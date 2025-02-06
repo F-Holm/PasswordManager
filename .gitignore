@@ -1,0 +1,70 @@
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+CMakeUserPresets.json
+/out
+
+# Configuración específica de Visual Studio
+.vscode/
+*.code-workspace
+
+# Archivos de construcción de CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+Testing/
+CTestTestfile.cmake
+CTestCostData.json
+
+# Archivos de Visual Studio
+*.VC.db
+*.VC.VC.opendb
+*.opensdf
+*.sdf
+*.cache
+*.ilk
+*.log
+*.ncb
+*.obj
+*.pch
+*.pdb
+*.ipch
+*.tlog
+*.lastbuildstate
+*.idb
+*.suo
+*.user
+*.unsuccessfulbuild
+*.VC.opendb
+
+# Directorios de compilación
+build/
+out/
+
+# Otros archivos y carpetas a ignorar
+*.DS_Store
+*.exe
+*.dll
+*.lib
+*.so
+*.dylib
+*.o
+*.a
+
+# Paquetes específicos del sistema operativo
+*.bak
+*.swp
+
+# Archivos de sistema
+Thumbs.db
+ehthumbs.db
