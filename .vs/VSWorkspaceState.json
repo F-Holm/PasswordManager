@@ -1,0 +1,42 @@
+{
+  "DevContainersInfoBarHidden": true,
+  "OutputFoldersPerTargetSystem": {
+    "Local Machine": [
+      "out\\build\\windows-x64-debug",
+      "out\\install\\windows-x64-debug",
+      "out\\build\\windows-x64-release",
+      "out\\install\\windows-x64-release",
+      "out\\build\\windows-x86-debug",
+      "out\\install\\windows-x86-debug",
+      "out\\build\\windows-x86-release",
+      "out\\install\\windows-x86-release"
+    ],
+    "WSL: Ubuntu": [
+      "out\\Ubuntu\\build\\linux-x64-debug",
+      "out\\Ubuntu\\install\\linux-x64-debug",
+      "out\\Ubuntu\\build\\linux-x64-release",
+      "out\\Ubuntu\\install\\linux-x64-release",
+      "out\\Ubuntu\\build\\linux-x86-debug",
+      "out\\Ubuntu\\install\\linux-x86-debug",
+      "out\\Ubuntu\\build\\linux-x86-release",
+      "out\\Ubuntu\\install\\linux-x86-release"
+    ]
+  },
+  "ActiveTargetSystem": "Local Machine",
+  "MRUPresetsPerTargetSystem": {
+    "Local Machine": {
+      "configure": "windows-x64-debug"
+    },
+    "WSL: Ubuntu": {
+      "configure": "linux-x64-debug"
+    }
+  },
+  "ExpandedNodes": [
+    "",
+    "\\include",
+    "\\src",
+    "\\tests"
+  ],
+  "SelectedNode": "\\CMakeLists.txt",
+  "PreviewInSolutionExplorer": false
+}

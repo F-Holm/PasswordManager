@@ -11,8 +11,26 @@ endif()
 
 project ("PasswordManager")
 
+# Include all headers in /include
+include_directories(include)
+
+# Collect all source files in /src
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+
+# Find OpenSSL
+find_package(OpenSSL REQUIRED)
+if (NOT OPENSSL_FOUND)
+  message(FATAL_ERROR "OpenSSL not found. Please install OpenSSL and try again.")
+endif()
+
+# Include OpenSSL headers
+include_directories(${OPENSSL_INCLUDE_DIR})
+
 # Add source to this project's executable.
-add_executable (PasswordManager "PasswordManager.cpp" "PasswordManager.h")
+add_executable (PasswordManager ${SOURCES})
+
+# Link OpenSSL libraries
+target_link_libraries(PasswordManager ${OPENSSL_LIBRARIES})
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET PasswordManager PROPERTY CXX_STANDARD 20)
