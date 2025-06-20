@@ -45,7 +45,7 @@ macro(UseDoxygenAwesomeExtensions)
 
   execute_process(COMMAND doxygen -w html header.html footer.html style.css
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
-  execute_process(COMMAND sed -i "/<\\/head>/r ${PROJECT_SOURCE_DIR}/cmake/extra_headers" header.html
+  execute_process(COMMAND sed -i "/<\\/head>/r ${PROJECT_SOURCE_DIR}/cmake/extra_headers.html" header.html
                   WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
   set(DOXYGEN_HTML_HEADER ${PROJECT_BINARY_DIR}/header.html)
 endmacro()
