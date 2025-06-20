@@ -20,25 +20,24 @@ WarningsAsErrors: 'google-*'
 HeaderFilterRegex: '.*'
 FormatStyle: file
 
-CheckOptions:
-  # Naming style (you can adjust this to match your codebase better)
-  - key:             readability-identifier-naming.ClassCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.FunctionCase
-    value:           CamelCase
-  - key:             readability-identifier-naming.VariableCase
-    value:           camelCase
-  - key:             readability-identifier-naming.ParameterCase
-    value:           camelCase
-  - key:             readability-identifier-naming.PrivateMemberPrefix
-    value:           m_
-  - key:             readability-identifier-naming.MemberVariableCase
-    value:           camelBack
-  - key:             readability-identifier-naming.NamespaceCase
-    value:           lower_case
-  - key:             modernize-use-nullptr.NullMacros
-    value:           'NULL'
-  - key:             modernize-loop-convert.MaxCopySize
-    value:           '16'
-  - key:             performance-unnecessary-value-param.AllowedTypes
-    value:           'std::string'
+#CheckOptions:
+#  - key:             readability-identifier-naming.ClassCase
+#    value:           CamelCase
+#  - key:             readability-identifier-naming.FunctionCase
+#    value:           CamelCase
+#  - key:             readability-identifier-naming.VariableCase
+#    value:           camelCase
+#  - key:             readability-identifier-naming.ParameterCase
+#    value:           camelCase
+#  - key:             readability-identifier-naming.PrivateMemberPrefix
+#    value:           m_
+#  - key:             readability-identifier-naming.MemberVariableCase
+#    value:           camelBack
+#  - key:             readability-identifier-naming.NamespaceCase
+#    value:           lower_case
+#  - key:             modernize-use-nullptr.NullMacros
+#    value:           'NULL'
+#  - key:             modernize-loop-convert.MaxCopySize
+#    value:           '16'
+#  - key:             performance-unnecessary-value-param.AllowedTypes
+#    value:           'std::string'
