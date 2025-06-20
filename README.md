@@ -6,6 +6,8 @@ Dependencias:
 - `clang-format`
 - `clang-tidy`
 - `valgrind` (Linux)
+- `cppcheck` (Linux)
 - `doxygen`
-- `OpenSSL` (se instala para el proyecto si no está instalado en el sistema)
+- `OpenSSL` (se instala automáticamente para el proyecto si no está instalado en el sistema)
 - `llvm-cov`
+- `Graphviz`
