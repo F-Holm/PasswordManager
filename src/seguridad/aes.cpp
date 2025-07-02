@@ -100,7 +100,7 @@ err:
   return error ? "" : str;
 }
 
-string Seguridad::desencriptar(string str, string key, string tag) {
+auto Seguridad::desencriptar(string str, string key, string tag) -> string {
   bool error = true;
 
   key = Seguridad::hash256(key);

@@ -1,6 +1,9 @@
 #include "cuenta.h"
 
+#include <string>
+
 #include "seguridad.h"
+#include "data_block.h"
 
 using std::array;
 using std::string;
