@@ -1,4 +1,4 @@
-#include "Seguridad.h"
+#include "seguridad.h"
 
 #pragma comment(lib, "crypt32")
 #pragma comment(lib, "Ws2_32")
@@ -9,7 +9,7 @@
 using std::string;
 
 static string IV = Seguridad::hash256_x(
-    "Este es un vector de inicialización super ultra mega secreto", 12);
+    "Este es un vector de inicializaciï¿½n super ultra mega secreto", 12);
 static string ADD = "Esto es algo totalmente innecesario";
 const static size_t TAG_LEN = 16;
 const static char *PROTOCOLO = "AES-256-GCM";
