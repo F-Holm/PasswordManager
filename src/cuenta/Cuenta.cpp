@@ -8,149 +8,141 @@
 using std::array;
 using std::string;
 
-Cuenta::Cuenta(array<DataBlock, Cuenta::cantAtributos> datos,
-               const string KEY) {
-  this->id =
-      string(reinterpret_cast<const char *>(datos[0].str), datos[0].largo);
-  this->descripcion =
-      string(reinterpret_cast<const char *>(datos[1].str), datos[1].largo);
-  this->email =
-      string(reinterpret_cast<const char *>(datos[2].str), datos[2].largo);
-  this->nombreUsuario =
-      string(reinterpret_cast<const char *>(datos[3].str), datos[3].largo);
-  this->contra =
-      string(reinterpret_cast<const char *>(datos[4].str), datos[4].largo);
-  this->extra =
-      string(reinterpret_cast<const char *>(datos[5].str), datos[5].largo);
+// Constructores, destructores y operators
+Cuenta::Cuenta(array<DataBlock, Cuenta::cantAtributos> datos, const string &key) {
+  id_ = string(reinterpret_cast<const char *>(datos[0].str), datos[0].largo);
+  desc_ = string(reinterpret_cast<const char *>(datos[1].str), datos[1].largo);
+  email_ = string(reinterpret_cast<const char *>(datos[2].str), datos[2].largo);
+  nom_ = string(reinterpret_cast<const char *>(datos[3].str), datos[3].largo);
+  contra_ = string(reinterpret_cast<const char *>(datos[4].str), datos[4].largo);
+  extra_ = string(reinterpret_cast<const char *>(datos[5].str), datos[5].largo);
 
-  this->idTag =
-      string(reinterpret_cast<const char *>(datos[6].str), datos[6].largo);
-  this->descripcionTag =
-      string(reinterpret_cast<const char *>(datos[7].str), datos[7].largo);
-  this->emailTag =
-      string(reinterpret_cast<const char *>(datos[8].str), datos[8].largo);
-  this->nombreUsuarioTag =
-      string(reinterpret_cast<const char *>(datos[9].str), datos[9].largo);
-  this->contraTag =
-      string(reinterpret_cast<const char *>(datos[10].str), datos[10].largo);
-  this->extraTag =
-      string(reinterpret_cast<const char *>(datos[11].str), datos[11].largo);
+  id_t_ = string(reinterpret_cast<const char *>(datos[6].str), datos[6].largo);
+  desc_t_ = string(reinterpret_cast<const char *>(datos[7].str), datos[7].largo);
+  email_t_ = string(reinterpret_cast<const char *>(datos[8].str), datos[8].largo);
+  nom_t_ = string(reinterpret_cast<const char *>(datos[9].str), datos[9].largo);
+  contra_t_ = string(reinterpret_cast<const char *>(datos[10].str), datos[10].largo);
+  extra_t_ = string(reinterpret_cast<const char *>(datos[11].str), datos[11].largo);
 
-  desencriptar(KEY);
+  Desencriptar(key);
 }
-Cuenta::Cuenta(array<string, Cuenta::cantAtributos> datos, const string KEY) {
-  this->id = datos[0];
-  this->descripcion = datos[1];
-  this->email = datos[2];
-  this->nombreUsuario = datos[3];
-  this->contra = datos[4];
-  this->extra = datos[5];
 
-  this->idTag = datos[6];
-  this->descripcionTag = datos[7];
-  this->emailTag = datos[8];
-  this->nombreUsuarioTag = datos[9];
-  this->contraTag = datos[10];
-  this->extraTag = datos[11];
+Cuenta::Cuenta(array<string, Cuenta::cantAtributos> datos, const string &key) {
+  id_ = datos[0];
+  desc_ = datos[1];
+  email_ = datos[2];
+  nom_ = datos[3];
+  contra_ = datos[4];
+  extra_ = datos[5];
 
-  desencriptar(KEY);
+  id_t_ = datos[6];
+  desc_t_ = datos[7];
+  email_t_ = datos[8];
+  nom_t_ = datos[9];
+  contra_t_ = datos[10];
+  extra_t_ = datos[11];
+
+  Desencriptar(key);
 }
-Cuenta::Cuenta(array<string, Cuenta::cantAtributos / 2 - 1> datos) {
-  this->id = "";
-  this->descripcion = datos[0];
-  this->email = datos[1];
-  this->nombreUsuario = datos[2];
-  this->contra = datos[3];
-  this->extra = datos[4];
 
-  this->idTag = "";
-  this->descripcionTag = "";
-  this->emailTag = "";
-  this->nombreUsuarioTag = "";
-  this->contraTag = "";
-  this->extraTag = "";
+Cuenta::Cuenta(array<string, (Cuenta::cantAtributos / 2) - 1> datos) {
+  id_ = "";
+  desc_ = datos[0];
+  email_ = datos[1];
+  nom_ = datos[2];
+  contra_ = datos[3];
+  extra_ = datos[4];
+
+  id_t_ = "";
+  desc_t_ = "";
+  email_t_ = "";
+  nom_t_ = "";
+  contra_t_ = "";
+  extra_t_ = "";
 }
+
 Cuenta::~Cuenta() {}
 
-string Cuenta::getId() const { return this->id; }
-void Cuenta::setId(const string &id) { this->id = id; }
+auto Cuenta::operator=(const Cuenta &other) -> Cuenta & {}
 
-string Cuenta::getDescripcion() const { return this->descripcion; }
-void Cuenta::setDescripcion(const string &descripcion) {
-  this->descripcion = descripcion;
+// Getters y Setters
+string Cuenta::GetId() const { return id_; }
+void Cuenta::SetId(const string &id) { id_ = id; }
+
+string Cuenta::GetDescripcion() const { return desc_; }
+void Cuenta::SetDescripcion(const string &desc) {
+  desc_ = desc;
 }
 
-string Cuenta::getEmail() const { return this->email; }
-void Cuenta::setEmail(const string &email) { this->email = email; }
+string Cuenta::GetEmail() const { return email_; }
+void Cuenta::SetEmail(const string &email) { email_ = email; }
 
-string Cuenta::getNombreUsuario() const { return this->nombreUsuario; }
-void Cuenta::setNombreUsuario(const string &nombreUsuario) {
-  this->nombreUsuario = nombreUsuario;
+string Cuenta::GetNombreUsuario() const { return nom_; }
+void Cuenta::SetNombreUsuario(const string &nom) {
+  nom_ = nom;
 }
 
-string Cuenta::getContra() const { return this->contra; }
-void Cuenta::setContra(const string &contra) { this->contra = contra; }
+string Cuenta::GetContra() const { return contra_; }
+void Cuenta::SetContra(const string &contra) { contra_ = contra; }
 
-string Cuenta::getExtra() const { return this->extra; }
-void Cuenta::setExtra(const string &extra) { this->extra = extra; }
+string Cuenta::GetExtra() const { return extra_; }
+void Cuenta::SetExtra(const string &extra) { extra_ = extra; }
 
-string Cuenta::getIdTag() const { return this->idTag; }
-string Cuenta::getDescripcionTag() const { return this->descripcionTag; }
-string Cuenta::getEmailTag() const { return this->emailTag; }
-string Cuenta::getNombreUsuarioTag() const { return this->nombreUsuarioTag; }
-string Cuenta::getContraTag() const { return this->contraTag; }
-string Cuenta::getExtraTag() const { return this->extraTag; }
+string Cuenta::GetIdTag() const { return id_t_; }
+string Cuenta::GetDescripcionTag() const { return desc_t_; }
+string Cuenta::GetEmailTag() const { return email_t_; }
+string Cuenta::GetNombreUsuarioTag() const { return nom_t_; }
+string Cuenta::GetContraTag() const { return contra_t_; }
+string Cuenta::GetExtraTag() const { return extra_t_; }
 
-void Cuenta::setIdTag(const string &idTag) { this->idTag = idTag; }
-void Cuenta::setDescripcionTag(const string &descripcionTag) {
-  this->descripcionTag = descripcionTag;
+void Cuenta::SetIdTag(const string &id_t) { id_t_ = id_t; }
+void Cuenta::SetDescripcionTag(const string &desc_t) {
+  desc_t_ = desc_t;
 }
-void Cuenta::setEmailTag(const string &emailTag) { this->emailTag = emailTag; }
-void Cuenta::setNombreUsuarioTag(const string &nombreUsuarioTag) {
-  this->nombreUsuarioTag = nombreUsuarioTag;
+void Cuenta::SetEmailTag(const string &email_t) { email_t_ = email_t; }
+void Cuenta::SetNombreUsuarioTag(const string &nom_t) {
+  nom_t_ = nom_t;
 }
-void Cuenta::setContraTag(const string &contraTag) {
-  this->contraTag = contraTag;
+void Cuenta::SetContraTag(const string &contra_t) {
+  contra_t_ = contra_t;
 }
-void Cuenta::setExtraTag(const string &extraTag) { this->extraTag = extraTag; }
+void Cuenta::SetExtraTag(const string &extra_t) { extra_t_ = extra_t; }
 
-void Cuenta::encriptar(const string KEY) {
-  id = Seguridad::encriptar(id, KEY, idTag);
-  this->descripcion =
-      Seguridad::encriptar(this->descripcion, KEY, this->descripcionTag);
-  email = Seguridad::encriptar(email, KEY, emailTag);
-  nombreUsuario = Seguridad::encriptar(nombreUsuario, KEY, nombreUsuarioTag);
-  contra = Seguridad::encriptar(contra, KEY, contraTag);
-  extra = Seguridad::encriptar(extra, KEY, extraTag);
+// Seguridad
+void Cuenta::Encriptar(const string &key) {
+  id_ = Seg::Encriptar(id_, key, id_t_);
+  desc_ = Seg::Encriptar(desc_, key, desc_t_);
+  email_ = Seg::Encriptar(email_, key, email_t_);
+  nom_ = Seg::Encriptar(nom_, key, nom_t_);
+  contra_ = Seg::Encriptar(contra_, key, contra_t_);
+  extra_ = Seg::Encriptar(extra_, key, extra_t_);
 }
-void Cuenta::desencriptar(const string KEY) {
-  id = Seguridad::desencriptar(id, KEY, idTag);
-  this->descripcion =
-      Seguridad::desencriptar(this->descripcion, KEY, this->descripcionTag);
-  email = Seguridad::desencriptar(email, KEY, emailTag);
-  nombreUsuario = Seguridad::desencriptar(nombreUsuario, KEY, nombreUsuarioTag);
-  contra = Seguridad::desencriptar(contra, KEY, contraTag);
-  extra = Seguridad::desencriptar(extra, KEY, extraTag);
+void Cuenta::Desencriptar(const string &key) {
+  id_ = Seg::desencriptar(id_, key, id_t_);
+  desc_ = Seg::desencriptar(desc_, key, desc_t_);
+  email_ = Seg::desencriptar(email_, key, email_t_);
+  nom_ = Seg::desencriptar(nom_, key, nom_t_);
+  contra_ = Seg::desencriptar(contra_, key, contra_t_);
+  extra_ = Seg::desencriptar(extra_, key, extra_t_);
 }
 
-array<DataBlock, Cuenta::cantAtributos>
-Cuenta::escribirDataBlocks(const string KEY) {
-  encriptar(KEY);
+array<DataBlock, Cuenta::cantAtributos> Cuenta::EscribirDataBlocks(const string &key) {
+  Encriptar(key);
   array<DataBlock, Cuenta::cantAtributos> cuentas;
 
-  cuentas[0] = DataBlock(id);
-  cuentas[1] = DataBlock(descripcion);
-  cuentas[2] = DataBlock(email);
-  cuentas[3] = DataBlock(nombreUsuario);
-  cuentas[4] = DataBlock(contra);
-  cuentas[5] = DataBlock(extra);
+  cuentas[0] = DataBlock(id_);
+  cuentas[1] = DataBlock(desc_);
+  cuentas[2] = DataBlock(email_);
+  cuentas[3] = DataBlock(nom_);
+  cuentas[4] = DataBlock(contra_);
+  cuentas[5] = DataBlock(extra_);
 
-  cuentas[6] = DataBlock(idTag);
-  cuentas[7] = DataBlock(descripcionTag);
-  cuentas[8] = DataBlock(emailTag);
-  cuentas[9] = DataBlock(nombreUsuarioTag);
-  cuentas[10] = DataBlock(contraTag);
-  cuentas[11] = DataBlock(extraTag);
+  cuentas[6] = DataBlock(id_t_);
+  cuentas[7] = DataBlock(desc_t_);
+  cuentas[8] = DataBlock(email_t_);
+  cuentas[9] = DataBlock(nom_t_);
+  cuentas[10] = DataBlock(contra_t_);
+  cuentas[11] = DataBlock(extra_t_);
 
   return cuentas;
 }
