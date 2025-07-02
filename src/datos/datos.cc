@@ -1,4 +1,4 @@
-#include "datos.h"
+#include "datos.hh"
 
 #include <random>
 

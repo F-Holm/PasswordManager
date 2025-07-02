@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "data_block.h"
+#include "data_block.hh"
 
 namespace DB {
 std::vector<DataBlock> leer(const std::string nombreArchivo);

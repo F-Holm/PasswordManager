@@ -1,4 +1,4 @@
-#include "cuenta.h"
+#include "cuenta.hh"
 
 #include <string>
 

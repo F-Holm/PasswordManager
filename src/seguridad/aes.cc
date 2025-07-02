@@ -1,4 +1,4 @@
-#include "seguridad.h"
+#include "seguridad.hh"
 
 #pragma comment(lib, "crypt32")
 #pragma comment(lib, "Ws2_32")
