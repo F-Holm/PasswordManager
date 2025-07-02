@@ -4,13 +4,13 @@
 
 struct DataBlock {
   size_t largo;
-  unsigned char *str;
+  char *str;
 
-  DataBlock(const size_t largo, unsigned char *str);
-  DataBlock(std::string str);
+  DataBlock(size_t largo, char *str);
+  explicit DataBlock(const std::string &str);
   DataBlock(const DataBlock &other);
   DataBlock();
   ~DataBlock();
 
-  DataBlock &operator=(const DataBlock &other);
+  auto operator=(const DataBlock &other) -> DataBlock &;
 };

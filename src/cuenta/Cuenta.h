@@ -7,56 +7,52 @@
 
 class Cuenta {
 private:
-  std::string id, descripcion, email, nombreUsuario, contra, extra;
+  std::string id_, desc_, email_, nom_, contra_, extra_;
+  std::string id_t_, desc_t_, email_t_, nom_t_, contra_t_, extra_t_;
 
-  std::string idTag, descripcionTag, emailTag, nombreUsuarioTag, contraTag,
-      extraTag;
-
-  void setIdTag(const std::string &idTag);
-  void setDescripcionTag(const std::string &descripcionTag);
-  void setEmailTag(const std::string &emailTag);
-  void setNombreUsuarioTag(const std::string &nombreUsuarioTag);
-  void setContraTag(const std::string &contraTag);
-  void setExtraTag(const std::string &extraTag);
+  void SetIdTag(const std::string &id_t);
+  void SetDescripcionTag(const std::string &desc_t);
+  void SetEmailTag(const std::string &email_t);
+  void SetNombreUsuarioTag(const std::string &nom_t);
+  void SetContraTag(const std::string &contra_t);
+  void SetExtraTag(const std::string &extra_t);
 
 public:
   const static uint8_t cantAtributos = 12;
 
-  Cuenta(std::array<DataBlock, Cuenta::cantAtributos> datos,
-         const std::string KEY);
-  Cuenta(std::array<std::string, Cuenta::cantAtributos> datos,
-         const std::string KEY);
-  Cuenta(std::array<std::string, Cuenta::cantAtributos / 2 - 1> datos);
+  Cuenta(std::array<DataBlock, Cuenta::cantAtributos> datos, const std::string &key);
+  Cuenta(std::array<std::string, Cuenta::cantAtributos> datos, const std::string &key);
+  Cuenta(std::array<std::string, (Cuenta::cantAtributos / 2) - 1> datos);
   ~Cuenta();
+  auto operator=(const Cuenta &other) -> Cuenta &;
 
-  std::string getId() const;
-  void setId(const std::string &id);
+  auto GetId() const -> std::string;
+  void SetId(const std::string &id);
 
-  std::string getDescripcion() const;
-  void setDescripcion(const std::string &descripcion);
+  auto GetDescripcion() const -> std::string;
+  void SetDescripcion(const std::string &desc);
 
-  std::string getEmail() const;
-  void setEmail(const std::string &email);
+  auto GetEmail() const -> std::string;
+  void SetEmail(const std::string &email);
 
-  std::string getNombreUsuario() const;
-  void setNombreUsuario(const std::string &nombreUsuario);
+  auto GetNombreUsuario() const -> std::string;
+  void SetNombreUsuario(const std::string &nom);
 
-  std::string getContra() const;
-  void setContra(const std::string &contra);
+  auto GetContra() const -> std::string;
+  void SetContra(const std::string &contra);
 
-  std::string getExtra() const;
-  void setExtra(const std::string &extra);
+  auto GetExtra() const -> std::string;
+  void SetExtra(const std::string &extra);
 
-  std::string getIdTag() const;
-  std::string getDescripcionTag() const;
-  std::string getEmailTag() const;
-  std::string getNombreUsuarioTag() const;
-  std::string getContraTag() const;
-  std::string getExtraTag() const;
+  auto GetIdTag() const -> std::string;
+  auto GetDescripcionTag() const -> std::string;
+  auto GetEmailTag() const -> std::string;
+  auto GetNombreUsuarioTag() const -> std::string;
+  auto GetContraTag() const -> std::string;
+  auto GetExtraTag() const -> std::string;
 
-  std::array<DataBlock, Cuenta::cantAtributos>
-  escribirDataBlocks(const std::string KEY);
+  auto EscribirDataBlocks(const std::string &key) -> std::array<DataBlock, Cuenta::cantAtributos>;
 
-  void encriptar(const std::string KEY);
-  void desencriptar(const std::string KEY);
+  void Encriptar(const std::string &key);
+  void Desencriptar(const std::string &key);
 };

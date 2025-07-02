@@ -1,20 +1,18 @@
 #include "data_block.h"
 
+#include <cstdio>
+
 using std::string;
 
-DataBlock::DataBlock(const size_t largo, unsigned char *str)
-    : largo(largo), str(new unsigned char[largo]) {
+DataBlock::DataBlock(const size_t largo, char *str) : largo(largo), str(new char[largo]) {
   std::memcpy(this->str, str, largo);
 }
 
-DataBlock::DataBlock(string str)
-    : largo(str.size()), str(new unsigned char[largo]) {
-  std::memcpy(this->str, reinterpret_cast<unsigned char *>(&str[0]),
-              str.size());
+DataBlock::DataBlock(const string &str) : largo(str.size()), str(new char[largo]) {
+  std::memcpy(this->str, (&str[0]), str.size());
 }
 
-DataBlock::DataBlock(const DataBlock &other)
-    : largo(other.largo), str(new unsigned char[largo]) {
+DataBlock::DataBlock(const DataBlock &other) : largo(other.largo), str(new char[largo]) {
   std::memcpy(this->str, other.str, largo);
 }
 
@@ -22,11 +20,11 @@ DataBlock::DataBlock() : largo(0), str(nullptr) {}
 
 DataBlock::~DataBlock() { delete[] str; }
 
-DataBlock &DataBlock::operator=(const DataBlock &other) {
+auto DataBlock::operator=(const DataBlock &other) -> DataBlock & {
   if (this != &other) {
-    delete[] str;
     largo = other.largo;
-    str = new unsigned char[largo];
+    delete[] str;
+    str = new char[largo];
     memcpy(this->str, other.str, largo);
   }
   return *this;
