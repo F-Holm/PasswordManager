@@ -1,4 +1,4 @@
-#include "DB.h"
+#include "db.h"
 
 #include <fstream>
 

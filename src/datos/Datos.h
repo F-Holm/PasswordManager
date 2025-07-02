@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Cuenta.h"
+#include "cuenta.h"
 
 class Datos {
 private:
