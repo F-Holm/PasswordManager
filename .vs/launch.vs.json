@@ -7,6 +7,12 @@
       "project": "CMakeLists.txt",
       "projectTarget": "PasswordManager.exe",
       "name": "PasswordManager.exe"
+    },
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "PasswordManagerTests.exe",
+      "name": "PasswordManagerTests.exe"
     }
   ]
 }

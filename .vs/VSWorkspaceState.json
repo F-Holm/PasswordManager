@@ -28,7 +28,7 @@
       "configure": "windows-x64-debug"
     },
     "WSL: Ubuntu": {
-      "configure": "linux-x64-debug"
+      "configure": "linux-x64-release"
     }
   },
   "ExpandedNodes": [
@@ -37,6 +37,5 @@
     "\\src",
     "\\tests"
   ],
-  "SelectedNode": "\\CMakeLists.txt",
   "PreviewInSolutionExplorer": false
 }
