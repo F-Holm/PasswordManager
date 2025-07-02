@@ -19,6 +19,7 @@ set(OPENSSL_BUILD_DOC     OFF CACHE BOOL "" FORCE)
 set(OPENSSL_USE_STATIC_LIBS ON CACHE BOOL "" FORCE)
 
 # Build
+message(STATUS "Building OpenSSL")
 FetchContent_MakeAvailable(openssl)
 
 # Exportar los targets

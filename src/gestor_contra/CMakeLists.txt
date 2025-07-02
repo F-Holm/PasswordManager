@@ -4,3 +4,13 @@ add_library(gestor_contra
 )
 
 target_include_directories(gestor_contra PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+
+target_link_libraries(password_generator
+    cuenta
+    data_block
+    datos
+    db
+    generador
+    seguridad
+)
