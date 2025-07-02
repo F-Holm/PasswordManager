@@ -4,6 +4,7 @@
 #include <string>
 
 #include "db.h"
+#include "data_block.h"
 
 class Cuenta {
 private:
@@ -22,7 +23,7 @@ public:
 
   Cuenta(std::array<DataBlock, Cuenta::cantAtributos> datos, const std::string &key);
   Cuenta(std::array<std::string, Cuenta::cantAtributos> datos, const std::string &key);
-  Cuenta(std::array<std::string, (Cuenta::cantAtributos / 2) - 1> datos);
+  explicit Cuenta(std::array<std::string, (Cuenta::cantAtributos / 2) - 1> datos);
   ~Cuenta();
   auto operator=(const Cuenta &other) -> Cuenta &;
 
