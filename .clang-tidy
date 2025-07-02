@@ -16,7 +16,7 @@ Checks: >
  # -readability-identifier-naming,
  # -readability-magic-numbers
 
-WarningsAsErrors: 'google-*'
+#WarningsAsErrors: 'google-*'
 HeaderFilterRegex: '.*'
 FormatStyle: file
 

@@ -4,30 +4,30 @@
 
 using std::string;
 
-static void setRand() {
+static void SetRand() {
   std::random_device rd;
   srand(static_cast<unsigned int>(std::time(nullptr)) ^ rd());
 }
 
-static unsigned char caracterRandom(const unsigned char &BASE,
-                                    const uint8_t RANGO) {
-  return (rand() % RANGO) + BASE;
+static auto CaracterRandom(const unsigned char &base,
+                                    const uint8_t rango) -> char {
+  return (rand() % rango) + base;
 }
 
-static bool contraFacil(string contra, const Generador::TipoContrasenia &TIPO) {
+static auto ContraFacil(const string &contra, const Generador::TipoContrasenia &tipo) -> bool {
   bool minuscula = false, mayuscula = false, numero = false, simbolo = false;
-  for (size_t i = 0; i < contra.size(); i++) {
-    if (islower(contra[i]))
+  for (char i : contra) {
+    if (islower(i))
       minuscula = true;
-    else if (isupper(contra[i]))
+    else if (isupper(i))
       mayuscula = true;
-    else if (isdigit(contra[i]))
+    else if (isdigit(i))
       numero = true;
     else
       simbolo = true;
   }
 
-  switch (TIPO) {
+  switch (tipo) {
   case Generador::TipoContrasenia::COMPLETA:
     return !(minuscula && mayuscula && numero && simbolo);
     break;
@@ -52,41 +52,41 @@ static bool contraFacil(string contra, const Generador::TipoContrasenia &TIPO) {
   }
 }
 
-static unsigned char caracter(const Generador::TipoContrasenia &TIPO) {
+static auto Caracter(const Generador::TipoContrasenia &tipo) -> char {
   char caracteres[3] = {'X', 'X', 'X'};
-  switch (TIPO) {
+  switch (tipo) {
   case Generador::TipoContrasenia::COMPLETA:
-    return caracterRandom('!', 94);
+    return CaracterRandom('!', 94);
     break;
   case Generador::TipoContrasenia::ALFANUMERICA:
-    caracteres[0] = caracterRandom('a', 26);
-    caracteres[1] = caracterRandom('A', 26);
-    caracteres[2] = caracterRandom('0', 10);
+    caracteres[0] = CaracterRandom('a', 26);
+    caracteres[1] = CaracterRandom('A', 26);
+    caracteres[2] = CaracterRandom('0', 10);
     return caracteres[rand() % 3];
     break;
   case Generador::TipoContrasenia::ALFANUMERICA_MAYUSCULA:
-    caracteres[0] = caracterRandom('A', 26);
-    caracteres[1] = caracterRandom('0', 10);
+    caracteres[0] = CaracterRandom('A', 26);
+    caracteres[1] = CaracterRandom('0', 10);
     return caracteres[rand() % 2];
     break;
   case Generador::TipoContrasenia::ALFANUMERICA_MINUSCULA:
-    caracteres[0] = caracterRandom('a', 26);
-    caracteres[1] = caracterRandom('0', 10);
+    caracteres[0] = CaracterRandom('a', 26);
+    caracteres[1] = CaracterRandom('0', 10);
     return caracteres[rand() % 2];
     break;
   case Generador::TipoContrasenia::ALFABETICA:
-    caracteres[0] = caracterRandom('a', 26);
-    caracteres[1] = caracterRandom('A', 26);
+    caracteres[0] = CaracterRandom('a', 26);
+    caracteres[1] = CaracterRandom('A', 26);
     return caracteres[rand() % 2];
     break;
   case Generador::TipoContrasenia::ALFABETICA_MAYUSCULA:
-    return caracterRandom('A', 26);
+    return CaracterRandom('A', 26);
     break;
   case Generador::TipoContrasenia::ALFABETICA_MINUSCULA:
-    return caracterRandom('a', 26);
+    return CaracterRandom('a', 26);
     break;
   case Generador::TipoContrasenia::NUMERICA:
-    return caracterRandom('0', 10);
+    return CaracterRandom('0', 10);
     break;
   default:
     return 'X';
@@ -94,13 +94,12 @@ static unsigned char caracter(const Generador::TipoContrasenia &TIPO) {
   }
 }
 
-string Generador::generarContrasenia(const size_t CANT_CARACTERES,
-                                     const Generador::TipoContrasenia &TIPO) {
-  setRand();
+auto Generador::GenerarContrasenia(const size_t &cant_car, const Generador::TipoContrasenia &tipo) -> string {
+  SetRand();
   string contra = "";
   do {
-    for (size_t i = 0; i < CANT_CARACTERES; i++)
-      contra += caracter(TIPO);
-  } while (contraFacil(contra, TIPO));
+    for (size_t i = 0; i < cant_car; i++)
+      contra += Caracter(tipo);
+  } while (ContraFacil(contra, tipo));
   return contra;
 }
