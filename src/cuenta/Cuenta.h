@@ -1,7 +1,9 @@
 #pragma once
 
-#include "DB.h"
 #include <array>
+#include <string>
+
+#include "db.h"
 
 class Cuenta {
 private:
