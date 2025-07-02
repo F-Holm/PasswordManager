@@ -1,6 +1,6 @@
-#include "Cuenta.h"
+#include "cuenta.h"
 
-#include "Seguridad.h"
+#include "seguridad.h"
 
 using std::array;
 using std::string;

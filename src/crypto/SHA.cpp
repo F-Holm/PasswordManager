@@ -1,4 +1,4 @@
-#include "Seguridad.h"
+#include "seguridad.h"
 
 #include <openssl/sha.h>
 
