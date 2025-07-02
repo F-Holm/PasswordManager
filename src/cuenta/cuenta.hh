@@ -3,8 +3,8 @@
 #include <array>
 #include <string>
 
-#include "db.h"
-#include "data_block.h"
+#include "db.hh"
+#include "data_block.hh"
 
 class Cuenta {
 private:
