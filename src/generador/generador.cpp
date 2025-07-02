@@ -4,88 +4,88 @@
 
 using std::string;
 
-static void SetRand() {
+namespace {
+void SetRand() {
   std::random_device rd;
   srand(static_cast<unsigned int>(std::time(nullptr)) ^ rd());
 }
 
-static auto CaracterRandom(const unsigned char &base,
-                                    const uint8_t rango) -> char {
-  return (rand() % rango) + base;
+auto CaracterRandom(const char &base, const uint8_t &rango) -> char {
+  return static_cast<char>((rand() % rango) + base);
 }
 
-static auto ContraFacil(const string &contra, const Generador::TipoContrasenia &tipo) -> bool {
-  bool minuscula = false, mayuscula = false, numero = false, simbolo = false;
+auto ContraFacil(const string &contra, const Gen::TipoContra &tipo) -> bool {
+  bool min = false, may = false, num = false, sim = false;
   for (char i : contra) {
-    if (islower(i))
-      minuscula = true;
-    else if (isupper(i))
-      mayuscula = true;
-    else if (isdigit(i))
-      numero = true;
+    if (islower(i) != 0)
+      min = true;
+    else if (isupper(i) != 0)
+      may = true;
+    else if (isdigit(i) != 0)
+      num = true;
     else
-      simbolo = true;
+      sim = true;
   }
 
   switch (tipo) {
-  case Generador::TipoContrasenia::COMPLETA:
-    return !(minuscula && mayuscula && numero && simbolo);
+  case Gen::TipoContra::COMP:
+    return !(min && may && num && sim);
     break;
-  case Generador::TipoContrasenia::ALFANUMERICA:
-    return !(minuscula && mayuscula && numero);
+  case Gen::TipoContra::ALFA_NUM:
+    return !(min && may && num);
     break;
-  case Generador::TipoContrasenia::ALFANUMERICA_MAYUSCULA:
-    return !(mayuscula && numero);
+  case Gen::TipoContra::ALFA_NUM_MAY:
+    return !(may && num);
     break;
-  case Generador::TipoContrasenia::ALFANUMERICA_MINUSCULA:
-    return !(minuscula && numero);
+  case Gen::TipoContra::ALFA_NUM_MIN:
+    return !(min && num);
     break;
-  case Generador::TipoContrasenia::ALFABETICA:
-    return !(minuscula && mayuscula);
+  case Gen::TipoContra::ALFA:
+    return !(min && may);
     break;
-  case Generador::TipoContrasenia::ALFABETICA_MAYUSCULA:
-  case Generador::TipoContrasenia::ALFABETICA_MINUSCULA:
-  case Generador::TipoContrasenia::NUMERICA:
+  case Gen::TipoContra::ALFA_MAY:
+  case Gen::TipoContra::ALFA_MIN:
+  case Gen::TipoContra::NUM:
   default:
     return false;
     break;
   }
 }
 
-static auto Caracter(const Generador::TipoContrasenia &tipo) -> char {
-  char caracteres[3] = {'X', 'X', 'X'};
+auto Caracter(const Gen::TipoContra &tipo) -> char {
+  char cars[3] = {'X', 'X', 'X'};
   switch (tipo) {
-  case Generador::TipoContrasenia::COMPLETA:
+  case Gen::TipoContra::COMP:
     return CaracterRandom('!', 94);
     break;
-  case Generador::TipoContrasenia::ALFANUMERICA:
-    caracteres[0] = CaracterRandom('a', 26);
-    caracteres[1] = CaracterRandom('A', 26);
-    caracteres[2] = CaracterRandom('0', 10);
-    return caracteres[rand() % 3];
+  case Gen::TipoContra::ALFA_NUM:
+    cars[0] = CaracterRandom('a', 26);
+    cars[1] = CaracterRandom('A', 26);
+    cars[2] = CaracterRandom('0', 10);
+    return cars[rand() % 3];
     break;
-  case Generador::TipoContrasenia::ALFANUMERICA_MAYUSCULA:
-    caracteres[0] = CaracterRandom('A', 26);
-    caracteres[1] = CaracterRandom('0', 10);
-    return caracteres[rand() % 2];
+  case Gen::TipoContra::ALFA_NUM_MAY:
+    cars[0] = CaracterRandom('A', 26);
+    cars[1] = CaracterRandom('0', 10);
+    return cars[rand() % 2];
     break;
-  case Generador::TipoContrasenia::ALFANUMERICA_MINUSCULA:
-    caracteres[0] = CaracterRandom('a', 26);
-    caracteres[1] = CaracterRandom('0', 10);
-    return caracteres[rand() % 2];
+  case Gen::TipoContra::ALFA_NUM_MIN:
+    cars[0] = CaracterRandom('a', 26);
+    cars[1] = CaracterRandom('0', 10);
+    return cars[rand() % 2];
     break;
-  case Generador::TipoContrasenia::ALFABETICA:
-    caracteres[0] = CaracterRandom('a', 26);
-    caracteres[1] = CaracterRandom('A', 26);
-    return caracteres[rand() % 2];
+  case Gen::TipoContra::ALFA:
+    cars[0] = CaracterRandom('a', 26);
+    cars[1] = CaracterRandom('A', 26);
+    return cars[rand() % 2];
     break;
-  case Generador::TipoContrasenia::ALFABETICA_MAYUSCULA:
+  case Gen::TipoContra::ALFA_MAY:
     return CaracterRandom('A', 26);
     break;
-  case Generador::TipoContrasenia::ALFABETICA_MINUSCULA:
+  case Gen::TipoContra::ALFA_MIN:
     return CaracterRandom('a', 26);
     break;
-  case Generador::TipoContrasenia::NUMERICA:
+  case Gen::TipoContra::NUM:
     return CaracterRandom('0', 10);
     break;
   default:
@@ -93,8 +93,9 @@ static auto Caracter(const Generador::TipoContrasenia &tipo) -> char {
     break;
   }
 }
+}  // namespace
 
-auto Generador::GenerarContrasenia(const size_t &cant_car, const Generador::TipoContrasenia &tipo) -> string {
+auto Gen::GenerarContra(const size_t &cant_car, const Gen::TipoContra &tipo) -> string {
   SetRand();
   string contra = "";
   do {

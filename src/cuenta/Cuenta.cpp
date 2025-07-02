@@ -63,7 +63,24 @@ Cuenta::Cuenta(array<string, (Cuenta::cantAtributos / 2) - 1> datos) {
 
 Cuenta::~Cuenta() {}
 
-auto Cuenta::operator=(const Cuenta &other) -> Cuenta & {}
+auto Cuenta::operator=(const Cuenta &other) -> Cuenta & {
+  if (this != &other) {
+    id_ = other.id_;
+    desc_ = other.desc_;
+    email_ = other.email_;
+    nom_ = other.nom_;
+    contra_ = other.contra_;
+    extra_ = other.extra_;
+
+    id_t_ = other.id_t_;
+    desc_t_ = other.desc_t_;
+    email_t_ = other.email_t_;
+    nom_t_ = other.nom_t_;
+    contra_t_ = other.contra_t_;
+    extra_t_ = other.extra_t_;
+  }
+  return *this;
+}
 
 // Getters y Setters
 string Cuenta::GetId() const { return id_; }

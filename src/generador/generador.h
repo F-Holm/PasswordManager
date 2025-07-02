@@ -2,17 +2,17 @@
 
 #include <string>
 
-namespace Generador {
-enum class TipoContrasenia : uint8_t {
-  COMPLETA = 0,
-  ALFANUMERICA = 1,
-  ALFANUMERICA_MAYUSCULA = 2,
-  ALFANUMERICA_MINUSCULA = 3,
-  ALFABETICA = 4,
-  ALFABETICA_MAYUSCULA = 5,
-  ALFABETICA_MINUSCULA = 6,
-  NUMERICA = 7
+namespace Gen {
+enum class TipoContra : uint8_t {
+  COMP = 0,
+  ALFA_NUM = 1,
+  ALFA_NUM_MAY = 2,
+  ALFA_NUM_MIN = 3,
+  ALFA = 4,
+  ALFA_MAY = 5,
+  ALFA_MIN = 6,
+  NUM = 7
 };
 
-auto GenerarContrasenia(const size_t &cant_car, const TipoContrasenia &tipo) -> std::string;
-} // namespace Generador
+auto GenerarContra(const size_t &cant_car, const TipoContra &tipo) -> std::string;
+} // namespace Gen
