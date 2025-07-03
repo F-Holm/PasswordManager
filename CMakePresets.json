@@ -8,75 +8,130 @@
   "include": [],
   "configurePresets": [
     {
-      "name": "myConfigure",
-      "displayName": "Configure Preset",
-      "description": "Ninja generator",
+      "name": "default",
+      "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
-      "installDir": "${sourceDir}/build/install"
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER_LAUNCHER": "",
+        "CMAKE_CXX_COMPILER_NAMES": "clang++ g++",
+        "CMAKE_C_COMPILER_NAMES": "clang gcc",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "debug-x64",
+      "inherits": "default",
+      "displayName": "Debug x64",
+      "description": "Build Debug configuration for x64",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "binaryDir": "${sourceDir}/build/debug/x64",
+      "installDir": "${binaryDir}/install",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "debug-x86",
+      "inherits": "default",
+      "displayName": "Debug x86",
+      "description": "Build Debug configuration for x86",
+      "architecture": {
+        "value": "x86",
+        "strategy": "set"
+      },
+      "binaryDir": "${sourceDir}/build/debug/x86",
+      "installDir": "${binaryDir}/install",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release-x64",
+      "inherits": "default",
+      "displayName": "Release x64",
+      "description": "Build Release configuration for x64",
+      "architecture": {
+        "value": "x64",
+        "strategy": "set"
+      },
+      "binaryDir": "${sourceDir}/build/release/x64",
+      "installDir": "${binaryDir}/install",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "release-x86",
+      "inherits": "default",
+      "displayName": "Release x86",
+      "description": "Build Release configuration for x86",
+      "architecture": {
+        "value": "x86",
+        "strategy": "set"
+      },
+      "binaryDir": "${sourceDir}/build/release/x86",
+      "installDir": "${binaryDir}/install",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
     {
-      "name": "myBuild",
-      "displayName": "Build Preset",
-      "description": "Four jobs",
-      "configurePreset": "myConfigure",
-      "jobs": 4
+      "name": "build-debug-x64",
+      "configurePreset": "debug-x64",
+      "displayName": "Build Debug x64",
+      "description": "Compila en modo Debug para x64 con máxima paralelización"
     },
     {
-      "name": "myInstall",
-      "displayName": "Installation",
-      "targets" : "install",
-      "configurePreset": "myConfigure"
-    }
-  ],
-  "testPresets": [
+      "name": "build-debug-x86",
+      "configurePreset": "debug-x86",
+      "displayName": "Build Debug x86",
+      "description": "Compila en modo Debug para x86 con máxima paralelización"
+    },
     {
-      "name": "myTest",
-      "displayName": "Test Preset",
-      "description": "Output short progress",
-      "configurePreset": "myConfigure",
-      "output": {
-        "shortProgress": true
-      }
-    }
-  ],
-  "packagePresets": [
+      "name": "build-release-x64",
+      "configurePreset": "release-x64",
+      "displayName": "Build Release x64",
+      "description": "Compila en modo Release para x64 con máxima paralelización"
+    },
     {
-      "name": "myPackage",
-      "displayName": "Package Preset",
-      "description": "ZIP generator",
-      "configurePreset": "myConfigure",
-      "generators": [
-        "ZIP"
-      ]
+      "name": "build-release-x86",
+      "configurePreset": "release-x86",
+      "displayName": "Build Release x86",
+      "description": "Compila en modo Release para x86 con máxima paralelización"
     }
   ],
   "workflowPresets": [
     {
-      "name": "myWorkflow",
+      "name": "dbg64",
       "steps": [
-        {
-          "type": "configure",
-          "name": "myConfigure"
-        },
-        {
-          "type": "build",
-          "name": "myBuild"
-        },
-        {
-          "type": "test",
-          "name": "myTest"
-        },
-        {
-          "type": "package",
-          "name": "myPackage"
-        },
-        {
-          "type": "build",
-          "name": "myInstall"
-        }
+        { "type": "configure", "name": "debug-x64" },
+        { "type": "build", "name": "build-debug-x64" }
+      ]
+    },
+    {
+      "name": "dbg86",
+      "steps": [
+        { "type": "configure", "name": "debug-x86" },
+        { "type": "build", "name": "build-debug-x86" }
+      ]
+    },
+    {
+      "name": "rel64",
+      "steps": [
+        { "type": "configure", "name": "release-x64" },
+        { "type": "build", "name": "build-release-x64" }
+      ]
+    },
+    {
+      "name": "rel86",
+      "steps": [
+        { "type": "configure", "name": "release-x86" },
+        { "type": "build", "name": "build-release-x86" }
       ]
     }
   ],
