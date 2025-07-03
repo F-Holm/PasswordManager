@@ -1,4 +1,9 @@
 function(AddMemcheck target)
+  if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(STATUS "Memcheck no se configura porque no estás en Linux.")
+    return()
+  endif()
+
   include(FetchContent)
   FetchContent_Declare(
     memcheck-cover
