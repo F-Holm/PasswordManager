@@ -1,7 +1,7 @@
 include(FetchContent)
 
 if(NOT DEFINED OPENSSL_VERSION)
-    set(OPENSSL_VERSION openssl-3)
+    set(OPENSSL_VERSION openssl-3.5.1)
 endif()
 
 message(STATUS "Fetching OpenSSL version: ${OPENSSL_VERSION}")
