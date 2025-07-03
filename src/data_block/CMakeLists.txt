@@ -1,5 +1,4 @@
 add_library(data_block
-    data_block.hh
     data_block.cc
 )
 

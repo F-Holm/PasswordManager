@@ -1,5 +1,4 @@
 add_library(gestor_contra
-    gestor_contra.hh
     gestor_contra.cc
 )
 

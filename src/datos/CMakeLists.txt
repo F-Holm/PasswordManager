@@ -1,5 +1,4 @@
 add_library(datos
-    datos.hh
     datos.cc
 )
 

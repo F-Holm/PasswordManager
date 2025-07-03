@@ -1,5 +1,4 @@
 add_library(generador
-    generador.hh
     generador.cc
 )
 

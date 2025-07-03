@@ -1,8 +1,3 @@
-include(Coverage)
-include(Format)
-include(CppCheck)
-include(Doxygen)
-
 add_subdirectory(cuenta)
 add_subdirectory(data_block)
 add_subdirectory(datos)

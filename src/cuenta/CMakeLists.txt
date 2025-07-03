@@ -1,5 +1,4 @@
 add_library(cuenta
-    cuenta.hh
     cuenta.cc
 )
 

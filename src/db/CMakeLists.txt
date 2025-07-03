@@ -1,5 +1,4 @@
 add_library(db
-    db.hh
     db.cc
 )
 
