@@ -2,6 +2,7 @@
 
 ## Dependencias:
 - `CMake`
+- `ninja`
 - `clang`
 - `clang++`
 - `clang-format`
@@ -27,7 +28,13 @@ winget install --id DimitriVanHeesch.Doxygen --source winget
 ```cmd
 winget install --id Graphviz.Graphviz --source winget
 ```
+```cmd
+winget install --id Ninja-build.Ninja --source winget
+```
 ### Linux
 ```bash
-sudo apt install cmake clang clang-format clang-tidy valgrind doxygen llvm graphviz
+sudo apt update
+```
+```bash
+sudo apt install cmake ninja-build clang clang-format clang-tidy valgrind doxygen llvm graphviz 
 ```
