@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "seguridad.h"
-#include "data_block.h"
+#include "seguridad.hh"
+#include "data_block.hh"
 
 using std::array;
 using std::string;
