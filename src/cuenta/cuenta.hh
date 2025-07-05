@@ -27,10 +27,10 @@ public:
   ~Cuenta();
   auto operator=(const Cuenta &other) -> Cuenta &;
 
-  auto id() const -> std::string;
+  auto GetId() const -> std::string;
   void SetId(const std::string &id);
 
-  auto desc() const -> std::string;
+  auto GetDescripcion() const -> std::string;
   void SetDescripcion(const std::string &desc);
 
   auto GetEmail() const -> std::string;
