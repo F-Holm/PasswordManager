@@ -14,5 +14,5 @@ enum class TipoContra : uint8_t {
   NUM = 7
 };
 
-auto GenerarContra(const size_t &cant_car, const TipoContra &tipo) -> std::string;
+auto GenerarContra(const size_t &largo, const TipoContra &tipo) -> std::string;
 } // namespace Gen

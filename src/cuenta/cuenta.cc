@@ -1,7 +1,5 @@
 #include "cuenta.hh"
 
-#include <string>
-
 #include "seguridad.hh"
 #include "data_block.hh"
 
@@ -81,49 +79,6 @@ auto Cuenta::operator=(const Cuenta &other) -> Cuenta & {
   }
   return *this;
 }
-
-// Getters y Setters
-string Cuenta::GetId() const { return id_; }
-void Cuenta::SetId(const string &id) { id_ = id; }
-
-string Cuenta::GetDescripcion() const { return desc_; }
-void Cuenta::SetDescripcion(const string &desc) {
-  desc_ = desc;
-}
-
-string Cuenta::GetEmail() const { return email_; }
-void Cuenta::SetEmail(const string &email) { email_ = email; }
-
-string Cuenta::GetNombreUsuario() const { return nom_; }
-void Cuenta::SetNombreUsuario(const string &nom) {
-  nom_ = nom;
-}
-
-string Cuenta::GetContra() const { return contra_; }
-void Cuenta::SetContra(const string &contra) { contra_ = contra; }
-
-string Cuenta::GetExtra() const { return extra_; }
-void Cuenta::SetExtra(const string &extra) { extra_ = extra; }
-
-string Cuenta::GetIdTag() const { return id_t_; }
-string Cuenta::GetDescripcionTag() const { return desc_t_; }
-string Cuenta::GetEmailTag() const { return email_t_; }
-string Cuenta::GetNombreUsuarioTag() const { return nom_t_; }
-string Cuenta::GetContraTag() const { return contra_t_; }
-string Cuenta::GetExtraTag() const { return extra_t_; }
-
-void Cuenta::SetIdTag(const string &id_t) { id_t_ = id_t; }
-void Cuenta::SetDescripcionTag(const string &desc_t) {
-  desc_t_ = desc_t;
-}
-void Cuenta::SetEmailTag(const string &email_t) { email_t_ = email_t; }
-void Cuenta::SetNombreUsuarioTag(const string &nom_t) {
-  nom_t_ = nom_t;
-}
-void Cuenta::SetContraTag(const string &contra_t) {
-  contra_t_ = contra_t;
-}
-void Cuenta::SetExtraTag(const string &extra_t) { extra_t_ = extra_t; }
 
 // Seguridad
 void Cuenta::Encriptar(const string &key) {
