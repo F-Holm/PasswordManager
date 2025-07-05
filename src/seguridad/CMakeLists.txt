@@ -1,7 +1,11 @@
 add_subdirectory(openssl)
 
-add_library(seguridad INTERFACE)
+add_library(seguridad
+    seguridad.cc
+)
 
-target_include_directories(seguridad INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(seguridad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(seguridad INTERFACE openssl_)
+target_link_libraries(seguridad PUBLIC
+    openssl_
+)
