@@ -8,17 +8,17 @@ using std::vector;
 
 const string Datos::NOMBRE_ARCHIVO = "FEDERICO.HOLM";
 
-Datos::Datos(const string KEY) { cargarCuentas(KEY); }
+Datos::Datos(const string& key) { CargarCuentas(key); }
 Datos::~Datos() {}
 
-bool Datos::idUnico(const string ID) const {
+auto Datos::idUnico(const string ID) const -> bool {
   for (int i = 0; i < cuentas.size(); i++)
     if (cuentas[i].getId() == ID)
       return false;
   return true;
 }
 
-void Datos::setRand() {
+inline void Datos::SetRand() {
   std::random_device rd;
   srand(static_cast<unsigned int>(std::time(nullptr)) ^ rd());
 }

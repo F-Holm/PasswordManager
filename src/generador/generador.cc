@@ -5,7 +5,7 @@
 using std::string;
 
 namespace {
-void SetRand() {
+inline void SetRand() {
   std::random_device rd;
   srand(static_cast<unsigned int>(std::time(nullptr)) ^ rd());
 }
@@ -95,12 +95,13 @@ auto Caracter(const Gen::TipoContra &tipo) -> char {
 }
 }  // namespace
 
-auto Gen::GenerarContra(const size_t &cant_car, const Gen::TipoContra &tipo) -> string {
+auto Gen::GenerarContra(const size_t &largo, const Gen::TipoContra &tipo) -> string {
   SetRand();
-  string contra = "";
+  string contra;
   do {
-    for (size_t i = 0; i < cant_car; i++)
+    for (size_t i = 0; i < largo; i++){
       contra += Caracter(tipo);
+    }
   } while (ContraFacil(contra, tipo));
   return contra;
 }
