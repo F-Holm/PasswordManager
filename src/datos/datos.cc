@@ -1,6 +1,6 @@
 #include "datos.hh"
 
-#include <random>
+#include "utils/set_rand.hh"
 
 using std::array;
 using std::string;
@@ -11,55 +11,44 @@ const string Datos::NOMBRE_ARCHIVO = "FEDERICO.HOLM";
 Datos::Datos(const string& key) { CargarCuentas(key); }
 Datos::~Datos() {}
 
-auto Datos::idUnico(const string ID) const -> bool {
+auto Datos::IdUnico(const string& id) const -> bool {
   for (int i = 0; i < cuentas.size(); i++)
-    if (cuentas[i].getId() == ID)
+    if (cuentas[i].getId() == id)
       return false;
   return true;
 }
 
-inline void Datos::SetRand() {
-  std::random_device rd;
-  srand(static_cast<unsigned int>(std::time(nullptr)) ^ rd());
-}
-
-string Datos::generarIdUnico() const {
+string Datos::GenIdUnico() const {
   string str;
-  setRand();
+  SetRand();
   do {
     int num = rand();
-    str = string(reinterpret_cast<const char *>(&num), sizeof(int));
-  } while (!idUnico(str));
+    str = string(reinterpret_cast<const char*>(&num), sizeof(int));
+  } while (!IdUnico(str));
   return str;
 }
 
-int Datos::getIndex(const string ID) const {
+auto Datos::index(const string& id) const -> int {
   for (int i = 0; i < cuentas.size(); i++)
-    if (cuentas[i].getId() == ID)
+    if (cuentas[i].getId() == id)
       return i;
 }
 
-vector<Cuenta> Datos::getCuentas() const { return cuentas; }
-
-void Datos::setCuentas(const vector<Cuenta> &nuevasCuentas) {
-  cuentas = nuevasCuentas;
-}
-
-void Datos::agregarCuenta(Cuenta &cuenta) {
-  cuenta.setId(generarIdUnico());
+void Datos::AgrCuenta(Cuenta &cuenta) {
+  cuenta.SetId(GenIdUnico());
   cuentas.push_back(cuenta);
 }
 
-void Datos::modificarCuenta(const Cuenta &cuenta) {
+void Datos::ModCuenta(const Cuenta &cuenta) {
   cuentas[getIndex(cuenta.getId())] = cuenta;
 }
 
-void Datos::eliminarCuenta(const std::string id) {
-  cuentas.erase(cuentas.begin() + getIndex(id));
+void Datos::ElimCuenta(const std::string& id) {
+  cuentas.erase(cuentas.begin() + index(id));
 }
 
-void Datos::cargarCuentas(const string KEY) {
-  vector<DataBlock> datos = DB::leer(Datos::NOMBRE_ARCHIVO);
+void Datos::CargarCuentas(const string& key) {
+  vector<DataBlock> datos = DB::Leer(Datos::NOMBRE_ARCHIVO);
 
   for (size_t i = 0; i < datos.size(); i += Cuenta::cantAtributos) {
     array<DataBlock, Cuenta::cantAtributos> c;
@@ -67,19 +56,18 @@ void Datos::cargarCuentas(const string KEY) {
     for (int j = 0; j < Cuenta::cantAtributos; j++)
       c[j] = datos[i + j];
 
-    cuentas.emplace_back(c, KEY);
+    cuentas.emplace_back(c, key);
   }
 }
 
-void Datos::guardarCuentas(const string KEY) {
+void Datos::GuardarCuentas(const string& key) {
   vector<DataBlock> datos;
 
   for (Cuenta cuenta : cuentas) {
-
-    array<DataBlock, Cuenta::cantAtributos> arr;
-    arr = cuenta.escribirDataBlocks(KEY);
+    array<DataBlock, Cuenta::kCantAtri> arr;
+    arr = cuenta.EscribirDataBlocks(key);
     datos.insert(datos.end(), begin(arr), end(arr));
   }
 
-  DB::escribir(Datos::NOMBRE_ARCHIVO, datos);
+  DB::Escribir(Datos::NOMBRE_ARCHIVO, datos);
 }
