@@ -8,11 +8,11 @@
 
 class Cuenta {
 public:
-  const static uint8_t cantAtributos = 12;
+  const static uint8_t kCantAtri = 12;
 
-  Cuenta(std::array<DataBlock, Cuenta::cantAtributos> datos, const std::string &key);
-  Cuenta(std::array<std::string, Cuenta::cantAtributos> datos, const std::string &key);
-  explicit Cuenta(std::array<std::string, (Cuenta::cantAtributos / 2) - 1> datos);
+  Cuenta(std::array<DataBlock, Cuenta::kCantAtri> datos, const std::string &key);
+  Cuenta(std::array<std::string, Cuenta::kCantAtri> datos, const std::string &key);
+  explicit Cuenta(std::array<std::string, (Cuenta::kCantAtri / 2) - 1> datos);
   ~Cuenta();
   auto operator=(const Cuenta &other) -> Cuenta &;
 
@@ -40,7 +40,7 @@ public:
   auto contra_t() const -> std::string { return contra_t_; };
   auto extra_t() const -> std::string { return extra_t_; };
 
-  auto EscribirDataBlocks(const std::string &key) -> std::array<DataBlock, Cuenta::cantAtributos>;
+  auto EscribirDataBlocks(const std::string &key) -> std::array<DataBlock, Cuenta::kCantAtri>;
 
   void Encriptar(const std::string &key);
   void Desencriptar(const std::string &key);

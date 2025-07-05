@@ -7,7 +7,7 @@ using std::array;
 using std::string;
 
 // Constructores, destructores y operators
-Cuenta::Cuenta(array<DataBlock, Cuenta::cantAtributos> datos, const string &key) {
+Cuenta::Cuenta(array<DataBlock, Cuenta::kCantAtri> datos, const string &key) {
   id_ = string(reinterpret_cast<const char *>(datos[0].str), datos[0].largo);
   desc_ = string(reinterpret_cast<const char *>(datos[1].str), datos[1].largo);
   email_ = string(reinterpret_cast<const char *>(datos[2].str), datos[2].largo);
@@ -25,7 +25,7 @@ Cuenta::Cuenta(array<DataBlock, Cuenta::cantAtributos> datos, const string &key)
   Desencriptar(key);
 }
 
-Cuenta::Cuenta(array<string, Cuenta::cantAtributos> datos, const string &key) {
+Cuenta::Cuenta(array<string, Cuenta::kCantAtri> datos, const string &key) {
   id_ = datos[0];
   desc_ = datos[1];
   email_ = datos[2];
@@ -43,7 +43,7 @@ Cuenta::Cuenta(array<string, Cuenta::cantAtributos> datos, const string &key) {
   Desencriptar(key);
 }
 
-Cuenta::Cuenta(array<string, (Cuenta::cantAtributos / 2) - 1> datos) {
+Cuenta::Cuenta(array<string, (Cuenta::kCantAtri / 2) - 1> datos) {
   id_ = "";
   desc_ = datos[0];
   email_ = datos[1];
@@ -98,9 +98,9 @@ void Cuenta::Desencriptar(const string &key) {
   extra_ = Seg::desencriptar(extra_, key, extra_t_);
 }
 
-array<DataBlock, Cuenta::cantAtributos> Cuenta::EscribirDataBlocks(const string &key) {
+array<DataBlock, Cuenta::kCantAtri> Cuenta::EscribirDataBlocks(const string &key) {
   Encriptar(key);
-  array<DataBlock, Cuenta::cantAtributos> cuentas;
+  array<DataBlock, Cuenta::kCantAtri> cuentas;
 
   cuentas[0] = DataBlock(id_);
   cuentas[1] = DataBlock(desc_);

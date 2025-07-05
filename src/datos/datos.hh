@@ -12,12 +12,12 @@ public:
 
   const static std::string NOMBRE_ARCHIVO;
 
-  auto GetIndex(const std::string& id) const -> int;
-  auto centas() const -> std::vector<Cuenta> { return cuentas_; };
+  auto index(const std::string& id) const -> int;
+  auto cuentas() const -> std::vector<Cuenta> { return cuentas_; };
 
-  void AgregarCuenta(Cuenta &cuenta);
-  void ModificarCuenta(const Cuenta &cuenta);
-  void EliminarCuenta(const std::string &id);
+  void AgrCuenta(Cuenta &cuenta);
+  void ModCuenta(const Cuenta &cuenta);
+  void ElimCuenta(const std::string &id);
 
   void CargarCuentas(const std::string &key);
   void GuardarCuentas(const std::string &key);
@@ -25,9 +25,8 @@ public:
   private:
   std::vector<Cuenta> cuentas_;
 
-  void SetCuentas(const std::vector<Cuenta> &cuentas);
+  void SetCuentas(const std::vector<Cuenta> &cuentas) { cuentas_ = cuentas;}
 
   auto IdUnico(const std::string& id) const -> bool;
   auto GenIdUnico() const -> std::string;
-  inline static void SetRand();
 };

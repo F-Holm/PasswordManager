@@ -7,7 +7,7 @@ using std::ofstream;
 using std::string;
 using std::vector;
 
-vector<DataBlock> DB::leer(const string nombreArchivo) {
+vector<DataBlock> DB::leer(const string nom_arch) {
   vector<DataBlock> datos;
   ifstream archivo(nombreArchivo, std::ios::binary);
   if (!archivo)
