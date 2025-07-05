@@ -3,6 +3,9 @@
 
 #include "gestor_contra.hh"
 
+#include "utils/set_rand.h"
+
 auto main() -> int {
+  SetRand();
   return 0;
 }
