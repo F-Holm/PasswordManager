@@ -3,8 +3,8 @@
 #include <string>
 
 namespace OpenSSL_ {
-inline auto hash256(std::string str) -> std::string;
-inline auto hash256_x(std::string str, const size_t &len_rta) -> std::string;
-inline auto encriptar(std::string str, std::string key, std::string &tag) -> std::string;
-inline auto desencriptar(std::string str, std::string key, std::string tag) -> std::string;
+auto Hash256(std::string str) -> std::string;
+auto Hash256_x(std::string str, const size_t &len_rta) -> std::string;
+auto Encriptar(std::string str, std::string key, std::string &tag) -> std::string;
+auto Desencriptar(std::string str, std::string key, std::string tag) -> std::string;
 } // namespace Seguridad

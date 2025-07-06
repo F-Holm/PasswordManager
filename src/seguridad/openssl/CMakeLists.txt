@@ -1,4 +1,4 @@
-include(OpenSSL)
+include(GetOpenSSL)
 
 add_library(openssl_
     aes.cc
