@@ -11,6 +11,7 @@ FetchContent_Declare(
   openssl
   GIT_REPOSITORY https://github.com/openssl/openssl.git
   GIT_TAG        ${OPENSSL_VERSION}
+  GIT_SHALLOW    TRUE
 )
 
 # Opciones de build para OpenSSL

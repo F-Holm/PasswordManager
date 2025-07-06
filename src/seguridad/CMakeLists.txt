@@ -1,5 +1,3 @@
-add_subdirectory(openssl)
-
 add_library(seguridad
     seguridad.cc
 )
