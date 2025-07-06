@@ -1,15 +1,8 @@
 #include "generador.hh"
 
-#include <random>
-
 using std::string;
 
 namespace {
-inline void SetRand() {
-  std::random_device rd;
-  srand(static_cast<unsigned int>(std::time(nullptr)) ^ rd());
-}
-
 auto CaracterRandom(const char &base, const uint8_t &rango) -> char {
   return static_cast<char>((rand() % rango) + base);
 }
@@ -100,7 +93,6 @@ auto Caracter(const Gen::TipoContra &tipo) -> char {
 }  // namespace
 
 auto Gen::GenerarContra(const size_t &largo, const Gen::TipoContra &tipo) -> string {
-  SetRand();
   string contra;
   do {
     for (size_t i = 0; i < largo; i++){

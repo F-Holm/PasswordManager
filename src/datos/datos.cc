@@ -1,7 +1,5 @@
 #include "datos.hh"
 
-#include "set_rand.hh"
-
 using std::array;
 using std::string;
 using std::vector;
@@ -13,14 +11,13 @@ Datos::~Datos() {}
 
 auto Datos::IdUnico(const string& id) const -> bool {
   for (int i = 0; i < cuentas_.size(); i++)
-    if (cuentas_[i].getId() == id)
+    if (cuentas_[i].id() == id)
       return false;
   return true;
 }
 
 auto Datos::GenIdUnico() const -> string {
   string str;
-  SetRand();
   do {
     int num = rand();
     str = string(reinterpret_cast<const char*>(&num), sizeof(int));
@@ -30,7 +27,7 @@ auto Datos::GenIdUnico() const -> string {
 
 auto Datos::index(const string& id) const -> int {
   for (int i = 0; i < cuentas_.size(); i++)
-    if (cuentas_[i].getId() == id)
+    if (cuentas_[i].id() == id)
       return i;
 }
 
@@ -40,7 +37,7 @@ void Datos::AgrCuenta(Cuenta &cuenta) {
 }
 
 void Datos::ModCuenta(const Cuenta &cuenta) {
-  cuentas_[getIndex(cuenta.getId())] = cuenta;
+  cuentas_[getIndex(cuenta.id())] = cuenta;
 }
 
 void Datos::ElimCuenta(const std::string& id) {
