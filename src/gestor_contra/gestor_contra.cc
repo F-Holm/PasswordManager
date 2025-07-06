@@ -1,9 +1,4 @@
-﻿// PasswordManager.cpp : Defines the entry point for the application.
-//
-
-#include "gestor_contra.hh"
-
-#include "utils/set_rand.h"
+﻿#include "set_rand.hh"
 
 auto main() -> int {
   SetRand();

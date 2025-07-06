@@ -89,13 +89,14 @@ void Cuenta::Encriptar(const string &key) {
   contra_ = Seg::Encriptar(contra_, key, contra_t_);
   extra_ = Seg::Encriptar(extra_, key, extra_t_);
 }
+
 void Cuenta::Desencriptar(const string &key) {
-  id_ = Seg::desencriptar(id_, key, id_t_);
-  desc_ = Seg::desencriptar(desc_, key, desc_t_);
-  email_ = Seg::desencriptar(email_, key, email_t_);
-  nom_ = Seg::desencriptar(nom_, key, nom_t_);
-  contra_ = Seg::desencriptar(contra_, key, contra_t_);
-  extra_ = Seg::desencriptar(extra_, key, extra_t_);
+  id_ = Seg::Desencriptar(id_, key, id_t_);
+  desc_ = Seg::Desencriptar(desc_, key, desc_t_);
+  email_ = Seg::Desencriptar(email_, key, email_t_);
+  nom_ = Seg::Desencriptar(nom_, key, nom_t_);
+  contra_ = Seg::Desencriptar(contra_, key, contra_t_);
+  extra_ = Seg::Desencriptar(extra_, key, extra_t_);
 }
 
 array<DataBlock, Cuenta::kCantAtri> Cuenta::EscribirDataBlocks(const string &key) {

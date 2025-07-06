@@ -1,14 +1,14 @@
-#include "openssl.hh"
+#include "openssl_.hh"
 
-#pragma comment(lib, "crypt32")
-#pragma comment(lib, "Ws2_32")
+//#pragma comment(lib, "crypt32")
+//#pragma comment(lib, "Ws2_32")
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
 using std::string;
 
-static string IV = OpenSSL_::hash256_x(
+static string IV = OpenSSL_::Hash256_x(
     "Este es un vector de inicializaci�n super ultra mega secreto", 12);
 static string ADD = "Esto es algo totalmente innecesario";
 const static size_t TAG_LEN = 16;
@@ -19,19 +19,19 @@ const static char *PROTOCOLO = "AES-256-GCM";
  * algorithm implementations. If they are NULL then the default library
  * context and properties are used.
  */
-static OSSL_LIB_CTX *libctx = NULL;
-static const char *propq = NULL;
+static OSSL_LIB_CTX *libctx = nullptr;
+static const char *propq = nullptr;
 
-inline auto OpenSSL_::encriptar(string str, string key, string &tag) -> string {
+auto OpenSSL_::Encriptar(string str, string key, string &tag) -> string {
   bool error = true;
 
-  key = OpenSSL_::hash256(key);
+  key = OpenSSL_::Hash256(key);
 
   EVP_CIPHER_CTX *ctx;
   EVP_CIPHER *cipher = NULL;
   int outlen, tmplen;
   size_t gcm_ivlen = IV.size();
-  unsigned char *outbuf = new unsigned char[str.size()];
+  auto *outbuf = new unsigned char[str.size()];
   unsigned char outtag[TAG_LEN];
   OSSL_PARAM params[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
 
@@ -100,10 +100,10 @@ err:
   return error ? "" : str;
 }
 
-inline auto OpenSSL_::desencriptar(string str, string key, string tag) -> string {
+auto OpenSSL_::Desencriptar(string str, string key, string tag) -> string {
   bool error = true;
 
-  key = OpenSSL_::hash256(key);
+  key = OpenSSL_::Hash256(key);
 
   EVP_CIPHER_CTX *ctx;
   EVP_CIPHER *cipher = NULL;
