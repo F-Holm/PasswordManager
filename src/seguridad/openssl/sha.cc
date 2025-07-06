@@ -10,6 +10,6 @@ inline auto OpenSSL_::hash256(string str) -> string {
   return string(reinterpret_cast<const char *>(rta), SHA256_DIGEST_LENGTH);
 }
 
-inline auto OpenSSL_::hash256_x(string str, const size_t &LEN_RTA) -> string {
-  return OpenSSL_::hash256(str).substr(0, LEN_RTA);
+inline auto OpenSSL_::hash256_x(string str, const size_t &len_rta) -> string {
+  return OpenSSL_::hash256(str).substr(0, len_rta);
 }

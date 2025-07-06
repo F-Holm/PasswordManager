@@ -1,9 +1,6 @@
-add_library(gestor_contra
-    gestor_contra.cc
-)
+add_executable(GestorContra gestor_contra.cc)
 
-target_include_directories(gestor_contra PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_link_libraries(gestor_contra PUBLIC
+target_link_libraries(GestorContra PUBLIC
     utils
+    datos
 )
