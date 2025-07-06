@@ -15,16 +15,20 @@ auto CaracterRandom(const char &base, const uint8_t &rango) -> char {
 }
 
 auto ContraFacil(const string &contra, const Gen::TipoContra &tipo) -> bool {
-  bool min = false, may = false, num = false, sim = false;
-  for (char i : contra) {
-    if (islower(i) != 0)
+  bool min = false,
+       may = false,
+       num = false,
+       sim = false;
+  for (char chr : contra) {
+    if (islower(chr) != 0) {
       min = true;
-    else if (isupper(i) != 0)
+    } else if (isupper(chr) != 0) {
       may = true;
-    else if (isdigit(i) != 0)
+    } else if (isdigit(chr) != 0) {
       num = true;
-    else
+    } else {
       sim = true;
+    }
   }
 
   switch (tipo) {

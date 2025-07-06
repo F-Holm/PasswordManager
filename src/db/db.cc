@@ -7,21 +7,23 @@ using std::ofstream;
 using std::string;
 using std::vector;
 
-vector<DataBlock> DB::leer(const string nom_arch) {
+auto DB::Leer(const string &nom_arch) -> vector<DataBlock> {
   vector<DataBlock> datos;
-  ifstream archivo(nombreArchivo, std::ios::binary);
-  if (!archivo)
+  ifstream arch(nom_arch, std::ios::binary);
+  if (!arch) {
     return datos;
+  }
 
-  while (archivo) {
+  while (arch) {
     size_t largo;
-    archivo.read(reinterpret_cast<char *>(&largo), sizeof(size_t));
-    if (!archivo)
+    arch.read(reinterpret_cast<char *>(&largo), sizeof(size_t));
+    if (!arch) {
       break;
+  }
 
-    unsigned char *str = new unsigned char[largo];
-    archivo.read(reinterpret_cast<char *>(str), largo);
-    if (!archivo) {
+    char *str = new char[largo];
+    arch.read(reinterpret_cast<char *>(str), largo);
+    if (!arch) {
       delete[] str;
       break;
     }
@@ -31,15 +33,17 @@ vector<DataBlock> DB::leer(const string nom_arch) {
   }
   return datos;
 }
-void DB::escribir(const string nombreArchivo, vector<DataBlock> datos) {
-  ofstream archivo(nombreArchivo, std::ios::binary);
-  if (!archivo)
-    return;
 
-  for (DataBlock dato : datos) {
-    archivo.write(reinterpret_cast<const char *>(&dato.largo), sizeof(size_t));
-    archivo.write(reinterpret_cast<const char *>(dato.str), dato.largo);
+void DB::Escribir(const string& nom_arch, const vector<DataBlock> &datos) {
+  ofstream arch(nom_arch, std::ios::binary);
+  if (!arch) {
+    return;
   }
 
-  archivo.close();
+  for (DataBlock dato : datos) {
+    arch.write(reinterpret_cast<const char *>(&dato.largo), sizeof(size_t));
+    arch.write(reinterpret_cast<const char *>(dato.str), dato.largo);
+  }
+
+  arch.close();
 }
