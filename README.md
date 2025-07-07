@@ -4,9 +4,8 @@
 - `CMake`
 - `ninja`
 - `Visual Studio`
-- `nmake` (Windows)
-- `MSVC` (Windows)
-- `make` (Linux)
+- `make` (Cualquier implementación (`nmake`-`make`))
+- `nasm` (Windows)
 - `perl`
 - `clang`
 - `clang++`
@@ -36,10 +35,17 @@ winget install --id Graphviz.Graphviz --source winget
 ```cmd
 winget install --id Ninja-build.Ninja --source winget
 ```
+```cmd
+winget install --id StrawberryPerl.StrawberryPerl --source winget
+```
+```cmd
+winget install --id NASM.NASM --source winget
+```
+#### También hay que agregar las direcciones de los binarios instalados al path del sistema
 ### Linux
 ```bash
 sudo apt update
 ```
 ```bash
-sudo apt install cmake ninja-build clang clang-format clang-tidy valgrind doxygen llvm graphviz 
+sudo apt install cmake ninja-build clang clang-format clang-tidy valgrind doxygen llvm graphviz perl make
 ```
