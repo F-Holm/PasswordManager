@@ -3,6 +3,11 @@
 ## Dependencias:
 - `CMake`
 - `ninja`
+- `Visual Studio`
+- `nmake` (Windows)
+- `MSVC` (Windows)
+- `make` (Linux)
+- `perl`
 - `clang`
 - `clang++`
 - `clang-format`
