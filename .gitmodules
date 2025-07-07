@@ -1,3 +1,3 @@
-[submodule "src/openssl/openssl-src"]
-	path = src/openssl/openssl-src
-	url = https://github.com/openssl/openssl.git
+[submodule "src/openssl/openssl-cmake"]
+	path = src/openssl/openssl-cmake
+	url = https://github.com/jimmy-park/openssl-cmake.git
