@@ -10,7 +10,7 @@
 ## Dependencias:
 - `CMake`
 - `ninja`
-- `Visual Studio` (Windows)
+- `Visual Studio Build Tools 2022` (Windows)
 - `nasm` (Windows)
 - `make` (Linux)
 - `perl`
@@ -48,6 +48,9 @@ winget install --id StrawberryPerl.StrawberryPerl --source winget
 ```
 ```cmd
 winget install --id NASM.NASM --source winget
+```
+```cmd
+winget install --id Microsoft.VisualStudio.2022.BuildTools --source winget
 ```
 #### También hay que agregar las direcciones de los binarios instalados al path del sistema
 ### Linux
