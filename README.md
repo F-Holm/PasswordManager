@@ -1,11 +1,18 @@
 # Gestor de contraseñas
 
+## Sistemas Operativos compatibles
+
+- `Linux x64`
+- `Windows 10-11 x64`
+
+---
+
 ## Dependencias:
 - `CMake`
 - `ninja`
-- `Visual Studio`
-- `make` (Cualquier implementación (`nmake`-`make`))
+- `Visual Studio` (Windows)
 - `nasm` (Windows)
+- `make` (Linux)
 - `perl`
 - `clang`
 - `clang++`
@@ -17,6 +24,7 @@
 - `graphviz`
 
 ---
+
 ## Instalación:
 
 ### Windows
