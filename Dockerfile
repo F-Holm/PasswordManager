@@ -1,0 +1,15 @@
+FROM mcr.microsoft.com/devcontainers/base:ubuntu
+
+RUN apt update && apt install -y \
+    build-essential \
+    cmake \
+    ninja-build \
+    clang \
+    clang-format \
+    clang-tidy \
+    valgrind \
+    doxygen \
+    llvm \
+    graphviz \
+    perl \
+    make
