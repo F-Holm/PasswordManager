@@ -9,7 +9,7 @@
 using std::string;
 
 static string IV = OpenSSL_::Hash256_x(
-    "Este es un vector de inicializaci�n super ultra mega secreto", 12);
+    "Este es un vector de inicializacion super ultra mega secreto", 12);
 static string ADD = "Esto es algo totalmente innecesario";
 const static size_t TAG_LEN = 16;
 const static char *PROTOCOLO = "AES-256-GCM";
