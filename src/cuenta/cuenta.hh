@@ -2,6 +2,7 @@
 
 #include <array>
 #include <string>
+#include <cstdint>
 
 #include "db.hh"
 #include "data_block.hh"

@@ -21,6 +21,7 @@ Para compilarlo en otro sistema operativo recomiendo utilizar Docker, WSL o una 
 - `clang++`
 - `clang-format`
 - `clang-tidy`
+- `clang-tools`
 - `valgrind`
 - `doxygen`
 - `llvm-cov`
@@ -34,5 +35,5 @@ Para ver como se instalan las dependencias: [Dockerfile](Dockerfile)
 ## Instalación:
 
 ```bash
-sudo apt update && sudo apt install -y build-essential cmake ninja-build clang clang-format clang-tidy valgrind doxygen llvm graphviz perl make mingw-w64
+sudo apt update && sudo apt install -y build-essential cmake ninja-build clang clang-format clang-tidy clang-tools valgrind doxygen llvm graphviz perl make mingw-w64
 ```

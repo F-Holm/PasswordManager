@@ -13,4 +13,5 @@ RUN apt update && apt install -y \
     graphviz \
     perl \
     make \
-    mingw-w64
+    mingw-w64 \
+    clang-tools

@@ -1,5 +1,7 @@
 #include "data_block.hh"
 
+#include <cstring>
+
 using std::string;
 
 DataBlock::DataBlock(const size_t largo, char *str) : largo(largo), str(new char[largo]) {
