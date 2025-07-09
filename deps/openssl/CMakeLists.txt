@@ -1,7 +1,9 @@
+set(OPENSSL_SCRIPTS ${CMAKE_SOURCE_DIR}/deps/openssl/openssl-scripts)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    include(openssl-scripts/Linux.cmake)
+    include(${OPENSSL_SCRIPTS}/Linux.cmake)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    include(openssl-scripts/Windows.cmake)
+    include(${OPENSSL_SCRIPTS}/Windows.cmake)
 endif()
 
 #add_library(openssl INTERFACE)
