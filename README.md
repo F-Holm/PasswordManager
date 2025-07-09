@@ -1,62 +1,37 @@
 # Gestor de contraseñas
 
-## Sistemas Operativos compatibles
-
-- `Linux x64`
-- `Windows 10-11 x64`
+Este proyecto está diseñado para compilarse solo en `Linux`
+Para compilarlo en otro sistema operativo recomiendo utilizar Docker, WSL o una máquina virtual
 
 ---
 
 ## Dependencias:
+- `Docker`
+- `Visual Studio Code` + extensión `Dev Containers` **o** CLI compatible (`devcontainer up`)
+- Acceso a internet para construir la imagen
+
+---
+
+## Dependencias sin virtualización:
 - `CMake`
 - `ninja`
-- `Visual Studio Build Tools 2022` (Windows)
-- `nasm` (Windows)
-- `make` (Linux)
+- `make`
 - `perl`
 - `clang`
 - `clang++`
 - `clang-format`
 - `clang-tidy`
-- `valgrind` (Linux)
+- `valgrind`
 - `doxygen`
 - `llvm-cov`
 - `graphviz`
+
+Para ver como se instalan las dependencias: [Dockerfile](Dockerfile)
 
 ---
 
 ## Instalación:
 
-### Windows
-```cmd
-winget install --id LLVM.LLVM --source winget
-```
-```cmd
-winget install --id Kitware.CMake --source winget
-```
-```cmd
-winget install --id DimitriVanHeesch.Doxygen --source winget
-```
-```cmd
-winget install --id Graphviz.Graphviz --source winget
-```
-```cmd
-winget install --id Ninja-build.Ninja --source winget
-```
-```cmd
-winget install --id StrawberryPerl.StrawberryPerl --source winget
-```
-```cmd
-winget install --id NASM.NASM --source winget
-```
-```cmd
-winget install --id Microsoft.VisualStudio.2022.BuildTools --source winget
-```
-#### También hay que agregar las direcciones de los binarios instalados al path del sistema
-### Linux
 ```bash
-sudo apt update
-```
-```bash
-sudo apt install cmake ninja-build clang clang-format clang-tidy valgrind doxygen llvm graphviz perl make
+sudo apt update && sudo apt install -y build-essential cmake ninja-build clang clang-format clang-tidy valgrind doxygen llvm graphviz perl make
 ```
