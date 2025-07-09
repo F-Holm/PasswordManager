@@ -3,12 +3,45 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      },
+      "extensions": [
+        "aaron-bond.better-comments",
+        "aykutsarac.jsoncrack-vscode",
+        "batisteo.vscode-django",
+        "donjayamanne.python-environment-manager",
+        "donjayamanne.python-extension-pack",
+        "eamodio.gitlens",
+        "hediet.vscode-drawio",
+        "irongeek.vscode-env",
+        "kevinrose.vsc-python-indent",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "mhutchie.git-graph",
+        "ms-azuretools.vscode-containers",
+        "ms-azuretools.vscode-docker",
+        "ms-python.debugpy",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "ms-vscode.powershell",
+        "ms-vsliveshare.vsliveshare",
+        "njpwerner.autodocstring",
+        "rangav.vscode-thunder-client",
+        "rogalmic.bash-debug",
+        "tomoki1207.pdf",
+        "visualstudioexptteam.intellicode-api-usage-examples",
+        "visualstudioexptteam.vscodeintellicode",
+        "vscode-icons-team.vscode-icons",
+        "wholroyd.jinja"
+      ]
+    }
   },
-  "extensions": [
-    "ms-vscode.cpptools",
-    "ms-vscode.cmake-tools"
-  ],
-  "postCreateCommand": ""
+  "postStartCommand": "./build.sh"
 }
