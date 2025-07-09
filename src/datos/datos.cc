@@ -37,7 +37,7 @@ void Datos::AgrCuenta(Cuenta &cuenta) {
 }
 
 void Datos::ModCuenta(const Cuenta &cuenta) {
-  cuentas_[getIndex(cuenta.id())] = cuenta;
+  cuentas_[index(cuenta.id())] = cuenta;
 }
 
 void Datos::ElimCuenta(const std::string& id) {
