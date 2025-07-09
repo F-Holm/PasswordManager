@@ -12,9 +12,6 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER_LAUNCHER": "",
-        "CMAKE_CXX_COMPILER_NAMES": "clang++ g++",
-        "CMAKE_C_COMPILER_NAMES": "clang gcc",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_CXX_STANDARD_REQUIRED": "ON",
@@ -25,55 +22,239 @@
       }
     },
     {
-      "name": "conf-debug",
+      "name": "windows",
+      "hidden": true,
       "inherits": "default",
-      "displayName": "Debug",
-      "description": "Build Debug configuration",
-      "binaryDir": "${sourceDir}/build/debug",
-      "installDir": "${sourceDir}/build/debug/install",
       "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "Windows",
+        "CMAKE_CXX_COMPILER_NAMES": "clang++",
+        "CMAKE_C_COMPILER_NAMES": "clang"
+      }
+    },
+    {
+      "name": "conf-windows-x64-debug",
+      "inherits": "windows",
+      "displayName": "Windows-x64-Debug",
+      "description": "Config Windows x64 Debug configuration",
+      "binaryDir": "${sourceDir}/build/windows/x64/debug",
+      "installDir": "${sourceDir}/build/windows/x64/debug/install",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "--target=x86_64-w64-windows-gnu",
+        "CMAKE_C_FLAGS": "--target=x86_64-w64-windows-gnu",
+        "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "conf-release",
-      "inherits": "default",
-      "displayName": "Release",
-      "description": "Build Release configuration",
-      "binaryDir": "${sourceDir}/build/release/x64",
-      "installDir": "${sourceDir}/build/release/x64/install",
+      "name": "conf-windows-64-release",
+      "inherits": "windows",
+      "displayName": "Windows-x64-Release",
+      "description": "Config Windows x64 Release configuration",
+      "binaryDir": "${sourceDir}/build/windows/x64/release",
+      "installDir": "${sourceDir}/build/windows/x64/release/install",
       "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "--target=x86_64-w64-windows-gnu",
+        "CMAKE_C_FLAGS": "--target=x86_64-w64-windows-gnu",
+        "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "conf-windows-x86-debug",
+      "inherits": "windows",
+      "displayName": "Windows-x86-Debug",
+      "description": "Config Windows x86 Debug configuration",
+      "binaryDir": "${sourceDir}/build/windows/x86/debug",
+      "installDir": "${sourceDir}/build/windows/x86/debug/install",
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "--target=i686-w64-windows-gnu",
+        "CMAKE_CXX_FLAGS": "--target=i686-w64-windows-gnu",
+        "CMAKE_FIND_ROOT_PATH": "/usr/i686-w64-mingw32",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "conf-windows-x86-release",
+      "inherits": "windows",
+      "displayName": "Windows-x86-Release",
+      "description": "Config Windows x86 Release configuration",
+      "binaryDir": "${sourceDir}/build/windows/x86/release",
+      "installDir": "${sourceDir}/build/windows/x86/release/install",
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "--target=i686-w64-windows-gnu",
+        "CMAKE_CXX_FLAGS": "--target=i686-w64-windows-gnu",
+        "CMAKE_FIND_ROOT_PATH": "/usr/i686-w64-mingw32",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux",
+      "hidden": true,
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "Linux",
+        "CMAKE_CXX_COMPILER_NAMES": "clang++",
+        "CMAKE_C_COMPILER_NAMES": "clang"
+      }
+    },
+    {
+      "name": "conf-linux-x64-debug",
+      "inherits": "linux",
+      "displayName": "Linux-x64-Debug",
+      "description": "Config Linux x64 Debug configuration",
+      "binaryDir": "${sourceDir}/build/linux/x64/debug",
+      "installDir": "${sourceDir}/build/linux/x64/debug/install",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "conf-linux-64-release",
+      "inherits": "linux",
+      "displayName": "Linux-x64-Release",
+      "description": "Config Linux x64 Release configuration",
+      "binaryDir": "${sourceDir}/build/linux/x64/release",
+      "installDir": "${sourceDir}/build/linux/x64/release/install",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "conf-linux-x86-debug",
+      "inherits": "linux",
+      "displayName": "Linux-x86-Debug",
+      "description": "Config Linux x86 Debug configuration",
+      "binaryDir": "${sourceDir}/build/linux/x86/debug",
+      "installDir": "${sourceDir}/build/linux/x86/debug/install",
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "conf-linux-x86-release",
+      "inherits": "linux",
+      "displayName": "Linux-x86-Release",
+      "description": "Config Linux x86 Release configuration",
+      "binaryDir": "${sourceDir}/build/linux/x86/release",
+      "installDir": "${sourceDir}/build/linux/x86/release/install",
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_CXX_FLAGS": "",
         "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "build-debug",
-      "configurePreset": "conf-debug",
-      "displayName": "Build Debug",
-      "description": "Compila en modo Debug"
+      "name": "build-windows-x64-debug",
+      "configurePreset": "conf-windows-x64-debug",
+      "displayName": "Build Windows x64 Debug",
+      "description": "Compila Windows x64 Debug"
     },
     {
-      "name": "build-release",
-      "configurePreset": "conf-release",
-      "displayName": "Build Release",
-      "description": "Compila en modo Release"
+      "name": "build-windows-x64-release",
+      "configurePreset": "conf-windows-x64-release",
+      "displayName": "Build Windows x64 Release",
+      "description": "Compila Windows x64 Release"
+    },
+    {
+      "name": "build-windows-x86-debug",
+      "configurePreset": "conf-windows-x86-debug",
+      "displayName": "Build Windows x86 Debug",
+      "description": "Compila Windows x86 Debug"
+    },
+    {
+      "name": "build-windows-x86-release",
+      "configurePreset": "conf-windows-x86-release",
+      "displayName": "Build Windows x86 Release",
+      "description": "Compila Windows x86 Release"
+    },
+    {
+      "name": "build-linux-x64-debug",
+      "configurePreset": "conf-linux-x64-debug",
+      "displayName": "Build Linux x64 Debug",
+      "description": "Compila Linux x64 Debug"
+    },
+    {
+      "name": "build-linux-x64-release",
+      "configurePreset": "conf-linux-x64-release",
+      "displayName": "Build Linux x64 Release",
+      "description": "Compila Linux x64 Release"
+    },
+    {
+      "name": "build-linux-x86-debug",
+      "configurePreset": "conf-linux-x86-debug",
+      "displayName": "Build Linux x86 Debug",
+      "description": "Compila Linux x86 Debug"
+    },
+    {
+      "name": "build-linux-x86-release",
+      "configurePreset": "conf-linux-x86-release",
+      "displayName": "Build Linux x86 Release",
+      "description": "Compila Linux x86 Release"
     }
   ],
   "workflowPresets": [
     {
-      "name": "debug",
+      "name": "windows-x64-debug",
       "steps": [
-        { "type": "configure", "name": "conf-debug" },
-        { "type": "build", "name": "build-debug" }
+        { "type": "configure", "name": "conf-windows-x64-debug" },
+        { "type": "build", "name": "build-windows-x64-debug" }
       ]
     },
     {
-      "name": "release",
+      "name": "windows-x64-release",
       "steps": [
-        { "type": "configure", "name": "conf-release" },
-        { "type": "build", "name": "build-release" }
+        { "type": "configure", "name": "conf-windows-x64-release" },
+        { "type": "build", "name": "build-windows-x64-release" }
+      ]
+    },
+    {
+      "name": "windows-x86-debug",
+      "steps": [
+        { "type": "configure", "name": "conf-windows-x86-debug" },
+        { "type": "build", "name": "build-windows-x86-debug" }
+      ]
+    },
+    {
+      "name": "windows-x86-release",
+      "steps": [
+        { "type": "configure", "name": "conf-windows-x86-release" },
+        { "type": "build", "name": "build-windows-x86-release" }
+      ]
+    },
+    {
+      "name": "linux-x64-debug",
+      "steps": [
+        { "type": "configure", "name": "conf-linux-x64-debug" },
+        { "type": "build", "name": "build-linux-x64-debug" }
+      ]
+    },
+    {
+      "name": "linux-x64-release",
+      "steps": [
+        { "type": "configure", "name": "conf-linux-x64-release" },
+        { "type": "build", "name": "build-linux-x64-release" }
+      ]
+    },
+    {
+      "name": "linux-x86-debug",
+      "steps": [
+        { "type": "configure", "name": "conf-linux-x86-debug" },
+        { "type": "build", "name": "build-linux-x86-debug" }
+      ]
+    },
+    {
+      "name": "linux-x86-release",
+      "steps": [
+        { "type": "configure", "name": "conf-linux-x86-release" },
+        { "type": "build", "name": "build-linux-x86-release" }
       ]
     }
   ],

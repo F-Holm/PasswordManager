@@ -12,4 +12,5 @@ RUN apt update && apt install -y \
     llvm \
     graphviz \
     perl \
-    make
+    make \
+    mingw-w64
