@@ -29,6 +29,7 @@ auto Datos::index(const string& id) const -> int {
   for (int i = 0; i < cuentas_.size(); i++)
     if (cuentas_[i].id() == id)
       return i;
+  return -1;
 }
 
 void Datos::AgrCuenta(Cuenta &cuenta) {
