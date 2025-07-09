@@ -25,6 +25,7 @@ Para compilarlo en otro sistema operativo recomiendo utilizar Docker, WSL o una 
 - `doxygen`
 - `llvm-cov`
 - `graphviz`
+- `mingw-w64`
 
 Para ver como se instalan las dependencias: [Dockerfile](Dockerfile)
 
@@ -33,5 +34,5 @@ Para ver como se instalan las dependencias: [Dockerfile](Dockerfile)
 ## Instalación:
 
 ```bash
-sudo apt update && sudo apt install -y build-essential cmake ninja-build clang clang-format clang-tidy valgrind doxygen llvm graphviz perl make
+sudo apt update && sudo apt install -y build-essential cmake ninja-build clang clang-format clang-tidy valgrind doxygen llvm graphviz perl make mingw-w64
 ```
