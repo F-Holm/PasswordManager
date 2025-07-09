@@ -1,1 +1,1 @@
-cmake --workflow --preset debug
+cmake --workflow --preset linux-x64-debug
