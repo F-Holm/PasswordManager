@@ -1,0 +1,1 @@
+cmake --workflow --preset debug
