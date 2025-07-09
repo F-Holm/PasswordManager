@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 8,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 28,
@@ -34,7 +34,7 @@
     {
       "name": "conf-windows-x64-debug",
       "inherits": "windows",
-      "displayName": "Windows-x64-Debug",
+      "displayName": "Config-Windows-x64-Debug",
       "description": "Config Windows x64 Debug configuration",
       "binaryDir": "${sourceDir}/build/windows/x64/debug",
       "installDir": "${sourceDir}/build/windows/x64/debug/install",
@@ -46,9 +46,9 @@
       }
     },
     {
-      "name": "conf-windows-64-release",
+      "name": "conf-windows-x64-release",
       "inherits": "windows",
-      "displayName": "Windows-x64-Release",
+      "displayName": "Config-Windows-x64-Release",
       "description": "Config Windows x64 Release configuration",
       "binaryDir": "${sourceDir}/build/windows/x64/release",
       "installDir": "${sourceDir}/build/windows/x64/release/install",
@@ -62,7 +62,7 @@
     {
       "name": "conf-windows-x86-debug",
       "inherits": "windows",
-      "displayName": "Windows-x86-Debug",
+      "displayName": "Config-Windows-x86-Debug",
       "description": "Config Windows x86 Debug configuration",
       "binaryDir": "${sourceDir}/build/windows/x86/debug",
       "installDir": "${sourceDir}/build/windows/x86/debug/install",
@@ -76,7 +76,7 @@
     {
       "name": "conf-windows-x86-release",
       "inherits": "windows",
-      "displayName": "Windows-x86-Release",
+      "displayName": "Config-Windows-x86-Release",
       "description": "Config Windows x86 Release configuration",
       "binaryDir": "${sourceDir}/build/windows/x86/release",
       "installDir": "${sourceDir}/build/windows/x86/release/install",
@@ -100,7 +100,7 @@
     {
       "name": "conf-linux-x64-debug",
       "inherits": "linux",
-      "displayName": "Linux-x64-Debug",
+      "displayName": "Config-Linux-x64-Debug",
       "description": "Config Linux x64 Debug configuration",
       "binaryDir": "${sourceDir}/build/linux/x64/debug",
       "installDir": "${sourceDir}/build/linux/x64/debug/install",
@@ -111,9 +111,9 @@
       }
     },
     {
-      "name": "conf-linux-64-release",
+      "name": "conf-linux-x64-release",
       "inherits": "linux",
-      "displayName": "Linux-x64-Release",
+      "displayName": "Config-Linux-x64-Release",
       "description": "Config Linux x64 Release configuration",
       "binaryDir": "${sourceDir}/build/linux/x64/release",
       "installDir": "${sourceDir}/build/linux/x64/release/install",
@@ -126,7 +126,7 @@
     {
       "name": "conf-linux-x86-debug",
       "inherits": "linux",
-      "displayName": "Linux-x86-Debug",
+      "displayName": "Config-Linux-x86-Debug",
       "description": "Config Linux x86 Debug configuration",
       "binaryDir": "${sourceDir}/build/linux/x86/debug",
       "installDir": "${sourceDir}/build/linux/x86/debug/install",
@@ -139,7 +139,7 @@
     {
       "name": "conf-linux-x86-release",
       "inherits": "linux",
-      "displayName": "Linux-x86-Release",
+      "displayName": "Config-Linux-x86-Release",
       "description": "Config Linux x86 Release configuration",
       "binaryDir": "${sourceDir}/build/linux/x86/release",
       "installDir": "${sourceDir}/build/linux/x86/release/install",
