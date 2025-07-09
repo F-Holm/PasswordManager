@@ -42,6 +42,5 @@
         "wholroyd.jinja"
       ]
     }
-  },
-  "postStartCommand": "./build.sh"
+  }
 }
