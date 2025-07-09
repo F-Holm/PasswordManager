@@ -16,6 +16,7 @@ CMakeUserPresets.json
 *
 !/**/
 !*.*
+!Dockerfile
 
 # Archivos de compilación
 *.o
