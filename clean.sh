@@ -1,3 +1,3 @@
 #!/bin/bash
-./gitmodules.sh
+./reset_modules.sh
 rm -fr ./build
