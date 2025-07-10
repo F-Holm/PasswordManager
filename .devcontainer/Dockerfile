@@ -14,4 +14,5 @@ RUN apt update && apt install -y \
     perl \
     make \
     mingw-w64 \
-    clang-tools
+    clang-tools \
+    gcc
