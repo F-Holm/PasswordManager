@@ -1,5 +1,5 @@
 #!/bin/bash
-./gitmodules.sh
+./reset_modules.sh
 cmake --workflow --preset windows-x64-debug
 cmake --workflow --preset windows-x64-release
 cmake --workflow --preset windows-x86-debug
