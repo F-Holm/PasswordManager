@@ -29,7 +29,7 @@ Para compilarlo en otro sistema operativo recomiendo utilizar Docker, WSL o una 
 - `graphviz`
 - `mingw-w64`
 
-Para ver como se instalan las dependencias: [Dockerfile](Dockerfile)
+Para ver como se instalan las dependencias en la imagen docker: [`Dockerfile`](.devcontainer/Dockerfile)
 
 ---
 
