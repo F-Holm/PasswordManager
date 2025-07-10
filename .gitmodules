@@ -1,0 +1,4 @@
+[submodule "deps/openssl/openssl-src"]
+	path = deps/openssl/openssl-src
+	url = https://github.com/openssl/openssl.git
+	branch = main
