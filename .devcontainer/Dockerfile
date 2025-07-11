@@ -15,4 +15,5 @@ RUN apt update && apt install -y \
     make \
     mingw-w64 \
     clang-tools \
-    gcc
+    gcc \
+    ccache

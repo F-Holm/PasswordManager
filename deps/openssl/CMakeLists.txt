@@ -1,4 +1,6 @@
-set(OPENSSL_SOURCE_DIR ${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src)
+include(ExternalProject)
+
+set(OPENSSL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src")
 set(OPENSSL_STATIC_DIR "${PROJECT_BINARY_DIR}/deps/openssl-static")
 set(OPENSSL_SHARED_DIR "${PROJECT_BINARY_DIR}/deps/openssl-shared")
 
@@ -23,20 +25,22 @@ else()
     message(FATAL_ERROR "❌ Arquitectura no soportada: ${ARCH}")
 endif()
 
-ExternalProject_Add(openssl
-  SOURCE_DIR "${OPENSSL_SOURCE_DIR}"
-  BINARY_DIR "${OPENSSL_BUILD_DIR}"
-  BUILD_COMMAND 
-    ${CMAKE_COMMAND} -E echo "Compilando OpenSSL static" &&
+set(OPENSSL_BUILD_COMMAND
+    "${CMAKE_COMMAND} -E echo "Compilando OpenSSL static" &&
     perl Configure ${OPENSSL_ARCH} no-shared --prefix=${OPENSSL_STATIC_DIR} &&
-    make -j$(nproc) &&
+    make -j &&
     make install_sw &&
     make clean &&
     ${CMAKE_COMMAND} -E echo "Compilando OpenSSL shared" &&
     perl Configure ${OPENSSL_ARCH} shared --prefix=${OPENSSL_SHARED_DIR} &&
-    make -j$(nproc) &&
+    make -j &&
     make install_sw &&
-    make clean
+    make clean"
+)
+
+ExternalProject_Add(openssl
+  SOURCE_DIR "${OPENSSL_SOURCE_DIR}"
+  BUILD_COMMAND "${OPENSSL_BUILD_COMMAND}"
   BUILD_ALWAYS 0 
 )
 
