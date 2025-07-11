@@ -1,5 +1,4 @@
 set(OPENSSL_SOURCE_DIR ${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src)
-set(OPENSSL_BUILD_DIR ${CMAKE_BINARY_DIR}/_deps/openssl-build)
 set(OPENSSL_STATIC_DIR "${PROJECT_BINARY_DIR}/deps/openssl-static")
 set(OPENSSL_SHARED_DIR "${PROJECT_BINARY_DIR}/deps/openssl-shared")
 

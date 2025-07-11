@@ -2,5 +2,5 @@ BasedOnStyle: Google
 ColumnLimit: 200
 UseTab: Never
 AllowShortLoopsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: false
