@@ -1,7 +1,8 @@
 # Gestor de contraseñas
 
 Este proyecto está diseñado para compilarse solo en `Linux`
-Para compilarlo en otro sistema operativo recomiendo utilizar Docker, WSL o una máquina virtual
+Para compilarlo en otro sistema operativo recomiendo utilizar `Docker`, `WSL` o una `máquina virtual``
+Para evitar instalar todas las dependencias se puede utilizar `dev containers`
 
 ---
 
