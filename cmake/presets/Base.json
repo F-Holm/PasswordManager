@@ -13,7 +13,9 @@
         {
             "name": "mingw-arm64-linux",
             "hidden": true,
-            "inherits": "mingw-linux",
+            "inherits": [
+                "mingw-linux"
+            ],
             "cacheVariables": {
                 "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
                 "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32",
@@ -23,7 +25,9 @@
         {
             "name": "mingw-x86_64-linux",
             "hidden": true,
-            "inherits": "mingw-linux",
+            "inherits": [
+                "mingw-linux"
+            ],
             "cacheVariables": {
                 "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
                 "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32",
@@ -55,26 +59,21 @@
             "name": "target-windows",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_SYSTEM_NAME": "Windows",
-                "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "NEVER",
-                "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "ONLY",
-                "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "ONLY"
+                "CMAKE_SYSTEM_NAME": "Windows"
             }
         },
         {
             "name": "target-windows-arm64",
             "hidden": true,
             "inherits": [
-                "target-windows",
-                "mingw-arm64-linux"
+                "target-windows"
             ]
         },
         {
             "name": "target-windows-x86_64",
             "hidden": true,
             "inherits": [
-                "target-windows",
-                "mingw-x86_64-linux"
+                "target-windows"
             ]
         },
         {
@@ -167,7 +166,6 @@
             "cmakeExecutable": "cmake",
             "inherits": [
                 "ninja",
-                "clang",
                 "std",
                 "std-23",
                 "ccache"

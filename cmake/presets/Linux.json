@@ -9,6 +9,7 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
+                "clang",
                 "default",
                 "release"
             ]
@@ -18,6 +19,7 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
+                "clang",
                 "default",
                 "debug"
             ]
@@ -27,6 +29,7 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
+                "clang",
                 "default",
                 "release"
             ]
@@ -36,6 +39,7 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
+                "clang",
                 "default",
                 "debug"
             ]
