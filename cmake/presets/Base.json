@@ -2,6 +2,35 @@
     "version": 4,
     "configurePresets": [
         {
+            "name": "mingw-linux",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "NEVER",
+                "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "ONLY",
+                "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "ONLY"
+            }
+        },
+        {
+            "name": "mingw-arm64-linux",
+            "hidden": true,
+            "inherits": "mingw-linux",
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
+                "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32",
+                "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32"
+            }
+        },
+        {
+            "name": "mingw-x86_64-linux",
+            "hidden": true,
+            "inherits": "mingw-linux",
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
+                "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32",
+                "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32"
+            }
+        },
+        {
             "name": "host-linux",
             "hidden": true,
             "condition": {
@@ -18,47 +47,35 @@
             }
         },
         {
+            "name": "target-linux-x86_64",
+            "hidden": true,
+            "inherits": "target-linux"
+        },
+        {
             "name": "target-windows",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_SYSTEM_NAME": "Windows"
-            }
-        },
-        {
-            "name": "target-windows-arm",
-            "hidden": true,
-            "inherits": "target-windows",
-            "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=armv7-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=armv7-w64-mingw32"
+                "CMAKE_SYSTEM_NAME": "Windows",
+                "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "NEVER",
+                "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "ONLY",
+                "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "ONLY"
             }
         },
         {
             "name": "target-windows-arm64",
             "hidden": true,
-            "inherits": "target-windows",
-            "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32"
-            }
-        },
-        {
-            "name": "target-windows-x86",
-            "hidden": true,
-            "inherits": "target-windows",
-            "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=i686-w64-mingw32 -m32",
-                "CMAKE_CXX_FLAGS": "--target=i686-w64-mingw32 -m32"
-            }
+            "inherits": [
+                "target-windows",
+                "mingw-arm64-linux"
+            ]
         },
         {
             "name": "target-windows-x86_64",
             "hidden": true,
-            "inherits": "target-windows",
-            "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=x86_64-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=x86_64-w64-mingw32"
-            }
+            "inherits": [
+                "target-windows",
+                "mingw-x86_64-linux"
+            ]
         },
         {
             "name": "ninja",
