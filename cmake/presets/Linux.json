@@ -1,0 +1,108 @@
+{
+    "version": 4,
+    "include": [
+        "base.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "linux-x86_64-release",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "linux-x86_64-debug",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "linux-arm64-release",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "linux-arm64-debug",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "default",
+                "debug"
+            ]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-linux-x86_64-release",
+            "configurePreset": "linux-x86_64-release",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-x86_64-debug",
+            "configurePreset": "linux-x86_64-debug",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm64-release",
+            "configurePreset": "linux-arm64-release",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm64-debug",
+            "configurePreset": "linux-arm64-debug",
+            "inherits": [
+                "host-linux"
+            ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-linux-x86_64-release",
+            "configurePreset": "linux-x86_64-release",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-x86_64-debug",
+            "configurePreset": "linux-x86_64-debug",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm64-release",
+            "configurePreset": "linux-arm64-release",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm64-debug",
+            "configurePreset": "linux-arm64-debug",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        }
+    ]
+}
