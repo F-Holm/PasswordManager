@@ -1,7 +1,7 @@
 # Gestor de contraseñas
 
-Este proyecto está diseñado para compilarse solo en `Linux`
-Para compilarlo en otro sistema operativo recomiendo utilizar `Docker`, `WSL` o una `máquina virtual``
+Este proyecto está diseñado para compilarse solo en `Linux x64`<br>
+Para compilarlo en otro sistema operativo recomiendo utilizar `Docker`, `WSL`, `Dev Containers` o una `máquina virtual`<br>
 Para evitar instalar todas las dependencias se puede utilizar `dev containers`
 
 ---
@@ -30,6 +30,10 @@ Para evitar instalar todas las dependencias se puede utilizar `dev containers`
 - `graphviz`
 - `mingw-w64`
 - `ccache`
+- `gcc-arm-linux-gnueabihf`
+- `g++-arm-linux-gnueabihf`
+- `gcc-aarch64-linux-gnu`
+- `g++-aarch64-linux-gnu`
 
 Para ver como se instalan las dependencias en la imagen docker: [`Dockerfile`](.devcontainer/Dockerfile)
 
