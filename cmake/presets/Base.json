@@ -11,7 +11,7 @@
             }
         },
         {
-            "name": "mingw-arm64-linux",
+            "name": "mingw-x64-linux",
             "hidden": true,
             "inherits": [
                 "mingw-linux"
@@ -19,11 +19,11 @@
             "cacheVariables": {
                 "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
                 "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32",
-                "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32"
+                "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32ucrt"
             }
         },
         {
-            "name": "mingw-x86_64-linux",
+            "name": "mingw-x86-linux",
             "hidden": true,
             "inherits": [
                 "mingw-linux"
@@ -31,7 +31,7 @@
             "cacheVariables": {
                 "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
                 "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32",
-                "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32"
+                "CMAKE_FIND_ROOT_PATH": "/usr/i686-w64-mingw32"
             }
         },
         {
@@ -51,7 +51,22 @@
             }
         },
         {
-            "name": "target-linux-x86_64",
+            "name": "target-linux-x64",
+            "hidden": true,
+            "inherits": "target-linux"
+        },
+        {
+            "name": "target-linux-x86",
+            "hidden": true,
+            "inherits": "target-linux"
+        },
+        {
+            "name": "target-linux-arm64",
+            "hidden": true,
+            "inherits": "target-linux"
+        },
+        {
+            "name": "target-linux-arm",
             "hidden": true,
             "inherits": "target-linux"
         },
@@ -63,6 +78,20 @@
             }
         },
         {
+            "name": "target-windows-x64",
+            "hidden": true,
+            "inherits": [
+                "target-windows"
+            ]
+        },
+        {
+            "name": "target-windows-x86",
+            "hidden": true,
+            "inherits": [
+                "target-windows"
+            ]
+        },
+        {
             "name": "target-windows-arm64",
             "hidden": true,
             "inherits": [
@@ -70,7 +99,7 @@
             ]
         },
         {
-            "name": "target-windows-x86_64",
+            "name": "target-windows-arm",
             "hidden": true,
             "inherits": [
                 "target-windows"

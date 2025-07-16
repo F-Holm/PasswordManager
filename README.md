@@ -38,5 +38,5 @@ Para ver como se instalan las dependencias en la imagen docker: [`Dockerfile`](.
 ## Instalación:
 
 ```bash
-sudo apt update && sudo apt install -y build-essential cmake ninja-build clang clang-format clang-tidy clang-tools valgrind doxygen llvm graphviz perl make mingw-w64 gcc ccache
+sudo apt update && sudo apt install -y build-essential cmake ninja-build clang clang-format clang-tidy clang-tools valgrind doxygen llvm graphviz perl make mingw-w64 gcc ccache gcc-multilib g++-multilib libc6-dev-i386 gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 ```
