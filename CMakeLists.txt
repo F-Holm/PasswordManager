@@ -5,6 +5,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 include(NoInSourceBuilds)
 
+add_subdirectory(deps)
 add_subdirectory(src bin)
 #add_subdirectory(test)
-add_subdirectory(deps)
