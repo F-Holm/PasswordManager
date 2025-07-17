@@ -10,7 +10,7 @@
                 "host-linux",
                 "target-linux",
                 "x64",
-                "clang",
+                "clang-linux-x64",
                 "default",
                 "release"
             ]
@@ -20,7 +20,8 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "clang",
+                "x64",
+                "clang-linux-x64",
                 "default",
                 "debug"
             ]
@@ -30,7 +31,8 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "clang",
+                "x86",
+                "clang-linux-x86",
                 "default",
                 "release"
             ]
@@ -40,7 +42,8 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "clang",
+                "x86",
+                "clang-linux-x86",
                 "default",
                 "debug"
             ]
@@ -50,7 +53,8 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "clang",
+                "arm64",
+                "clang-linux-arm64",
                 "default",
                 "release"
             ]
@@ -60,7 +64,8 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "clang",
+                "arm64",
+                "clang-linux-arm64",
                 "default",
                 "debug"
             ]
@@ -70,7 +75,8 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "clang",
+                "arm",
+                "clang-linux-arm",
                 "default",
                 "release"
             ]
@@ -80,7 +86,8 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "clang",
+                "arm",
+                "clang-linux-arm",
                 "default",
                 "debug"
             ]
@@ -102,6 +109,20 @@
             ]
         },
         {
+            "name": "build-linux-x86-release",
+            "configurePreset": "linux-x86-release",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-x86-debug",
+            "configurePreset": "linux-x86-debug",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
             "name": "build-linux-arm64-release",
             "configurePreset": "linux-arm64-release",
             "inherits": [
@@ -111,6 +132,20 @@
         {
             "name": "build-linux-arm64-debug",
             "configurePreset": "linux-arm64-debug",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm-release",
+            "configurePreset": "linux-arm-release",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm-debug",
+            "configurePreset": "linux-arm-debug",
             "inherits": [
                 "host-linux"
             ]
@@ -134,6 +169,22 @@
             ]
         },
         {
+            "name": "test-linux-x86-release",
+            "configurePreset": "linux-x86-release",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-x86-debug",
+            "configurePreset": "linux-x86-debug",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
             "name": "test-linux-arm64-release",
             "configurePreset": "linux-arm64-release",
             "inherits": [
@@ -144,6 +195,22 @@
         {
             "name": "test-linux-arm64-debug",
             "configurePreset": "linux-arm64-debug",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm-release",
+            "configurePreset": "linux-arm-release",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm-debug",
+            "configurePreset": "linux-arm-debug",
             "inherits": [
                 "host-linux",
                 "options"
