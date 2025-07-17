@@ -18,8 +18,8 @@ RUN apt update && apt install -y \
     gcc \
     g++ \
     ccache \
-    gcc-multilib \
-    g++-multilib \
+    gcc-i686-linux-gnu \
+    g++-i686-linux-gnu \
     gcc-arm-linux-gnueabihf \
     g++-arm-linux-gnueabihf \
     gcc-aarch64-linux-gnu \
