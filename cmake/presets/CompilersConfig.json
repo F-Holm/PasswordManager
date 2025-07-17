@@ -67,7 +67,7 @@
             "name": "arm64",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_SYSTEM_PROCESSOR": "arm64"
+                "CMAKE_SYSTEM_PROCESSOR": "aarch64"
             }
         },
         {
