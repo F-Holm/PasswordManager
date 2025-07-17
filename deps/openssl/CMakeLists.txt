@@ -1,30 +1,53 @@
 include(ExternalProject)
 
+# Config
 set(OPENSSL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src")
 set(OPENSSL_STATIC_DIR "${PROJECT_BINARY_DIR}/deps_/openssl-static")
 set(OPENSSL_SHARED_DIR "${PROJECT_BINARY_DIR}/deps_/openssl-shared")
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND ARCH STREQUAL  "x64")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    set(OPENSSL_ARCH "mingw64")
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+    set(OPENSSL_ARCH "mingw")
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(OPENSSL_ARCH "mingw64-aarch64")
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7")
+    set(OPENSSL_ARCH "mingw-armv7")
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
     set(OPENSSL_ARCH "linux-x86_64")
-    set(STATIC_EXT "a")
-    set(SHARED_EXT "so")
-    set(OPENSSL_LIB_DIR "lib64")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND ARCH STREQUAL  "x86")
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
     set(OPENSSL_ARCH "linux-elf")
-    set(STATIC_EXT "a")
-    set(SHARED_EXT "so")
-    set(OPENSSL_LIB_DIR "lib")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND ARCH STREQUAL  "arm64")
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
     set(OPENSSL_ARCH "linux-aarch64")
-    set(STATIC_EXT "a")
-    set(SHARED_EXT "so")
-    set(OPENSSL_LIB_DIR "lib")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND ARCH STREQUAL  "x64")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND ARCH STREQUAL  "x86")
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7")
+    set(OPENSSL_ARCH "linux-armv4")
+
 else()
-    message(FATAL_ERROR "❌ Arquitectura no soportada: ${ARCH}")
+    message(FATAL_ERROR "❌ Arquitectura no soportada: ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(STATIC_EXT "a")
+    set(SHARED_EXT "dll")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(STATIC_EXT "a")
+    set(SHARED_EXT "so")
+endif()
+
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    set(OPENSSL_LIB_DIR "lib64")
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7")
+    set(OPENSSL_LIB_DIR "lib")
+endif()
+
+# Build
 set(OPENSSL_BUILD_COMMAND
     "${CMAKE_COMMAND} -E echo "Compilando OpenSSL static" &&
     perl Configure ${OPENSSL_ARCH} no-shared --prefix=${OPENSSL_STATIC_DIR} &&
@@ -44,6 +67,7 @@ ExternalProject_Add(openssl
   BUILD_ALWAYS 0 
 )
 
+# Link
 add_library(openssl_static INTERFACE)
 add_library(openssl_shared INTERFACE)
 
