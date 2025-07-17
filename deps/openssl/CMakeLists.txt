@@ -1,8 +1,8 @@
 include(ExternalProject)
 
 set(OPENSSL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src")
-set(OPENSSL_STATIC_DIR "${PROJECT_BINARY_DIR}/deps/openssl-static")
-set(OPENSSL_SHARED_DIR "${PROJECT_BINARY_DIR}/deps/openssl-shared")
+set(OPENSSL_STATIC_DIR "${PROJECT_BINARY_DIR}/deps_/openssl-static")
+set(OPENSSL_SHARED_DIR "${PROJECT_BINARY_DIR}/deps_/openssl-shared")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND ARCH STREQUAL  "x64")
     set(OPENSSL_ARCH "linux-x86_64")
