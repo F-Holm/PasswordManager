@@ -4,20 +4,19 @@ RUN apt update && apt install -y \
     build-essential \
     cmake \
     ninja-build \
+    make \
+    perl \
     clang \
     clang-format \
     clang-tidy \
+    clang-tools \
+    llvm \
     valgrind \
     doxygen \
-    llvm \
     graphviz \
-    perl \
-    make \
-    mingw-w64 \
-    clang-tools \
+    ccache \
     gcc \
     g++ \
-    ccache \
     gcc-i686-linux-gnu \
     g++-i686-linux-gnu \
     gcc-arm-linux-gnueabihf \
