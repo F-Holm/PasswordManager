@@ -1,3 +1,3 @@
 #!/bin/bash
 #./reset_modules.sh
-cmake --workflow --preset linux-x64-debug
+cmake --workflow --preset wf-linux-x64-release

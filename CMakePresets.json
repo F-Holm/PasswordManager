@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 9,
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 28,
@@ -11,112 +11,112 @@
   ],
   "workflowPresets": [
     {
-      "name": "windows-x64-release",
+      "name": "wf-windows-x64-release",
       "steps": [
         { "type": "configure", "name": "windows-x64-release" },
         { "type": "build", "name": "build-windows-x64-release" }
       ]
     },
     {
-      "name": "windows-x64-debug",
+      "name": "wf-windows-x64-debug",
       "steps": [
         { "type": "configure", "name": "windows-x64-debug" },
         { "type": "build", "name": "build-windows-x64-debug" }
       ]
     },
     {
-      "name": "windows-x86-release",
+      "name": "wf-windows-x86-release",
       "steps": [
         { "type": "configure", "name": "windows-x86-release" },
         { "type": "build", "name": "build-windows-x86-release" }
       ]
     },
     {
-      "name": "windows-x86-debug",
+      "name": "wf-windows-x86-debug",
       "steps": [
         { "type": "configure", "name": "windows-x86-debug" },
         { "type": "build", "name": "build-windows-x86-debug" }
       ]
     },
     {
-      "name": "windows-arm64-release",
+      "name": "wf-windows-arm64-release",
       "steps": [
         { "type": "configure", "name": "windows-arm64-release" },
         { "type": "build", "name": "build-windows-arm64-release" }
       ]
     },
     {
-      "name": "windows-arm64-debug",
+      "name": "wf-windows-arm64-debug",
       "steps": [
         { "type": "configure", "name": "windows-arm64-debug" },
         { "type": "build", "name": "build-windows-arm64-debug" }
       ]
     },
     {
-      "name": "windows-arm-release",
+      "name": "wf-windows-arm-release",
       "steps": [
         { "type": "configure", "name": "windows-arm-release" },
         { "type": "build", "name": "build-windows-arm-release" }
       ]
     },
     {
-      "name": "windows-arm-debug",
+      "name": "wf-windows-arm-debug",
       "steps": [
         { "type": "configure", "name": "windows-arm-debug" },
         { "type": "build", "name": "build-windows-arm-debug" }
       ]
     },
     {
-      "name": "linux-x64-release",
+      "name": "wf-linux-x64-release",
       "steps": [
         { "type": "configure", "name": "linux-x64-release" },
         { "type": "build", "name": "build-linux-x64-release" }
       ]
     },
     {
-      "name": "linux-x64-debug",
+      "name": "wf-linux-x64-debug",
       "steps": [
         { "type": "configure", "name": "linux-x64-debug" },
         { "type": "build", "name": "build-linux-x64-debug" }
       ]
     },
     {
-      "name": "linux-x86-release",
+      "name": "wf-linux-x86-release",
       "steps": [
         { "type": "configure", "name": "linux-x86-release" },
         { "type": "build", "name": "build-linux-x86-release" }
       ]
     },
     {
-      "name": "linux-x86-debug",
+      "name": "wf-linux-x86-debug",
       "steps": [
         { "type": "configure", "name": "linux-x86-debug" },
         { "type": "build", "name": "build-linux-x86-debug" }
       ]
     },
     {
-      "name": "linux-arm64-release",
+      "name": "wf-linux-arm64-release",
       "steps": [
         { "type": "configure", "name": "linux-arm64-release" },
         { "type": "build", "name": "build-linux-arm64-release" }
       ]
     },
     {
-      "name": "linux-arm64-debug",
+      "name": "wf-linux-arm64-debug",
       "steps": [
         { "type": "configure", "name": "linux-arm64-debug" },
         { "type": "build", "name": "build-linux-arm64-debug" }
       ]
     },
     {
-      "name": "linux-arm-release",
+      "name": "wf-linux-arm-release",
       "steps": [
         { "type": "configure", "name": "linux-arm-release" },
         { "type": "build", "name": "build-linux-arm-release" }
       ]
     },
     {
-      "name": "linux-arm-debug",
+      "name": "wf-linux-arm-debug",
       "steps": [
         { "type": "configure", "name": "linux-arm-debug" },
         { "type": "build", "name": "build-linux-arm-debug" }
