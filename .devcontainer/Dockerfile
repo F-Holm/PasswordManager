@@ -26,6 +26,17 @@ RUN apt update && apt install -y \
     wget
 
 # Install LLVM-Mingw
-RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250709/llvm-mingw-20250709-ucrt-ubuntu-22.04-x86_64.tar.xz -P ./deps
-RUN tar -xf ./deps/llvm-mingw-*.tar.xz -C "$(dirname ./deps/llvm-mingw/llvm-mingw-*.tar.xz)"
-RUN rm ./deps/llvm-mingw*.tar.xz
+#RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250709/llvm-mingw-20250709-ucrt-ubuntu-22.04-x86_64.tar.xz -P /opt/
+#RUN tar -xf ./deps/llvm-mingw-*.tar.xz -C "$(dirname ./deps/llvm-mingw/llvm-mingw-*.tar.xz)"
+#RUN rm ./deps/llvm-mingw*.tar.xz
+
+# Crear directorio para deps
+RUN mkdir -p /opt/llvm-mingw
+
+# Descargar y descomprimir LLVM-Mingw
+RUN wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250709/llvm-mingw-20250709-ucrt-ubuntu-22.04-x86_64.tar.xz -P /tmp && \
+    tar -xf /tmp/llvm-mingw-*.tar.xz -C /opt/llvm-mingw --strip-components=1 && \
+    rm /tmp/llvm-mingw-*.tar.xz
+
+# Agregar al PATH para que clang lo detecte
+ENV PATH="/opt/llvm-mingw/bin:${PATH}"
