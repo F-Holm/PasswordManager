@@ -16,10 +16,10 @@ RUN apt update && apt install -y \
     mingw-w64 \
     clang-tools \
     gcc \
+    g++ \
     ccache \
     gcc-multilib \
     g++-multilib \
-    libc6-dev-i386 \
     gcc-arm-linux-gnueabihf \
     g++-arm-linux-gnueabihf \
     gcc-aarch64-linux-gnu \
