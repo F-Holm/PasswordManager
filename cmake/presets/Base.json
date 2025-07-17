@@ -1,39 +1,10 @@
 {
     "version": 4,
+    "include": [
+        "Compilers.json",
+        "CompilersConfig.json"
+    ],
     "configurePresets": [
-        {
-            "name": "mingw-linux",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "NEVER",
-                "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "ONLY",
-                "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "ONLY"
-            }
-        },
-        {
-            "name": "mingw-x64-linux",
-            "hidden": true,
-            "inherits": [
-                "mingw-linux"
-            ],
-            "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32",
-                "CMAKE_FIND_ROOT_PATH": "/usr/x86_64-w64-mingw32ucrt"
-            }
-        },
-        {
-            "name": "mingw-x86-linux",
-            "hidden": true,
-            "inherits": [
-                "mingw-linux"
-            ],
-            "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32",
-                "CMAKE_FIND_ROOT_PATH": "/usr/i686-w64-mingw32"
-            }
-        },
         {
             "name": "host-linux",
             "hidden": true,
@@ -121,70 +92,6 @@
             "cacheVariables": {
                 "CMAKE_COLOR_DIAGNOSTICS": true,
                 "CMAKE_EXPORT_COMPILE_COMMANDS": true
-            }
-        },
-        {
-            "name": "clang",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++"
-            }
-        },
-        {
-            "name": "gcc",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++"
-            }
-        },
-        {
-            "name": "std-23",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_STANDARD": "23",
-                "CMAKE_C_STANDARD_REQUIRED": "ON",
-                "CMAKE_CXX_STANDARD": "23",
-                "CMAKE_CXX_STANDARD_REQUIRED": "ON"
-            }
-        },
-        {
-            "name": "std",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_STANDARD_REQUIRED": true,
-                "CMAKE_CXX_STANDARD_REQUIRED": true
-            }
-        },
-        {
-            "name": "no-std",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_STANDARD_REQUIRED": false,
-                "CMAKE_CXX_STANDARD_REQUIRED": false
-            }
-        },
-        {
-            "name": "ccache",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-                "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
-            }
-        },
-        {
-            "name": "debug",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
-            "name": "release",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
