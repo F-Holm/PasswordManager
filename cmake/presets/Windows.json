@@ -1,0 +1,220 @@
+{
+    "version": 4,
+    "include": [
+        "base.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "windows-x64-release",
+            "inherits": [
+                "host-linux",
+                "target-windows",
+                "x64",
+                "clang-linux-x64",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "windows-x64-debug",
+            "inherits": [
+                "host-linux",
+                "target-windows",
+                "x64",
+                "clang-linux-x64",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "windows-x86-release",
+            "inherits": [
+                "host-linux",
+                "target-windows",
+                "x86",
+                "clang-linux-x86",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "windows-x86-debug",
+            "inherits": [
+                "host-linux",
+                "target-windows",
+                "x86",
+                "clang-linux-x86",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "windows-arm64-release",
+            "inherits": [
+                "host-linux",
+                "target-windows",
+                "arm64",
+                "clang-linux-arm64",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "windows-arm64-debug",
+            "inherits": [
+                "host-linux",
+                "target-windows",
+                "arm64",
+                "clang-linux-arm64",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "windows-arm-release",
+            "inherits": [
+                "host-linux",
+                "target-windows",
+                "arm",
+                "clang-linux-arm",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "windows-arm-debug",
+            "inherits": [
+                "host-linux",
+                "target-windows",
+                "arm",
+                "clang-linux-arm",
+                "default",
+                "debug"
+            ]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-linux-x64-release",
+            "configurePreset": "linux-x64-release",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-x64-debug",
+            "configurePreset": "linux-x64-debug",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-x86-release",
+            "configurePreset": "linux-x86-release",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-x86-debug",
+            "configurePreset": "linux-x86-debug",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm64-release",
+            "configurePreset": "linux-arm64-release",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm64-debug",
+            "configurePreset": "linux-arm64-debug",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm-release",
+            "configurePreset": "linux-arm-release",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm-debug",
+            "configurePreset": "linux-arm-debug",
+            "inherits": [
+                "host-linux"
+            ]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "test-linux-x64-release",
+            "configurePreset": "linux-x64-release",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-x64-debug",
+            "configurePreset": "linux-x64-debug",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-x86-release",
+            "configurePreset": "linux-x86-release",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-x86-debug",
+            "configurePreset": "linux-x86-debug",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm64-release",
+            "configurePreset": "linux-arm64-release",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm64-debug",
+            "configurePreset": "linux-arm64-debug",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm-release",
+            "configurePreset": "linux-arm-release",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm-debug",
+            "configurePreset": "linux-arm-debug",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        }
+    ]
+}

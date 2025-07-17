@@ -22,59 +22,11 @@
             }
         },
         {
-            "name": "target-linux-x64",
-            "hidden": true,
-            "inherits": "target-linux"
-        },
-        {
-            "name": "target-linux-x86",
-            "hidden": true,
-            "inherits": "target-linux"
-        },
-        {
-            "name": "target-linux-arm64",
-            "hidden": true,
-            "inherits": "target-linux"
-        },
-        {
-            "name": "target-linux-arm",
-            "hidden": true,
-            "inherits": "target-linux"
-        },
-        {
             "name": "target-windows",
             "hidden": true,
             "cacheVariables": {
                 "CMAKE_SYSTEM_NAME": "Windows"
             }
-        },
-        {
-            "name": "target-windows-x64",
-            "hidden": true,
-            "inherits": [
-                "target-windows"
-            ]
-        },
-        {
-            "name": "target-windows-x86",
-            "hidden": true,
-            "inherits": [
-                "target-windows"
-            ]
-        },
-        {
-            "name": "target-windows-arm64",
-            "hidden": true,
-            "inherits": [
-                "target-windows"
-            ]
-        },
-        {
-            "name": "target-windows-arm",
-            "hidden": true,
-            "inherits": [
-                "target-windows"
-            ]
         },
         {
             "name": "ninja",
