@@ -82,7 +82,7 @@
             }
         },
         {
-            "name": "mingw-clang-x64-linux",
+            "name": "mingw-clang-linux-x64",
             "hidden": true,
             "inherits": [
                 "mingw-clang-linux"
@@ -93,7 +93,7 @@
             }
         },
         {
-            "name": "mingw-clang-x86-linux",
+            "name": "mingw-clang-linux-x86",
             "hidden": true,
             "inherits": [
                 "mingw-clang-linux"
@@ -104,7 +104,7 @@
             }
         },
         {
-            "name": "mingw-clang-arm64-linux",
+            "name": "mingw-clang-linux-arm64",
             "hidden": true,
             "inherits": [
                 "mingw-clang-linux"
@@ -115,7 +115,7 @@
             }
         },
         {
-            "name": "mingw-clang-arm-linux",
+            "name": "mingw-clang-linux-arm",
             "hidden": true,
             "inherits": [
                 "mingw-clang-linux"
