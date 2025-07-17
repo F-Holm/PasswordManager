@@ -1,3 +1,6 @@
+# LLVM-Mingw
+deps/llvm-mingw*
+
 # CMake
 CMakeLists.txt.user
 CMakeCache.txt
