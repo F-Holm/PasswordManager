@@ -9,6 +9,7 @@
             "inherits": [
                 "host-linux",
                 "target-linux",
+                "x64",
                 "clang",
                 "default",
                 "release"
@@ -16,6 +17,26 @@
         },
         {
             "name": "linux-x64-debug",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "clang",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "linux-x86-release",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "clang",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "linux-x86-debug",
             "inherits": [
                 "host-linux",
                 "target-linux",
@@ -36,6 +57,26 @@
         },
         {
             "name": "linux-arm64-debug",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "clang",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "linux-arm-release",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "clang",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "linux-arm-debug",
             "inherits": [
                 "host-linux",
                 "target-linux",

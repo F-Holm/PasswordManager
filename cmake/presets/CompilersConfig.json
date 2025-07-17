@@ -48,6 +48,34 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        },
+        {
+            "name": "x64",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_SYSTEM_PROCESSOR": "x64"
+            }
+        },
+        {
+            "name": "x86",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_SYSTEM_PROCESSOR": "x86_64"
+            }
+        },
+        {
+            "name": "arm64",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_SYSTEM_PROCESSOR": "arm64"
+            }
+        },
+        {
+            "name": "arm",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_SYSTEM_PROCESSOR": "armv7"
+            }
         }
     ]
 }
