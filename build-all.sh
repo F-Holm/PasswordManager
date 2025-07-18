@@ -1,5 +1,4 @@
 #!/bin/bash
-./reset_modules.sh
 cmake --workflow --preset wf-windows-x64-release
 cmake --workflow --preset wf-windows-x64-debug
 cmake --workflow --preset wf-windows-x86-release
