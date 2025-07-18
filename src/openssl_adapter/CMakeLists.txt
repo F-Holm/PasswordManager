@@ -3,4 +3,4 @@ add_library(openssl_adapter STATIC
     sha.cc
 )
 
-target_include_directories(openssl_adapter PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(openssl_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
