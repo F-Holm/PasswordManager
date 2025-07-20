@@ -56,6 +56,7 @@ endif()
 # perl Configure linux-x86_64 no-shared --prefix=/home/zlatan/openssl/openssl-linux-x64-static && grep ^CC= Makefile && make -j$(nproc) && make install_sw && make clean
 # perl Configure linux-x86 shared --cross-compile-prefix=i686-linux-gnu- --prefix=/home/zlatan/openssl/openssl-linux-x86-shared && grep ^CC= Makefile && make -j$(nproc) && make install_sw && make clean
 
+# ./Configure linux-x86_64 no-tests no-apps no-docs --prefix=/ruta/instalacion
 
 # Build
 set(OPENSSL_BUILD_COMMAND
