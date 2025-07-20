@@ -47,6 +47,16 @@ elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL
     set(OPENSSL_LIB_DIR "lib")
 endif()
 
+# perl Configure LIST | grep linux
+# perl Configure LIST | grep mingw
+
+# export CC="clang"
+# unset CC
+
+# perl Configure linux-x86_64 no-shared --prefix=/home/zlatan/openssl/openssl-linux-x64-static && grep ^CC= Makefile && make -j$(nproc) && make install_sw && make clean
+# perl Configure linux-x86 shared --cross-compile-prefix=i686-linux-gnu- --prefix=/home/zlatan/openssl/openssl-linux-x86-shared && grep ^CC= Makefile && make -j$(nproc) && make install_sw && make clean
+
+
 # Build
 set(OPENSSL_BUILD_COMMAND
     "${CMAKE_COMMAND} -E echo "Compilando OpenSSL static" &&
