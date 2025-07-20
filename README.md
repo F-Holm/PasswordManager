@@ -30,12 +30,12 @@ Para evitar instalar todas las dependencias se puede utilizar `dev containers`
 - `ccache`
 - `gcc`
 - `g++`
-- `gcc-i686-linux-gnu`
-- `g++-i686-linux-gnu`
-- `gcc-arm-linux-gnueabihf`
-- `g++-arm-linux-gnueabihf`
-- `gcc-aarch64-linux-gnu`
-- `g++-aarch64-linux-gnu`
-- `mingw-w64`
+- `gcc-i686-linux-gnu` (también para clang)
+- `g++-i686-linux-gnu` (también para clang++)
+- `gcc-arm-linux-gnueabihf` (también para clang)
+- `g++-arm-linux-gnueabihf` (también para clang++)
+- `gcc-aarch64-linux-gnu` (también para clang)
+- `g++-aarch64-linux-gnu` (también para clang++)
+- `llvm-mingw`
 
 Para ver como se instalan las dependencias en la imagen docker: [`Dockerfile`](.devcontainer/Dockerfile)
