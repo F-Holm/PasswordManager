@@ -1,7 +1,7 @@
 {
     "version": 8,
     "include": [
-        "base.json"
+        "Base.json"
     ],
     "configurePresets": [
         {
