@@ -10,7 +10,8 @@
             "inherits": "mingw-gcc-linux",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "x86_64-w64-mingw32-gcc",
-                "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++"
+                "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++",
+                "OPENSSL_ARCH_TARGET": "mingw64"
             }
         },
         {
@@ -19,7 +20,8 @@
             "inherits": "mingw-gcc-linux",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "i686-w64-mingw32-gcc",
-                "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++"
+                "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++",
+                "OPENSSL_ARCH_TARGET": "mingw"
             }
         },
         {
@@ -28,7 +30,8 @@
             "inherits": "mingw-gcc-linux",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "aarch64-w64-mingw32-gcc",
-                "CMAKE_CXX_COMPILER": "aarch64-w64-mingw32-g++"
+                "CMAKE_CXX_COMPILER": "aarch64-w64-mingw32-g++",
+                "OPENSSL_ARCH_TARGET": "mingwarm64"
             }
         },
         {
@@ -37,7 +40,8 @@
             "inherits": "mingw-gcc-linux",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "armv7-w64-mingw32-gcc",
-                "CMAKE_CXX_COMPILER": "armv7-w64-mingw32-g++"
+                "CMAKE_CXX_COMPILER": "armv7-w64-mingw32-g++",
+                "OPENSSL_ARCH_TARGET": "no-asm"
             }
         },
         {
@@ -48,7 +52,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "x86_64-w64-mingw32-clang",
-                "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-clang++"
+                "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-clang++",
+                "OPENSSL_ARCH_TARGET": "mingw64"
             }
         },
         {
@@ -59,7 +64,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "i686-w64-mingw32-clang",
-                "CMAKE_CXX_COMPILER": "i686-w64-mingw32-clang++"
+                "CMAKE_CXX_COMPILER": "i686-w64-mingw32-clang++",
+                "OPENSSL_ARCH_TARGET": "mingw"
             }
         },
         {
@@ -70,7 +76,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "aarch64-w64-mingw32-clang",
-                "CMAKE_CXX_COMPILER": "aarch64-w64-mingw32-clang++"
+                "CMAKE_CXX_COMPILER": "aarch64-w64-mingw32-clang++",
+                "OPENSSL_ARCH_TARGET": "mingwarm64"
             }
         },
         {
@@ -81,7 +88,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "armv7-w64-mingw32-clang",
-                "CMAKE_CXX_COMPILER": "armv7-w64-mingw32-clang++"
+                "CMAKE_CXX_COMPILER": "armv7-w64-mingw32-clang++",
+                "OPENSSL_ARCH_TARGET": "no-asm"
             }
         },
         {
@@ -92,7 +100,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++"
+                "CMAKE_CXX_COMPILER": "g++",
+                "OPENSSL_ARCH_TARGET": "linux-x86_64"
             }
         },
         {
@@ -103,7 +112,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "i686-linux-gnu-gcc",
-                "CMAKE_CXX_COMPILER": "i686-linux-gnu-g++"
+                "CMAKE_CXX_COMPILER": "i686-linux-gnu-g++",
+                "OPENSSL_ARCH_TARGET": "linux-x86"
             }
         },
         {
@@ -114,7 +124,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "aarch64-linux-gnu-gcc",
-                "CMAKE_CXX_COMPILER": "aarch64-linux-gnu-g++"
+                "CMAKE_CXX_COMPILER": "aarch64-linux-gnu-g++",
+                "OPENSSL_ARCH_TARGET": "linux-aarch64"
             }
         },
         {
@@ -125,7 +136,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "arm-linux-gnueabihf-gcc",
-                "CMAKE_CXX_COMPILER": "arm-linux-gnueabihf-g++"
+                "CMAKE_CXX_COMPILER": "arm-linux-gnueabihf-g++",
+                "OPENSSL_ARCH_TARGET": "linux-armv4"
             }
         },
         {
@@ -133,7 +145,12 @@
             "hidden": true,
             "inherits": [
                 "clang-linux"
-            ]
+            ],
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "OPENSSL_ARCH_TARGET": "linux-x86_64-clang"
+            }
         },
         {
             "name": "clang-linux-x86",
@@ -143,7 +160,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "i686-linux-gnu-clang",
-                "CMAKE_CXX_COMPILER": "i686-linux-gnu-clang++"
+                "CMAKE_CXX_COMPILER": "i686-linux-gnu-clang++",
+                "OPENSSL_ARCH_TARGET": "linux-x86-clang"
             }
         },
         {
@@ -154,7 +172,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "aarch64-linux-gnu-clang",
-                "CMAKE_CXX_COMPILER": "aarch64-linux-gnu-clang++"
+                "CMAKE_CXX_COMPILER": "aarch64-linux-gnu-clang++",
+                "OPENSSL_ARCH_TARGET": "linux-aarch64"
             }
         },
         {
@@ -165,7 +184,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "arm-linux-gnueabihf-clang",
-                "CMAKE_CXX_COMPILER": "arm-linux-gnueabihf-clang++"
+                "CMAKE_CXX_COMPILER": "arm-linux-gnueabihf-clang++",
+                "OPENSSL_ARCH_TARGET": "linux-armv4"
             }
         }
     ]
