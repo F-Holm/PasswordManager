@@ -25,12 +25,9 @@ RUN apt update && apt install -y \
     g++-aarch64-linux-gnu
 
 # Scripts
-COPY ./CLANG-CROSS-COMPILING-WRAPPERS.sh ./CLANG-CROSS-COMPILING-WRAPPERS.sh
-COPY ./UPDATE-LLVM-MINGW.sh ./UPDATE-LLVM-MINGW.sh
-COPY ./GET-NAME-LLVM-MINGW-RELEASE.py ./GET-NAME-LLVM-MINGW-RELEASE.py
+RUN git clone https://github.com/F-Holm/Paquetes-Ubuntu.git
 
-RUN ./CLANG-CROSS-COMPILING-WRAPPERS.sh
-RUN ./UPDATE-LLVM-MINGW.sh
+RUN ./Paquetes-Ubuntu/CLANG-CROSS-COMPILING-WRAPPERS.sh
+RUN ./Paquetes-Ubuntu/UPDATE-LLVM-MINGW.sh
 
-RUN rm ./CLANG-CROSS-COMPILING-WRAPPERS.sh
-RUN rm ./UPDATE-LLVM-MINGW.sh
+RUN rm -rf ./Paquetes-Ubuntu
