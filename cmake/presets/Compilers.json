@@ -1,13 +1,12 @@
 {
     "version": 8,
+    "include": [
+        "CompilersBase.json"
+    ],
     "configurePresets": [
         {
             "name": "clang",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_COMPILER": "clang",
-                "CMAKE_CXX_COMPILER": "clang++"
-            }
+            "hidden": true
         },
         {
             "name": "gcc",
@@ -88,8 +87,8 @@
                 "mingw-clang-linux"
             ],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=x86_64-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=x86_64-w64-mingw32"
+                "CMAKE_C_COMPILER": "x86_64-w64-mingw32-clang",
+                "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-clang++"
             }
         },
         {
@@ -99,8 +98,8 @@
                 "mingw-clang-linux"
             ],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=i686-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=i686-w64-mingw32"
+                "CMAKE_C_COMPILER": "i686-w64-mingw32-clang",
+                "CMAKE_CXX_COMPILER": "i686-w64-mingw32-clang++"
             }
         },
         {
@@ -110,8 +109,8 @@
                 "mingw-clang-linux"
             ],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=aarch64-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=aarch64-w64-mingw32"
+                "CMAKE_C_COMPILER": "aarch64-w64-mingw32-clang",
+                "CMAKE_CXX_COMPILER": "aarch64-w64-mingw32-clang++"
             }
         },
         {
@@ -121,46 +120,56 @@
                 "mingw-clang-linux"
             ],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=armv7-w64-mingw32",
-                "CMAKE_CXX_FLAGS": "--target=armv7-w64-mingw32"
+                "CMAKE_C_COMPILER": "armv7-w64-mingw32-clang",
+                "CMAKE_CXX_COMPILER": "armv7-w64-mingw32-clang++"
             }
         },
         {
             "name": "clang-linux-x64",
             "hidden": true,
-            "inherits": "clang"
+            "inherits": [
+                "clang"
+            ]
         },
         {
             "name": "clang-linux-x86",
             "hidden": true,
-            "inherits": "clang",
+            "inherits": [
+                "clang"
+            ],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=i686-linux-gnu",
-                "CMAKE_CXX_FLAGS": "--target=i686-linux-gnu"
+                "CMAKE_C_COMPILER": "i686-linux-gnu-clang",
+                "CMAKE_CXX_COMPILER": "i686-linux-gnu-clang++"
             }
         },
         {
             "name": "clang-linux-arm64",
             "hidden": true,
-            "inherits": "clang",
+            "inherits": [
+                "clang"
+            ],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=aarch64-linux-gnu",
-                "CMAKE_CXX_FLAGS": "--target=aarch64-linux-gnu"
+                "CMAKE_C_COMPILER": "aarch64-linux-gnu-clang",
+                "CMAKE_CXX_COMPILER": "aarch64-linux-gnu-clang++"
             }
         },
         {
             "name": "clang-linux-arm",
             "hidden": true,
-            "inherits": "clang",
+            "inherits": [
+                "clang"
+            ],
             "cacheVariables": {
-                "CMAKE_C_FLAGS": "--target=arm-linux-gnueabihf",
-                "CMAKE_CXX_FLAGS": "--target=arm-linux-gnueabihf"
+                "CMAKE_C_COMPILER": "arm-linux-gnueabihf-clang",
+                "CMAKE_CXX_COMPILER": "arm-linux-gnueabihf-clang++"
             }
         },
         {
             "name": "gcc-linux-x64",
             "hidden": true,
-            "inherits": "gcc",
+            "inherits": [
+                "gcc"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++"
@@ -169,7 +178,9 @@
         {
             "name": "gcc-linux-x86",
             "hidden": true,
-            "inherits": "gcc",
+            "inherits": [
+                "gcc"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "i686-linux-gnu-gcc",
                 "CMAKE_CXX_COMPILER": "i686-linux-gnu-g++"
@@ -178,7 +189,9 @@
         {
             "name": "gcc-linux-arm64",
             "hidden": true,
-            "inherits": "gcc",
+            "inherits": [
+                "gcc"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "aarch64-linux-gnu-gcc",
                 "CMAKE_CXX_COMPILER": "aarch64-linux-gnu-g++"
@@ -187,7 +200,9 @@
         {
             "name": "gcc-linux-arm",
             "hidden": true,
-            "inherits": "gcc",
+            "inherits": [
+                "gcc"
+            ],
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "arm-linux-gnueabihf-gcc",
                 "CMAKE_CXX_COMPILER": "arm-linux-gnueabihf-g++"
