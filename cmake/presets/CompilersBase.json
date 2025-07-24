@@ -6,20 +6,6 @@
             "hidden": true
         },
         {
-            "name": "clang",
-            "hidden": true,
-            "inherits": [
-                "compilador-default"
-            ]
-        },
-        {
-            "name": "gcc",
-            "hidden": true,
-            "inherits": [
-                "compilador-default"
-            ]
-        },
-        {
             "name": "cross-compile-linux",
             "hidden": true,
             "cacheVariables": {
@@ -29,18 +15,24 @@
             }
         },
         {
+            "name": "gcc",
+            "hidden": true,
+            "inherits": [
+                "compilador-default"
+            ]
+        },
+        {
+            "name": "clang",
+            "hidden": true,
+            "inherits": [
+                "compilador-default"
+            ]
+        },
+        {
             "name": "mingw-linux",
             "hidden": true,
             "inherits": [
                 "cross-compile-linux"
-            ]
-        },
-        {
-            "name": "mingw-clang-linux",
-            "hidden": true,
-            "inherits": [
-                "cross-compile-linux",
-                "clang"
             ]
         },
         {
@@ -52,9 +44,10 @@
             ]
         },
         {
-            "name": "clang-linux",
+            "name": "mingw-clang-linux",
             "hidden": true,
             "inherits": [
+                "cross-compile-linux",
                 "clang"
             ]
         },
@@ -63,6 +56,13 @@
             "hidden": true,
             "inherits": [
                 "gcc"
+            ]
+        },
+        {
+            "name": "clang-linux",
+            "hidden": true,
+            "inherits": [
+                "clang"
             ]
         }
     ]
