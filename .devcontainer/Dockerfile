@@ -24,6 +24,7 @@ RUN apt update && apt install -y \
     gcc-aarch64-linux-gnu \
     g++-aarch64-linux-gnu
 
+# Scripts
 COPY ./CLANG-CROSS-COMPILING-WRAPPERS.sh ./CLANG-CROSS-COMPILING-WRAPPERS.sh
 COPY ./UPDATE-LLVM-MINGW.sh ./UPDATE-LLVM-MINGW.sh
 COPY ./GET-NAME-LLVM-MINGW-RELEASE.py ./GET-NAME-LLVM-MINGW-RELEASE.py
