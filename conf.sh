@@ -1,2 +1,2 @@
 #!/bin/bash
-cmake --workflow --preset linux-x64-release
+cmake --preset linux-x64-release
