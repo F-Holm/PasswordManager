@@ -1,4 +1,4 @@
-set(OPENSSL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src")
+set(OPENSSL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src/")
 set(OPENSSL_BUILD_DIR "${PROJECT_BINARY_DIR}/deps_/openssl")
 
 # Configurar comandos de compilación
@@ -12,17 +12,21 @@ set(OPENSSL_LIMPIAR "make clean")
 # Compilación
 message(Compilando OpenSSL...)
 execute_process(
-    COMMAND "bash -c ${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
+    COMMAND bash -c "${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
     WORKING_DIRECTORY ${OPENSSL_SOURCE_DIR}
     RESULT_VARIABLE OPENSSL_BUILD_RESULT
     OUTPUT_VARIABLE OPENSSL_BUILD_OUTPUT
     ERROR_VARIABLE OPENSSL_BUILD_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE 
+    ERROR_STRIP_TRAILING_WHITESPACE 
 )
 
 if(NOT OPENSSL_BUILD_RESULT EQUAL 0)
-    message("${OPENSSL_BUILD_OUTPUT}")
-    message("${OPENSSL_BUILD_RESULT}")
-    message("${OPENSSL_BUILD_ERROR}")
+    message("OpenSSL source dir: ${OPENSSL_SOURCE_DIR}")
+    message("OpenSSL build dir: ${OPENSSL_BUILD_DIR}")
+    message("OpenSSL build output: ${OPENSSL_BUILD_OUTPUT}")
+    message("OpenSSL build result: ${OPENSSL_BUILD_RESULT}")
+    message("OpenSSL build error: ${OPENSSL_BUILD_ERROR}")
     message(FATAL_ERROR "OpenSSL build falló")
 endif()
 
@@ -45,8 +49,8 @@ endif()
 add_library(openssl_static INTERFACE)
 add_library(openssl_shared INTERFACE)
 
-target_include_directories(openssl_static INTERFACE "${OPENSSL_STATIC_DIR}/include")
-target_include_directories(openssl_shared INTERFACE "${OPENSSL_SHARED_DIR}/include")
+target_include_directories(openssl_static INTERFACE "${OPENSSL_BUILD_DIR}/include")
+target_include_directories(openssl_shared INTERFACE "${OPENSSL_BUILD_DIR}/include")
 
 target_link_libraries(openssl_static INTERFACE
     "${OPENSSL_LIB_DIR}/libssl.${STATIC_EXT}"
