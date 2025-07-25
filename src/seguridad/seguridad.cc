@@ -1,6 +1,6 @@
 #include "seguridad.hh"
 
-#include "openssl_.hh"
+#include "openssl_adapter.hh"
 
 auto Seg::Hash256(std::string str) -> std::string{
     return OpenSSL_::Hash256(str);

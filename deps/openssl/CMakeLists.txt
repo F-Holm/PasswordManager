@@ -1,5 +1,5 @@
 set(OPENSSL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src/")
-set(OPENSSL_BUILD_DIR "${PROJECT_BINARY_DIR}/deps_/openssl")
+set(OPENSSL_BUILD_DIR "${PROJECT_BINARY_DIR}/deps/openssl")
 
 # Configurar comandos de compilación
 set(OPENSSL_ENV_VARS "export CC=${CMAKE_C_COMPILER}")
@@ -9,25 +9,29 @@ set(OPENSSL_COMPILAR [[make -j$(nproc)]])
 set(OPENSSL_INSTALAR "make install_sw")
 set(OPENSSL_LIMPIAR "make clean")
 
-# Compilación
-message(Compilando OpenSSL...)
-execute_process(
-    COMMAND bash -c "${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
-    WORKING_DIRECTORY ${OPENSSL_SOURCE_DIR}
-    RESULT_VARIABLE OPENSSL_BUILD_RESULT
-    OUTPUT_VARIABLE OPENSSL_BUILD_OUTPUT
-    ERROR_VARIABLE OPENSSL_BUILD_ERROR
-    OUTPUT_STRIP_TRAILING_WHITESPACE 
-    ERROR_STRIP_TRAILING_WHITESPACE 
-)
+if(IS_DIRECTORY "${OPENSSL_BUILD_DIR}")
+    message(STATUS "-- OpenSSL ya está compilado")
+else()
+    # Compilación
+    message(-- Compilando OpenSSL...)
+    execute_process(
+        COMMAND bash -c "${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
+        WORKING_DIRECTORY ${OPENSSL_SOURCE_DIR}
+        RESULT_VARIABLE OPENSSL_BUILD_RESULT
+        OUTPUT_VARIABLE OPENSSL_BUILD_OUTPUT
+        ERROR_VARIABLE OPENSSL_BUILD_ERROR
+        OUTPUT_STRIP_TRAILING_WHITESPACE 
+        ERROR_STRIP_TRAILING_WHITESPACE 
+    )
 
-if(NOT OPENSSL_BUILD_RESULT EQUAL 0)
-    message("OpenSSL source dir: ${OPENSSL_SOURCE_DIR}")
-    message("OpenSSL build dir: ${OPENSSL_BUILD_DIR}")
-    message("OpenSSL build output: ${OPENSSL_BUILD_OUTPUT}")
-    message("OpenSSL build result: ${OPENSSL_BUILD_RESULT}")
-    message("OpenSSL build error: ${OPENSSL_BUILD_ERROR}")
-    message(FATAL_ERROR "OpenSSL build falló")
+    if(NOT OPENSSL_BUILD_RESULT EQUAL 0)
+        message("OpenSSL source dir: ${OPENSSL_SOURCE_DIR}")
+        message("OpenSSL build dir: ${OPENSSL_BUILD_DIR}")
+        message("OpenSSL build output: ${OPENSSL_BUILD_OUTPUT}")
+        message("OpenSSL build result: ${OPENSSL_BUILD_RESULT}")
+        message("OpenSSL build error: ${OPENSSL_BUILD_ERROR}")
+        message(FATAL_ERROR "OpenSSL build falló")
+    endif()
 endif()
 
 # Configurar ruta librerías
