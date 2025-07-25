@@ -82,21 +82,21 @@ auto Cuenta::operator=(const Cuenta &other) -> Cuenta & {
 
 // Seguridad
 void Cuenta::Encriptar(const string &key) {
-  id_ = Seg::Encriptar(id_, key, id_t_);
-  desc_ = Seg::Encriptar(desc_, key, desc_t_);
-  email_ = Seg::Encriptar(email_, key, email_t_);
-  nom_ = Seg::Encriptar(nom_, key, nom_t_);
-  contra_ = Seg::Encriptar(contra_, key, contra_t_);
-  extra_ = Seg::Encriptar(extra_, key, extra_t_);
+  id_ = Seguridad::Encriptar(id_, key, id_t_);
+  desc_ = Seguridad::Encriptar(desc_, key, desc_t_);
+  email_ = Seguridad::Encriptar(email_, key, email_t_);
+  nom_ = Seguridad::Encriptar(nom_, key, nom_t_);
+  contra_ = Seguridad::Encriptar(contra_, key, contra_t_);
+  extra_ = Seguridad::Encriptar(extra_, key, extra_t_);
 }
 
 void Cuenta::Desencriptar(const string &key) {
-  id_ = Seg::Desencriptar(id_, key, id_t_);
-  desc_ = Seg::Desencriptar(desc_, key, desc_t_);
-  email_ = Seg::Desencriptar(email_, key, email_t_);
-  nom_ = Seg::Desencriptar(nom_, key, nom_t_);
-  contra_ = Seg::Desencriptar(contra_, key, contra_t_);
-  extra_ = Seg::Desencriptar(extra_, key, extra_t_);
+  id_ = Seguridad::Desencriptar(id_, key, id_t_);
+  desc_ = Seguridad::Desencriptar(desc_, key, desc_t_);
+  email_ = Seguridad::Desencriptar(email_, key, email_t_);
+  nom_ = Seguridad::Desencriptar(nom_, key, nom_t_);
+  contra_ = Seguridad::Desencriptar(contra_, key, contra_t_);
+  extra_ = Seguridad::Desencriptar(extra_, key, extra_t_);
 }
 
 array<DataBlock, Cuenta::kCantAtri> Cuenta::EscribirDataBlocks(const string &key) {
