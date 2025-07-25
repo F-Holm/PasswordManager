@@ -1,2 +1,2 @@
 #!/bin/bash
-cmake --workflow --preset test-linux-x64-release
+ctest --preset test-linux-x64-release
