@@ -4,3 +4,7 @@ add_library(openssl_adapter STATIC
 )
 
 target_include_directories(openssl_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_link_libraries(GestorContra PUBLIC
+    openssl_static
+)
