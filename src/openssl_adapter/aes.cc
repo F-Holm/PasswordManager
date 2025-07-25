@@ -1,15 +1,13 @@
-#include "openssl_.hh"
+#include "openssl_adapter.hh"
 
-//#pragma comment(lib, "crypt32")
-//#pragma comment(lib, "Ws2_32")
+#include <memory>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
 using std::string;
 
-static string IV = OpenSSL_::Hash256_x(
-    "Este es un vector de inicializacion super ultra mega secreto", 12);
+static string IV = OpenSslAdapter::Hash256_x("Este es un vector de inicializacion super ultra mega secreto", 12);
 static string ADD = "Esto es algo totalmente innecesario";
 const static size_t TAG_LEN = 16;
 const static char *PROTOCOLO = "AES-256-GCM";
@@ -22,16 +20,16 @@ const static char *PROTOCOLO = "AES-256-GCM";
 static OSSL_LIB_CTX *libctx = nullptr;
 static const char *propq = nullptr;
 
-auto OpenSSL_::Encriptar(string str, string key, string &tag) -> string {
+auto OpenSslAdapter::Encriptar(const string& str, string key, string &tag) -> string {
   bool error = true;
 
-  key = OpenSSL_::Hash256(key);
+  key = OpenSslAdapter::Hash256(key);
 
   EVP_CIPHER_CTX *ctx;
   EVP_CIPHER *cipher = NULL;
   int outlen, tmplen;
   size_t gcm_ivlen = IV.size();
-  auto *outbuf = new unsigned char[str.size()];
+  auto* outbuf = new unsigned char[str.size()];
   unsigned char outtag[TAG_LEN];
   OSSL_PARAM params[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
 
@@ -54,21 +52,15 @@ auto OpenSSL_::Encriptar(string str, string key, string &tag) -> string {
    * application the IV would be generated internally so the iv passed in
    * would be NULL.
    */
-  if (!EVP_EncryptInit_ex2(ctx, cipher,
-                           reinterpret_cast<unsigned char *>(&key[0]),
-                           reinterpret_cast<unsigned char *>(&IV[0]), params))
+  if (!EVP_EncryptInit_ex2(ctx, cipher, reinterpret_cast<const unsigned char *>(key.c_str()), reinterpret_cast<const unsigned char *>(IV.c_str()), params))
     goto err;
 
   /* Zero or more calls to specify any AAD */
-  if (!EVP_EncryptUpdate(ctx, NULL, &outlen,
-                         reinterpret_cast<unsigned char *>(&ADD[0]),
-                         ADD.size()))
+  if (!EVP_EncryptUpdate(ctx, NULL, &outlen, reinterpret_cast<const unsigned char *>(ADD.c_str()), ADD.size()))
     goto err;
 
   /* Encrypt plaintext */
-  if (!EVP_EncryptUpdate(ctx, outbuf, &outlen,
-                         reinterpret_cast<unsigned char *>(&str[0]),
-                         str.size()))
+  if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, reinterpret_cast<const unsigned char *>(str.c_str()), str.size()))
     goto err;
 
   /* Finalise: note get no output for GCM */
@@ -76,8 +68,7 @@ auto OpenSSL_::Encriptar(string str, string key, string &tag) -> string {
     goto err;
 
   /* Get tag */
-  params[0] =
-      OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, outtag, 16);
+  params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, outtag, 16);
 
   if (!EVP_CIPHER_CTX_get_params(ctx, params))
     goto err;
@@ -85,10 +76,11 @@ auto OpenSSL_::Encriptar(string str, string key, string &tag) -> string {
   error = false;
 
 err:
+  string rta;
   if (error)
     ERR_print_errors_fp(stderr);
   else {
-    str = string(reinterpret_cast<const char *>(outbuf), outlen);
+    rta = string(reinterpret_cast<const char *>(outbuf), outlen);
     tag = string(reinterpret_cast<const char *>(outtag), TAG_LEN);
   }
 
@@ -97,19 +89,19 @@ err:
   EVP_CIPHER_free(cipher);
   EVP_CIPHER_CTX_free(ctx);
 
-  return error ? "" : str;
+  return error ? "" : rta;
 }
 
-auto OpenSSL_::Desencriptar(string str, string key, string tag) -> string {
+auto OpenSslAdapter::Desencriptar(const string& str, string key, string tag) -> string {
   bool error = true;
 
-  key = OpenSSL_::Hash256(key);
+  key = OpenSslAdapter::Hash256(key);
 
-  EVP_CIPHER_CTX *ctx;
-  EVP_CIPHER *cipher = NULL;
+  EVP_CIPHER_CTX* ctx;
+  EVP_CIPHER* cipher = NULL;
   int outlen, rv;
   size_t gcm_ivlen = IV.size();
-  unsigned char *outbuf = new unsigned char[str.size()];
+  auto* outbuf = new unsigned char[str.size()];
   OSSL_PARAM params[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
 
   if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
@@ -120,39 +112,32 @@ auto OpenSSL_::Desencriptar(string str, string key, string tag) -> string {
     goto err;
 
   /* Set IV length if default 96 bits is not appropriate */
-  params[0] =
-      OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, &gcm_ivlen);
+  params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, &gcm_ivlen);
 
   /*
    * Initialise an encrypt operation with the cipher/mode, key, IV and
    * IV length parameter.
    */
-  if (!EVP_DecryptInit_ex2(ctx, cipher,
-                           reinterpret_cast<unsigned char *>(&key[0]),
-                           reinterpret_cast<unsigned char *>(&IV[0]), params))
+  if (!EVP_DecryptInit_ex2(ctx, cipher, reinterpret_cast<const unsigned char*>(key.c_str()), reinterpret_cast<const unsigned char*>(IV.c_str()), params))
     goto err;
 
   /* Zero or more calls to specify any AAD */
-  if (!EVP_DecryptUpdate(ctx, NULL, &outlen,
-                         reinterpret_cast<unsigned char *>(&ADD[0]),
-                         ADD.size()))
+  if (!EVP_DecryptUpdate(ctx, NULL, &outlen, reinterpret_cast<const unsigned char*>(ADD.c_str()), ADD.size()))
     goto err;
 
   /* Decrypt plaintext */
-  if (!EVP_DecryptUpdate(ctx, outbuf, &outlen,
-                         reinterpret_cast<unsigned char *>(&str[0]),
-                         str.size()))
+  if (!EVP_DecryptUpdate(ctx, outbuf, &outlen, reinterpret_cast<const unsigned char*>(str.c_str()), str.size()))
     goto err;
 
   /* Set expected tag value. */
   params[0] = OSSL_PARAM_construct_octet_string(
       OSSL_CIPHER_PARAM_AEAD_TAG,
-      (void *)reinterpret_cast<unsigned char *>(&tag[0]), tag.size());
+      reinterpret_cast<void*>(&tag[0]), tag.size());
 
   if (!EVP_CIPHER_CTX_set_params(ctx, params))
     goto err;
 
-  str = string(reinterpret_cast<const char *>(outbuf), outlen);
+  string rta(reinterpret_cast<const char *>(outbuf), outlen);
 
   /* Finalise: note get no output for GCM */
   rv = EVP_DecryptFinal_ex(ctx, outbuf, &outlen);
@@ -168,5 +153,5 @@ err:
   EVP_CIPHER_free(cipher);
   EVP_CIPHER_CTX_free(ctx);
 
-  return (error || rv <= 0) ? "" : str;
+  return (error || rv <= 0) ? "" : rta;
 }
