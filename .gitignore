@@ -1,4 +1,19 @@
 # CMake
+build/
+
+# Visual Studio
+.vs/
+out/
+
+# Visual Studio Code
+.vscode/
+
+# CLion
+.idea/
+
+
+
+# CMake
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
@@ -84,7 +99,6 @@ Thumbs.db
 
 # Binarios y carpetas de salida comunes
 obj/
-build/
 bin/
 dist/
 
