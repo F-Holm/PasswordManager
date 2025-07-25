@@ -12,13 +12,18 @@ set(OPENSSL_LIMPIAR "make clean")
 # Compilación
 message(Compilando OpenSSL...)
 execute_process(
-  COMMAND "bash -c ${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
-  WORKING_DIRECTORY ${OPENSSL_SOURCE_DIR}
-  RESULT_VARIABLE OPENSSL_BUILD_RESULT
+    COMMAND "bash -c ${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
+    WORKING_DIRECTORY ${OPENSSL_SOURCE_DIR}
+    RESULT_VARIABLE OPENSSL_BUILD_RESULT
+    OUTPUT_VARIABLE OPENSSL_BUILD_OUTPUT
+    ERROR_VARIABLE OPENSSL_BUILD_ERROR
 )
 
 if(NOT OPENSSL_BUILD_RESULT EQUAL 0)
-  message(FATAL_ERROR "OpenSSL build falló")
+    message("${OPENSSL_BUILD_OUTPUT}")
+    message("${OPENSSL_BUILD_RESULT}")
+    message("${OPENSSL_BUILD_ERROR}")
+    message(FATAL_ERROR "OpenSSL build falló")
 endif()
 
 # Configurar ruta librerías
@@ -44,11 +49,11 @@ target_include_directories(openssl_static INTERFACE "${OPENSSL_STATIC_DIR}/inclu
 target_include_directories(openssl_shared INTERFACE "${OPENSSL_SHARED_DIR}/include")
 
 target_link_libraries(openssl_static INTERFACE
-  "${OPENSSL_LIB_DIR}/libssl.${STATIC_EXT}"
-  "${OPENSSL_LIB_DIR}/libcrypto.${STATIC_EXT}"
+    "${OPENSSL_LIB_DIR}/libssl.${STATIC_EXT}"
+    "${OPENSSL_LIB_DIR}/libcrypto.${STATIC_EXT}"
 )
 
 target_link_libraries(openssl_shared INTERFACE
-  "${OPENSSL_LIB_DIR}/libssl.${SHARED_EXT}"
-  "${OPENSSL_LIB_DIR}/libcrypto.${SHARED_EXT}"
+    "${OPENSSL_LIB_DIR}/libssl.${SHARED_EXT}"
+    "${OPENSSL_LIB_DIR}/libcrypto.${SHARED_EXT}"
 )
