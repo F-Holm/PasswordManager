@@ -1,3 +1,2 @@
 #!/bin/bash
-clear
-cmake --workflow --preset wf-linux-x64-release
+cmake --workflow --preset build-linux-x64-release
