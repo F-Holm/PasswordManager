@@ -37,20 +37,6 @@ elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL
 endif()
 
 # Crear librerías importadas estáticas y compartidas
-add_library(openssl_static STATIC IMPORTED GLOBAL)
-add_library(openssl_shared SHARED IMPORTED GLOBAL)
-set_target_properties(openssl_static PROPERTIES
-    IMPORTED_LOCATION "${OPENSSL_LIB_DIR}/libcrypto.${STATIC_EXT}"
-    IMPORTED_LOCATION "${OPENSSL_LIB_DIR}/libssl.${STATIC_EXT}"
-    INTERFACE_INCLUDE_DIRECTORIES "${OPENSSL_BUILD_DIR}/include"
-)
-set_target_properties(openssl_shared PROPERTIES
-    IMPORTED_LOCATION "${OPENSSL_LIB_DIR}/libcrypto.${SHARED_EXT}"
-    IMPORTED_LOCATION "${OPENSSL_LIB_DIR}/libssl.${SHARED_EXT}"
-    INTERFACE_INCLUDE_DIRECTORIES "${OPENSSL_BUILD_DIR}/include"
-)
-
-#--------------------------
 add_library(openssl_static INTERFACE)
 add_library(openssl_shared INTERFACE)
 
@@ -66,6 +52,3 @@ target_link_libraries(openssl_shared INTERFACE
   "${OPENSSL_LIB_DIR}/libssl.${SHARED_EXT}"
   "${OPENSSL_LIB_DIR}/libcrypto.${SHARED_EXT}"
 )
-
-add_dependencies(openssl_static openssl)
-add_dependencies(openssl_shared openssl)
