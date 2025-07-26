@@ -4,9 +4,8 @@
 
 # CMake
 build/
-./build/
-build/*
-./build/*
+CMakeLists.txt.user
+CMakeUserPresets.json
 
 # Visual Studio
 .vs/
@@ -17,6 +16,9 @@ out/
 
 # CLion
 .idea/
+
+# Python
+__pycache__/
 
 # ====================================
 # Windows
@@ -87,98 +89,5 @@ Temporary Items
 .apdisk
 
 # ====================================
-# Otros (La mayoría no son necesarios)
+# Otros
 # ====================================
-
-# CMake
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
-CMakeUserPresets.json
-
-# Archivos sin extención (Ejecutables de linux)
-*
-!/**/
-!*.*
-!Dockerfile
-
-# Archivos de compilación
-*.o
-*.obj
-*.lo
-*.slo
-*.la
-*.a
-*.lib
-*.dll
-*.so
-*.so.*
-*.dylib
-*.exe
-*.out
-*.app
-*.out
-*.run
-
-# Archivos de dependencias
-*.d
-
-# Archivos de logs y debug
-*.log
-*.stackdump
-core
-*.core
-
-# Archivos de CMake
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-install_manifest.txt
-
-# Archivos generados por compiladores
-__pycache__/
-*.pch
-*.pdb
-*.idb
-*.class
-*.ilk
-*.tlog
-*.gch
-*.dSYM/
-
-# Archivos de IDEs (Visual Studio, CLion, etc.)
-.vscode/
-.idea/
-*.sdf
-*.opensdf
-*.VC.db
-*.VC.opendb
-
-# Archivos temporales
-*.tmp
-*.swp
-*.bak
-*.old
-*~
-
-# Archivos de sistema
-.DS_Store
-Thumbs.db
-
-# Binarios y carpetas de salida comunes
-obj/
-bin/
-dist/
-
-# Archivos de enlace intermedios
-*.so
-*.a
