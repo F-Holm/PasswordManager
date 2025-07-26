@@ -4,6 +4,9 @@
 
 # CMake
 build/
+./build/
+build/*
+./build/*
 
 # Visual Studio
 .vs/
