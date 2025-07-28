@@ -1,0 +1,7 @@
+add_executable(GestorContra
+    bootstrap.cc
+)
+
+target_link_libraries(GestorContra PUBLIC
+    gestor_contra
+)
