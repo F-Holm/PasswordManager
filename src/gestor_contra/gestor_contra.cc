@@ -1,8 +1,10 @@
-﻿#include "set_rand.hh"
+﻿#include "gestor_contra.hh"
+
+#include "set_rand.hh"
 
 #include <iostream>
 
-auto main() -> int {
+auto run() -> int {
   SetRand();
   std::cout << "Funciona" << std::endl;
   return 0;
