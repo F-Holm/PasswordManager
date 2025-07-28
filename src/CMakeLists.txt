@@ -1,4 +1,4 @@
-add_subdirectory(botstrap)
+add_subdirectory(bootstrap)
 add_subdirectory(cuenta)
 add_subdirectory(data_block)
 add_subdirectory(datos)
