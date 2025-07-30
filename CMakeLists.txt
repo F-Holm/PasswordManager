@@ -4,7 +4,8 @@ project(GestorContra VERSION 1.0.0 LANGUAGES C CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 include(NoInSourceBuilds)
+include(CTest)
 
 add_subdirectory(deps)
 add_subdirectory(src bin)
-#add_subdirectory(test)
+add_subdirectory(test)
