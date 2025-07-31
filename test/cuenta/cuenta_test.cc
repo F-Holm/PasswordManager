@@ -1,56 +1,110 @@
 #include "cuenta.hh"
+
+#include "data_block.hh"
+
+#include <array>
+#include <string>
+
 #include <gtest/gtest.h>
 
-/*
-class Cuenta {
-public:
-  const static uint8_t kCantAtri = 12;
+// Helper para crear DataBlock desde string simple
+DataBlock CrearDB(const std::string& s) {
+    return DataBlock(s);
+}
 
-  Cuenta(std::array<DataBlock, Cuenta::kCantAtri> datos, const std::string &key);
-  Cuenta(std::array<std::string, Cuenta::kCantAtri> datos, const std::string &key);
-  explicit Cuenta(std::array<std::string, (Cuenta::kCantAtri / 2) - 1> datos);
-  ~Cuenta();
-  auto operator=(const Cuenta &other) -> Cuenta &;
+// Helper para crear array<string> con contenido simple
+template<size_t N>
+std::array<std::string, N> CrearArrayStr(const std::string& base) {
+    std::array<std::string, N> arr;
+    for (size_t i = 0; i < N; ++i) {
+        arr[i] = base + std::to_string(i);
+    }
+    return arr;
+}
 
-  // Setters
-  void SetId(const std::string &id) { id_ = id; };
-  void SetDescripcion(const std::string &desc) { desc_ = desc; };
-  void SetEmail(const std::string &email) { email_ = email; };
-  void SetNombreUsuario(const std::string &nom) { nom_ = nom; };
-  void SetContra(const std::string &contra) { contra_ = contra; };
-  void SetExtra(const std::string &extra) { extra_ = extra; };
+// Test constructor con std::array<DataBlock, kCantAtri>
+TEST(CuentaTest, ConstructorDataBlock) {
+    std::array<DataBlock, Cuenta::kCantAtri> datos;
+    for (size_t i = 0; i < Cuenta::kCantAtri; ++i) {
+        datos[i] = CrearDB("dato" + std::to_string(i));
+    }
+    Cuenta c(datos, "clave123");
 
-  //Getters
-  auto id() const -> std::string { return id_; };
-  auto desc() const -> std::string { return desc_; };
-  auto email() const -> std::string { return email_; };
-  auto nom() const -> std::string { return nom_; };
-  auto contra() const -> std::string { return contra_; };
-  auto extra() const -> std::string { return extra_; };
+    EXPECT_EQ(c.id(), "");
+    EXPECT_EQ(c.contra(), "");
+}
 
-  // Getters Tags
-  auto id_t() const -> std::string { return id_t_; };
-  auto desc_t() const -> std::string { return desc_t_; };
-  auto email_t() const -> std::string { return email_t_; };
-  auto nom_t() const -> std::string { return nom_t_; };
-  auto contra_t() const -> std::string { return contra_t_; };
-  auto extra_t() const -> std::string { return extra_t_; };
+// Test constructor con std::array<string, kCantAtri>
+TEST(CuentaTest, ConstructorStringArray) {
+    auto arr = CrearArrayStr<Cuenta::kCantAtri>("campo");
+    Cuenta c(arr, "clave456");
 
-  auto EscribirDataBlocks(const std::string &key) -> std::array<DataBlock, Cuenta::kCantAtri>;
+    EXPECT_EQ(c.id(), "");
+    EXPECT_EQ(c.nom(), "");
+}
 
-  void Encriptar(const std::string &key);
-  void Desencriptar(const std::string &key);
+// Test constructor con mitad menos uno de strings
+TEST(CuentaTest, ConstructorMitadMenosUno) {
+    constexpr size_t n = (Cuenta::kCantAtri / 2) - 1;
+    auto arr = CrearArrayStr<n>("mitad");
+    Cuenta c(arr);
 
-  private:
-  std::string id_, desc_, email_, nom_, contra_, extra_;
-  std::string id_t_, desc_t_, email_t_, nom_t_, contra_t_, extra_t_;
+    EXPECT_EQ(c.desc(), "");
+    EXPECT_EQ(c.extra(), "");
+}
 
-  // Setters Tags
-  void SetIdTag(const std::string &id_t) { id_t_ = id_t; };
-  void SetDescripcionTag(const std::string &desc_t) { desc_t_ = desc_t; };
-  void SetEmailTag(const std::string &email_t) { email_t_ = email_t; };
-  void SetNombreUsuarioTag(const std::string &nom_t) { nom_t_ = nom_t; };
-  void SetContraTag(const std::string &contra_t) { contra_t_ = contra_t; };
-  void SetExtraTag(const std::string &extra_t) { extra_t_ = extra_t; };
-};
-*/
+// Test setters y getters básicos
+TEST(CuentaTest, SettersGetters) {
+    Cuenta c = Cuenta(CrearArrayStr<Cuenta::kCantAtri>("x"), "clave");
+
+    c.SetId("id1");
+    c.SetDescripcion("desc1");
+    c.SetEmail("email1");
+    c.SetNombreUsuario("nom1");
+    c.SetContra("contra1");
+    c.SetExtra("extra1");
+
+    EXPECT_EQ(c.id(), "id1");
+    EXPECT_EQ(c.desc(), "desc1");
+    EXPECT_EQ(c.email(), "email1");
+    EXPECT_EQ(c.nom(), "nom1");
+    EXPECT_EQ(c.contra(), "contra1");
+    EXPECT_EQ(c.extra(), "extra1");
+}
+
+// Test operador= (asignación)
+TEST(CuentaTest, OperadorAsignacion) {
+    Cuenta a = Cuenta(CrearArrayStr<Cuenta::kCantAtri>("a"), "clave");
+    Cuenta b = Cuenta(CrearArrayStr<Cuenta::kCantAtri>("b"), "clave2");
+
+    b = a;
+
+    EXPECT_EQ(b.id(), a.id());
+    EXPECT_EQ(b.contra(), a.contra());
+}
+
+// Test EscribirDataBlocks devuelve array con kCantAtri elementos
+TEST(CuentaTest, EscribirDataBlocks) {
+    Cuenta c = Cuenta(CrearArrayStr<Cuenta::kCantAtri>("x"), "clave");
+    auto arr = c.EscribirDataBlocks("clave");
+
+    EXPECT_EQ(arr.size(), Cuenta::kCantAtri);
+    // Opcional: verificar que los DataBlock no estén vacíos (según implementación)
+    for (const auto& db : arr) {
+        EXPECT_GT(db.largo, 0);
+        EXPECT_NE(db.str, nullptr);
+    }
+}
+
+// Test Encriptar y Desencriptar
+TEST(CuentaTest, EncriptarDesencriptar) {
+    Cuenta c = Cuenta(CrearArrayStr<Cuenta::kCantAtri>("dato"), "clave");
+
+    c.SetContra("pass1234");
+    c.Encriptar("clave");
+    std::string contra_encriptada = c.contra();
+    EXPECT_NE(contra_encriptada, "pass1234");  // debería cambiar
+
+    c.Desencriptar("clave");
+    EXPECT_EQ(c.contra(), "pass1234");
+}
