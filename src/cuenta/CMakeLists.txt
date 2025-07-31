@@ -4,8 +4,8 @@ add_library(cuenta STATIC
 
 target_include_directories(cuenta PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(cuenta PUBLIC
-    db
-    data_block
-    seguridad
+target_link_libraries(cuenta
+    PUBLIC data_block
+    PUBLIC db
+    PRIVATE seguridad
 )

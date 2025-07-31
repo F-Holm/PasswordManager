@@ -1,5 +1,7 @@
 #include "datos.hh"
 
+#include "db.hh"
+
 using std::array;
 using std::string;
 using std::vector;

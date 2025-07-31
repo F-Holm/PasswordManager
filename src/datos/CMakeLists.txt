@@ -4,6 +4,7 @@ add_library(datos STATIC
 
 target_include_directories(datos PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(datos PUBLIC
-    cuenta
+target_link_libraries(datos
+    PRIVATE db
+    PUBLIC cuenta
 )
