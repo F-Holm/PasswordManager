@@ -3,8 +3,8 @@ add_executable(cuenta_test
 )
 
 target_link_libraries(cuenta_test PRIVATE
-    cuenta
     data_block
+    cuenta
 )
 
 AddTests(cuenta_test)
