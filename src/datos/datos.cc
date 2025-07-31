@@ -48,10 +48,10 @@ void Datos::ElimCuenta(const std::string& id) {
 void Datos::CargarCuentas(const string& key) {
   vector<DataBlock> datos = DB::Leer(Datos::NOMBRE_ARCHIVO);
 
-  for (size_t i = 0; i < datos.size(); i += Cuenta::kCantAtri) {
-    array<DataBlock, Cuenta::kCantAtri> c;
+  for (size_t i = 0; i < datos.size(); i += Cuenta::kCantAtributos) {
+    array<DataBlock, Cuenta::kCantAtributos> c;
 
-    for (int j = 0; j < Cuenta::kCantAtri; j++)
+    for (int j = 0; j < Cuenta::kCantAtributos; j++)
       c[j] = datos[i + j];
 
     cuentas_.emplace_back(c, key);
@@ -62,7 +62,7 @@ void Datos::GuardarCuentas(const string& key) {
   vector<DataBlock> datos;
 
   for (Cuenta cuenta : cuentas_) {
-    array<DataBlock, Cuenta::kCantAtri> arr;
+    array<DataBlock, Cuenta::kCantAtributos> arr;
     arr = cuenta.EscribirDataBlocks(key);
     datos.insert(datos.end(), begin(arr), end(arr));
   }

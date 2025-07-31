@@ -9,7 +9,7 @@
 
 // Helper para crear cuenta simple con id único
 Cuenta CrearCuentaConId(const std::string& id) {
-    constexpr size_t k = Cuenta::kCantAtri;
+    constexpr size_t k = Cuenta::kCantAtributos;
     auto datos = std::array<std::string, k>{};
     for (size_t i = 0; i < k; ++i) {
         datos[i] = "campo" + std::to_string(i);
