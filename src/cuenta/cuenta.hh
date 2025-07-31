@@ -9,7 +9,7 @@
 
 class Cuenta {
 public:
-  const static uint8_t kCantAtributos = 12;
+  inline static constexpr uint8_t kCantAtributos = 12;
 
   Cuenta(std::array<DataBlock, Cuenta::kCantAtributos> datos, const std::string &key);
   Cuenta(std::array<std::string, Cuenta::kCantAtributos> datos, const std::string &key);
