@@ -3,7 +3,7 @@
 #include <string>
 #include <cstdint>
 
-namespace Gen {
+namespace Generador {
 enum class TipoContra : uint8_t {
   COMP = 0,
   ALFA_NUM = 1,
@@ -16,4 +16,4 @@ enum class TipoContra : uint8_t {
 };
 
 auto GenerarContra(const size_t &largo, const TipoContra &tipo) -> std::string;
-} // namespace Gen
+} // namespace Generador

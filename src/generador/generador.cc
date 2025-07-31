@@ -7,7 +7,10 @@ auto CaracterRandom(const char &base, const uint8_t &rango) -> char {
   return static_cast<char>((rand() % rango) + base);
 }
 
-auto ContraFacil(const string &contra, const Gen::TipoContra &tipo) -> bool {
+auto ContraFacil(const string &contra, const Generador::TipoContra &tipo) -> bool {
+  if (contra.size() <= 4)
+    return false;
+
   bool min = false,
        may = false,
        num = false,
@@ -25,64 +28,64 @@ auto ContraFacil(const string &contra, const Gen::TipoContra &tipo) -> bool {
   }
 
   switch (tipo) {
-  case Gen::TipoContra::COMP:
+  case Generador::TipoContra::COMP:
     return !(min && may && num && sim);
     break;
-  case Gen::TipoContra::ALFA_NUM:
+  case Generador::TipoContra::ALFA_NUM:
     return !(min && may && num);
     break;
-  case Gen::TipoContra::ALFA_NUM_MAY:
+  case Generador::TipoContra::ALFA_NUM_MAY:
     return !(may && num);
     break;
-  case Gen::TipoContra::ALFA_NUM_MIN:
+  case Generador::TipoContra::ALFA_NUM_MIN:
     return !(min && num);
     break;
-  case Gen::TipoContra::ALFA:
+  case Generador::TipoContra::ALFA:
     return !(min && may);
     break;
-  case Gen::TipoContra::ALFA_MAY:
-  case Gen::TipoContra::ALFA_MIN:
-  case Gen::TipoContra::NUM:
+  case Generador::TipoContra::ALFA_MAY:
+  case Generador::TipoContra::ALFA_MIN:
+  case Generador::TipoContra::NUM:
   default:
     return false;
     break;
   }
 }
 
-auto Caracter(const Gen::TipoContra &tipo) -> char {
+auto Caracter(const Generador::TipoContra &tipo) -> char {
   char cars[3] = {'X', 'X', 'X'};
   switch (tipo) {
-  case Gen::TipoContra::COMP:
+  case Generador::TipoContra::COMP:
     return CaracterRandom('!', 94);
     break;
-  case Gen::TipoContra::ALFA_NUM:
+  case Generador::TipoContra::ALFA_NUM:
     cars[0] = CaracterRandom('a', 26);
     cars[1] = CaracterRandom('A', 26);
     cars[2] = CaracterRandom('0', 10);
     return cars[rand() % 3];
     break;
-  case Gen::TipoContra::ALFA_NUM_MAY:
+  case Generador::TipoContra::ALFA_NUM_MAY:
     cars[0] = CaracterRandom('A', 26);
     cars[1] = CaracterRandom('0', 10);
     return cars[rand() % 2];
     break;
-  case Gen::TipoContra::ALFA_NUM_MIN:
+  case Generador::TipoContra::ALFA_NUM_MIN:
     cars[0] = CaracterRandom('a', 26);
     cars[1] = CaracterRandom('0', 10);
     return cars[rand() % 2];
     break;
-  case Gen::TipoContra::ALFA:
+  case Generador::TipoContra::ALFA:
     cars[0] = CaracterRandom('a', 26);
     cars[1] = CaracterRandom('A', 26);
     return cars[rand() % 2];
     break;
-  case Gen::TipoContra::ALFA_MAY:
+  case Generador::TipoContra::ALFA_MAY:
     return CaracterRandom('A', 26);
     break;
-  case Gen::TipoContra::ALFA_MIN:
+  case Generador::TipoContra::ALFA_MIN:
     return CaracterRandom('a', 26);
     break;
-  case Gen::TipoContra::NUM:
+  case Generador::TipoContra::NUM:
     return CaracterRandom('0', 10);
     break;
   default:
@@ -92,9 +95,10 @@ auto Caracter(const Gen::TipoContra &tipo) -> char {
 }
 }  // namespace
 
-auto Gen::GenerarContra(const size_t &largo, const Gen::TipoContra &tipo) -> string {
+auto Generador::GenerarContra(const size_t &largo, const Generador::TipoContra &tipo) -> string {
   string contra;
   do {
+    contra = "";
     for (size_t i = 0; i < largo; i++){
       contra += Caracter(tipo);
     }
