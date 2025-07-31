@@ -11,7 +11,7 @@ TEST(OpenSslAdapterTest, Hash256_Determinismo) {
     std::string hash2 = OpenSslAdapter::Hash256(input);
 
     EXPECT_EQ(hash1, hash2);
-    EXPECT_EQ(hash1.size(), 64);  // SHA-256 en hex tiene 64 caracteres
+    EXPECT_EQ(hash1.size(), 256/8);  // SHA-256 en hex tiene 64 caracteres
 }
 
 // Test que verifica que Hash256_x devuelve exactamente len_rta caracteres

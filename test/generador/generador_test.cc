@@ -6,7 +6,7 @@
 
 // Test que verifica el largo de la contraseña
 TEST(GenerarContraTest, LargoCorrecto) {
-    for (int i = 10; i <= 100; ++i) {
+    for (int i = 0; i <= 100; ++i) {
         std::string contra = Generador::GenerarContra(i, Generador::TipoContra::COMP);
         EXPECT_EQ(contra.size(), i);
     }
