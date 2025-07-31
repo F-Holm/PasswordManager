@@ -9,52 +9,52 @@
 
 class Cuenta {
 public:
-  const static uint8_t kCantAtri = 12;
+  const static uint8_t kCantAtributos = 12;
 
-  Cuenta(std::array<DataBlock, Cuenta::kCantAtri> datos, const std::string &key);
-  Cuenta(std::array<std::string, Cuenta::kCantAtri> datos, const std::string &key);
-  explicit Cuenta(std::array<std::string, (Cuenta::kCantAtri / 2) - 1> datos);
+  Cuenta(std::array<DataBlock, Cuenta::kCantAtributos> datos, const std::string &key);
+  Cuenta(std::array<std::string, Cuenta::kCantAtributos> datos, const std::string &key);
+  explicit Cuenta(std::array<std::string, (Cuenta::kCantAtributos / 2) - 1> datos);
   ~Cuenta();
   auto operator=(const Cuenta &other) -> Cuenta &;
 
   // Setters
   void SetId(const std::string &id) { id_ = id; };
-  void SetDescripcion(const std::string &desc) { desc_ = desc; };
+  void SetDescripcion(const std::string &descripcion) { descripcion_ = descripcion; };
   void SetEmail(const std::string &email) { email_ = email; };
-  void SetNombreUsuario(const std::string &nom) { nom_ = nom; };
+  void SetNombreUsuario(const std::string &nombre_usuario) { nombre_usuario_ = nombre_usuario; };
   void SetContra(const std::string &contra) { contra_ = contra; };
   void SetExtra(const std::string &extra) { extra_ = extra; };
 
   //Getters
   auto id() const -> std::string { return id_; };
-  auto desc() const -> std::string { return desc_; };
+  auto descripcion() const -> std::string { return descripcion_; };
   auto email() const -> std::string { return email_; };
-  auto nom() const -> std::string { return nom_; };
+  auto nombre_usuario() const -> std::string { return nombre_usuario_; };
   auto contra() const -> std::string { return contra_; };
   auto extra() const -> std::string { return extra_; };
 
   // Getters Tags
-  auto id_t() const -> std::string { return id_t_; };
-  auto desc_t() const -> std::string { return desc_t_; };
-  auto email_t() const -> std::string { return email_t_; };
-  auto nom_t() const -> std::string { return nom_t_; };
-  auto contra_t() const -> std::string { return contra_t_; };
-  auto extra_t() const -> std::string { return extra_t_; };
+  auto id_tag() const -> std::string { return id_tag_; };
+  auto descripcion_tag() const -> std::string { return descripcion_tag_; };
+  auto email_tag() const -> std::string { return email_tag_; };
+  auto nombre_usuario_tag() const -> std::string { return nombre_usuario_tag_; };
+  auto contra_tag() const -> std::string { return contra_tag_; };
+  auto extra_tag() const -> std::string { return extra_tag_; };
 
-  auto EscribirDataBlocks(const std::string &key) -> std::array<DataBlock, Cuenta::kCantAtri>;
+  auto EscribirDataBlocks(const std::string &key) -> std::array<DataBlock, Cuenta::kCantAtributos>;
 
   void Encriptar(const std::string &key);
   void Desencriptar(const std::string &key);
 
   private:
-  std::string id_, desc_, email_, nom_, contra_, extra_;
-  std::string id_t_, desc_t_, email_t_, nom_t_, contra_t_, extra_t_;
+  std::string id_, descripcion_, email_, nombre_usuario_, contra_, extra_;
+  std::string id_tag_, descripcion_tag_, email_tag_, nombre_usuario_tag_, contra_tag_, extra_tag_;
 
   // Setters Tags
-  void SetIdTag(const std::string &id_t) { id_t_ = id_t; };
-  void SetDescripcionTag(const std::string &desc_t) { desc_t_ = desc_t; };
-  void SetEmailTag(const std::string &email_t) { email_t_ = email_t; };
-  void SetNombreUsuarioTag(const std::string &nom_t) { nom_t_ = nom_t; };
-  void SetContraTag(const std::string &contra_t) { contra_t_ = contra_t; };
-  void SetExtraTag(const std::string &extra_t) { extra_t_ = extra_t; };
+  void SetIdTag(const std::string &id_tag) { id_tag_ = id_tag; };
+  void SetDescripcionTag(const std::string &descripcion_tag) { descripcion_tag_ = descripcion_tag; };
+  void SetEmailTag(const std::string &email_tag) { email_tag_ = email_tag; };
+  void SetNombreUsuarioTag(const std::string &nombre_usuario_tag) { nombre_usuario_tag_ = nombre_usuario_tag; };
+  void SetContraTag(const std::string &contra_tag) { contra_tag_ = contra_tag; };
+  void SetExtraTag(const std::string &extra_tag) { extra_tag_ = extra_tag; };
 };
