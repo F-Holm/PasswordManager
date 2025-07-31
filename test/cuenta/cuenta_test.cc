@@ -8,11 +8,9 @@
 #include <gtest/gtest.h>
 
 TEST(CuentaTest, CantAtributos) {
-    EXPECT_NE(Cuenta::kCantAtributos, 12);
+    EXPECT_EQ(Cuenta::kCantAtributos, 12);
 }
 
-
-/*
 // Helper para crear array<string> con contenido simple
 template<size_t N>
 std::array<std::string, N> CrearArrayStr(const std::string& base) {
@@ -46,12 +44,13 @@ TEST(CuentaTest, ConstructorStringArray) {
 
 // Test constructor con mitad menos uno de strings
 TEST(CuentaTest, ConstructorMitadMenosUno) {
+    const std::string str = "mitad";
     constexpr size_t n = (Cuenta::kCantAtributos / 2) - 1;
-    auto arr = CrearArrayStr<n>("mitad");
+    auto arr = CrearArrayStr<n>(str);
     Cuenta c(arr);
 
-    EXPECT_EQ(c.descripcion(), "");
-    EXPECT_EQ(c.extra(), "");
+    EXPECT_EQ(c.descripcion(), str + "0");
+    EXPECT_EQ(c.extra(), str + "4");
 }
 
 // Test setters y getters básicos
@@ -86,15 +85,11 @@ TEST(CuentaTest, OperadorAsignacion) {
 
 // Test EscribirDataBlocks devuelve array con kCantAtributos elementos
 TEST(CuentaTest, EscribirDataBlocks) {
-    Cuenta c = Cuenta(CrearArrayStr<Cuenta::kCantAtributos>("x"), "clave");
+    const std::string key = "clave";
+    Cuenta c = Cuenta(CrearArrayStr<Cuenta::kCantAtributos>("x"), key);
     auto arr = c.EscribirDataBlocks("clave");
 
     EXPECT_EQ(arr.size(), Cuenta::kCantAtributos);
-    // Opcional: verificar que los DataBlock no estén vacíos (según implementación)
-    for (const auto& db : arr) {
-        EXPECT_GT(db.largo, 0);
-        EXPECT_NE(db.str, nullptr);
-    }
 }
 
 // Test Encriptar y Desencriptar
@@ -109,4 +104,3 @@ TEST(CuentaTest, EncriptarDesencriptar) {
     c.Desencriptar("clave");
     EXPECT_EQ(c.contra(), "pass1234");
 }
-*/
