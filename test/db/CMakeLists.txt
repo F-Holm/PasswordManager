@@ -4,7 +4,7 @@ add_executable(db_test
 
 target_link_libraries(db_test PRIVATE
     db
-    datablock
+    data_block
 )
 
 AddTests(db_test)
