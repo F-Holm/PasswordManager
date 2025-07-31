@@ -1,6 +1,6 @@
 #include "db.hh"
 
-#include "datablock.hh"
+#include "data_block.hh"
 
 #include <vector>
 #include <string>
@@ -57,15 +57,11 @@ TEST(DBTest, LeerArchivoVacio) {
 TEST(DBTest, LeerArchivoNoExistente) {
     const std::string archivo = "archivo_inexistente.bin";
 
-    // Depende si DB::Leer lanza excepción o devuelve vector vacío
-    // Por ejemplo, si lanza excepción:
-    EXPECT_THROW({
-        auto datos = DB::Leer(archivo);
-        (void)datos;
-    }, std::exception);
+    std::vector<DataBlock> datos = DB::Leer(archivo);
 
-    // O si devuelve vector vacío, usar:
-    // EXPECT_TRUE(DB::Leer(archivo).empty());
+    EXPECT_TRUE(datos.empty());
+
+    std::remove(archivo.c_str());
 }
 
 TEST(DBTest, EscribirYLeerDatosConCaracteresEspeciales) {
