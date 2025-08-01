@@ -84,10 +84,7 @@
         {
             "name": "options",
             "hidden": true,
-            "configuration": "Debug",
-            "output": {
-                "verbosity": "verbose"
-            }
+            "configuration": "Debug"
         }
     ]
 }

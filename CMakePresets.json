@@ -70,14 +70,16 @@
       "name": "wf-linux-x64-release",
       "steps": [
         { "type": "configure", "name": "linux-x64-release" },
-        { "type": "build", "name": "build-linux-x64-release" }
+        { "type": "build", "name": "build-linux-x64-release" },
+        { "type": "test", "name": "test-linux-x64-release" }
       ]
     },
     {
       "name": "wf-linux-x64-debug",
       "steps": [
         { "type": "configure", "name": "linux-x64-debug" },
-        { "type": "build", "name": "build-linux-x64-debug" }
+        { "type": "build", "name": "build-linux-x64-debug" },
+        { "type": "test", "name": "test-linux-x64-debug" }
       ]
     },
     {
