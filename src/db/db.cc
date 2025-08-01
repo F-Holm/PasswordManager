@@ -2,14 +2,9 @@
 
 #include <fstream>
 
-using std::ifstream;
-using std::ofstream;
-using std::string;
-using std::vector;
-
-auto DB::Leer(const string &nom_arch) -> vector<DataBlock> {
-  vector<DataBlock> datos;
-  ifstream arch(nom_arch, std::ios::binary);
+auto DB::Leer(const std::string &nom_arch) -> std::vector<DataBlock> {
+  std::vector<DataBlock> datos;
+  std::ifstream arch(nom_arch, std::ios::binary);
   if (!arch) {
     return datos;
   }
@@ -34,8 +29,8 @@ auto DB::Leer(const string &nom_arch) -> vector<DataBlock> {
   return datos;
 }
 
-void DB::Escribir(const string& nom_arch, const vector<DataBlock> &datos) {
-  ofstream arch(nom_arch, std::ios::binary);
+void DB::Escribir(const std::string& nom_arch, const std::vector<DataBlock> &datos) {
+  std::ofstream arch(nom_arch, std::ios::binary);
   if (!arch) {
     return;
   }

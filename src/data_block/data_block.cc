@@ -2,13 +2,11 @@
 
 #include <cstring>
 
-using std::string;
-
 DataBlock::DataBlock(const size_t largo, char *str) : largo(largo), str(new char[largo]) {
   std::memcpy(this->str, str, largo);
 }
 
-DataBlock::DataBlock(const string &str) : largo(str.size()), str(new char[largo]) {
+DataBlock::DataBlock(const std::string &str) : largo(str.size()), str(new char[largo]) {
   std::memcpy(this->str, (&str[0]), str.size());
 }
 
