@@ -16,7 +16,8 @@ public:
   auto cuentas() const -> std::vector<Cuenta> { return cuentas_; };
 
   void AgrCuenta(Cuenta &cuenta);
-  void ModCuenta(const Cuenta &cuenta);
+  void AgrCuentaConId(Cuenta &cuenta);
+  void ModCuenta(const size_t& index, const Cuenta& cuenta);
   void ElimCuenta(const std::string &id);
 
   void CargarCuentas(const std::string &key);

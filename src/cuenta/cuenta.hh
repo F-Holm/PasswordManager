@@ -13,7 +13,8 @@ public:
 
   Cuenta(std::array<DataBlock, Cuenta::kCantAtributos> datos, const std::string &key);
   Cuenta(std::array<std::string, Cuenta::kCantAtributos> datos, const std::string &key);
-  explicit Cuenta(std::array<std::string, (Cuenta::kCantAtributos / 2) - 1> datos);
+  explicit Cuenta(std::array<std::string, Cuenta::kCantAtributos / 2> datos); // Con id
+  explicit Cuenta(std::array<std::string, (Cuenta::kCantAtributos / 2) - 1> datos); // Sin id
   ~Cuenta();
   auto operator=(const Cuenta &other) -> Cuenta &;
 

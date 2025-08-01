@@ -40,6 +40,22 @@ Cuenta::Cuenta(std::array<std::string, Cuenta::kCantAtributos> datos, const std:
   Desencriptar(key);
 }
 
+Cuenta::Cuenta(std::array<std::string, Cuenta::kCantAtributos / 2> datos) {
+  id_ = datos[0];
+  descripcion_ = datos[1];
+  email_ = datos[2];
+  nombre_usuario_ = datos[3];
+  contra_ = datos[4];
+  extra_ = datos[5];
+
+  id_tag_ = "";
+  descripcion_tag_ = "";
+  email_tag_ = "";
+  nombre_usuario_tag_ = "";
+  contra_tag_ = "";
+  extra_tag_ = "";
+}
+
 Cuenta::Cuenta(std::array<std::string, (Cuenta::kCantAtributos / 2) - 1> datos) {
   id_ = "";
   descripcion_ = datos[0];
