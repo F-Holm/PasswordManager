@@ -29,9 +29,15 @@ auto IdUnico(const std::vector<Cuenta>& cuentas, const std::string& id) -> bool 
 
 class DatosTest : public ::testing::Test {
 protected:
+
     static void SetUpTestSuite() {
         SetRand();
     }
+
+    static void TearDownTestSuite() {
+        std::remove(Datos::NOMBRE_ARCHIVO.c_str());
+    }
+
     inline static const std::string key = "clave_test";
     Datos datos_{ key };
 };
@@ -78,9 +84,8 @@ TEST_F(DatosTest, EliminarCuenta) {
 
     datos_.ElimCuenta(id[0]);
 
-    auto cuentas = datos_.cuentas();
-    ASSERT_EQ(cuentas.size(), 1);
-    EXPECT_EQ(cuentas[0].id(), id[1]);
+    ASSERT_EQ(datos_.cuentas().size(), 1);
+    EXPECT_EQ(datos_.cuentas()[0].id(), id[1]);
 
     // Eliminar id inexistente no debe fallar
     datos_.ElimCuenta("noexiste");
@@ -94,10 +99,13 @@ TEST_F(DatosTest, GenIdUnico) {
         Cuenta c = CrearCuentaConId("id_gen");
         datos_.AgrCuenta(c);
     }
-    auto cuentas = datos_.cuentas();
 
-    for (int i = 0;i < cant_cuentas;i++)
-        EXPECT_TRUE(IdUnico(cuentas, cuentas[i].id()));
+    for (int i = 0;i < cant_cuentas;i++) {
+        Cuenta c = datos_.cuentas()[i];
+        datos_.ElimCuenta(c.id());
+        EXPECT_TRUE(IdUnico(datos_.cuentas(), datos_.cuentas()[i].id()));
+        datos_.AgrCuentaConId(c);
+    }
 }
 
 // Tests básicos para Cargar y Guardar (depende implementación real)

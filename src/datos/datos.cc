@@ -42,7 +42,9 @@ void Datos::ModCuenta(const size_t& index, const Cuenta& cuenta) {
 }
 
 void Datos::ElimCuenta(const std::string& id) {
-  cuentas_.erase(cuentas_.begin() + index(id));
+  const auto i = index(id);
+  if(i != -1)
+    cuentas_.erase(cuentas_.begin() + i);
 }
 
 void Datos::CargarCuentas(const std::string& key) {
