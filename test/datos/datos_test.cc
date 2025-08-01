@@ -103,7 +103,7 @@ TEST_F(DatosTest, GenIdUnico) {
     for (int i = 0;i < cant_cuentas;i++) {
         Cuenta c = datos_.cuentas()[i];
         datos_.ElimCuenta(c.id());
-        EXPECT_TRUE(IdUnico(datos_.cuentas(), datos_.cuentas()[i].id()));
+        EXPECT_TRUE(IdUnico(datos_.cuentas(), c.id()));
         datos_.AgrCuentaConId(c);
     }
 }
