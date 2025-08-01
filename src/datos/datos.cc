@@ -33,8 +33,12 @@ void Datos::AgrCuenta(Cuenta &cuenta) {
   cuentas_.push_back(cuenta);
 }
 
-void Datos::ModCuenta(const Cuenta &cuenta) {
-  cuentas_[index(cuenta.id())] = cuenta;
+void Datos::AgrCuentaConId(Cuenta &cuenta) {
+  cuentas_.push_back(cuenta);
+}
+
+void Datos::ModCuenta(const size_t& index, const Cuenta& cuenta) {
+  cuentas_[index] = cuenta;
 }
 
 void Datos::ElimCuenta(const std::string& id) {
@@ -57,7 +61,7 @@ void Datos::CargarCuentas(const std::string& key) {
 void Datos::GuardarCuentas(const std::string& key) {
   std::vector<DataBlock> datos;
 
-  for (Cuenta cuenta : cuentas_) {
+  for (Cuenta& cuenta : cuentas_) {
     std::array<DataBlock, Cuenta::kCantAtributos> arr;
     arr = cuenta.EscribirDataBlocks(key);
     datos.insert(datos.end(), begin(arr), end(arr));
