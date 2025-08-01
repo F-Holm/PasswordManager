@@ -6,8 +6,6 @@ using std::array;
 using std::string;
 using std::vector;
 
-const string Datos::NOMBRE_ARCHIVO = "FEDERICO.HOLM";
-
 Datos::Datos(const string& key) { CargarCuentas(key); }
 Datos::~Datos() {}
 
