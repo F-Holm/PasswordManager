@@ -6,13 +6,11 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-using std::string;
-
 const static size_t TAG_LEN = 16;
 constexpr static uint8_t iv_len = 96 / 8;
 const static char *PROTOCOLO = "AES-256-GCM";
-static string IV = OpenSslAdapter::Hash256_x("Este es un vector de inicializacion super ultra mega secreto", iv_len);
-static string ADD = "Esto es algo totalmente innecesario";
+static std::string IV = OpenSslAdapter::Hash256_x("Este es un vector de inicializacion super ultra mega secreto", iv_len);
+static std::string ADD = "Esto es algo totalmente innecesario";
 
 /*
  * A library context and property query can be used to select & filter
@@ -28,7 +26,7 @@ static void ReleaseMemory(unsigned char*& outbuf, EVP_CIPHER*& cipher, EVP_CIPHE
   EVP_CIPHER_CTX_free(ctx);
 }
 
-auto OpenSslAdapter::Encriptar(const string& str, string key, string &tag) -> string {
+auto OpenSslAdapter::Encriptar(const std::string& str, std::string key, std::string &tag) -> std::string {
   key = OpenSslAdapter::Hash256(key);
 
   EVP_CIPHER_CTX* ctx;
@@ -101,8 +99,8 @@ auto OpenSslAdapter::Encriptar(const string& str, string key, string &tag) -> st
     return "";
   }
 
-  string rta(reinterpret_cast<const char *>(outbuf), outlen);
-  tag = string(reinterpret_cast<const char *>(outtag), TAG_LEN);
+  std::string rta(reinterpret_cast<const char *>(outbuf), outlen);
+  tag = std::string(reinterpret_cast<const char *>(outtag), TAG_LEN);
 
   /* Free memory */
   ReleaseMemory(outbuf, cipher, ctx);
@@ -110,7 +108,7 @@ auto OpenSslAdapter::Encriptar(const string& str, string key, string &tag) -> st
   return rta;
 }
 
-auto OpenSslAdapter::Desencriptar(const string& str, string key, string tag) -> string {
+auto OpenSslAdapter::Desencriptar(const std::string& str, std::string key, std::string tag) -> std::string {
   key = OpenSslAdapter::Hash256(key);
 
   EVP_CIPHER_CTX* ctx;
@@ -171,7 +169,7 @@ auto OpenSslAdapter::Desencriptar(const string& str, string key, string tag) -> 
     return "";
   }
 
-  string rta(reinterpret_cast<const char *>(outbuf), outlen);
+  std::string rta(reinterpret_cast<const char *>(outbuf), outlen);
 
   /* Finalise: note get no output for GCM */
   rv = EVP_DecryptFinal_ex(ctx, outbuf, &outlen);
