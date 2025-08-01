@@ -10,7 +10,7 @@ public:
   Datos(const std::string &key);
   ~Datos();
 
-  const static std::string NOMBRE_ARCHIVO;
+  inline static const std::string NOMBRE_ARCHIVO = "FEDERICO.HOLM";
 
   auto index(const std::string& id) const -> int;
   auto cuentas() const -> std::vector<Cuenta> { return cuentas_; };

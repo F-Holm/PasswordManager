@@ -1,6 +1,7 @@
 #include "datos.hh"
 
 #include "cuenta.hh"
+#include "set_rand.hh"
 
 #include <vector>
 #include <string>
@@ -19,8 +20,28 @@ Cuenta CrearCuentaConId(const std::string& id) {
     return c;
 }
 
+auto IdUnico(const std::vector<Cuenta>& cuentas, const std::string& id) -> bool {
+  for (int i = 0; i < cuentas.size(); i++)
+    if (cuentas[i].id() == id)
+      return false;
+  return true;
+}
+
+auto GenIdUnico(const std::vector<Cuenta>& cuentas) -> std::string {
+  std::string str;
+  do {
+    int num = rand();
+    str = std::string(reinterpret_cast<const char*>(&num), sizeof(int));
+  } while (!IdUnico(cuentas, str));
+  return str;
+}
+
 class DatosTest : public ::testing::Test {
 protected:
+    static void SetUpTestSuite() {
+        SetRand();
+    }
+
     Datos datos_{"clave_test"};
 };
 
@@ -74,11 +95,12 @@ TEST_F(DatosTest, EliminarCuenta) {
 TEST_F(DatosTest, IdUnico) {
     Cuenta c1 = CrearCuentaConId("id6");
     datos_.AgrCuenta(c1);
+    auto cuentas = datos_.cuentas();
 
     // id6 ya está agregado
-    EXPECT_FALSE(datos_.IdUnico("id6"));
+    EXPECT_FALSE(IdUnico(cuentas, "id6"));
     // id nuevo
-    EXPECT_TRUE(datos_.IdUnico("id_nuevo"));
+    EXPECT_TRUE(IdUnico(cuentas, "id_nuevo"));
 }
 
 TEST_F(DatosTest, GenIdUnico) {
@@ -87,9 +109,11 @@ TEST_F(DatosTest, GenIdUnico) {
         Cuenta c = CrearCuentaConId("id_gen_" + std::to_string(i));
         datos_.AgrCuenta(c);
     }
-    std::string nuevo_id = datos_.GenIdUnico();
+    auto cuentas = datos_.cuentas();
+    
+    std::string nuevo_id = GenIdUnico(cuentas);
 
-    EXPECT_TRUE(datos_.IdUnico(nuevo_id));
+    EXPECT_TRUE(IdUnico(cuentas, nuevo_id));
 }
 
 // Tests básicos para Cargar y Guardar (depende implementación real)
