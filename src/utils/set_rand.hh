@@ -1,5 +1,3 @@
-#include <cstdlib>
-#include <ctime>
-#include <random>
+#pragma once
 
 void SetRand();
