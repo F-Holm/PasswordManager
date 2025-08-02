@@ -4,7 +4,8 @@
 
 #include <string>
 
-// Test que verifica que Hash256 genera siempre el mismo resultado para la misma entrada
+// Test que verifica que Hash256 genera siempre el mismo resultado para la misma
+// entrada
 TEST(OpenSslAdapterTest, Hash256_Determinismo) {
   std::string input = "mensaje de prueba";
   std::string hash1 = OpenSslAdapter::Hash256(input);
@@ -35,16 +36,20 @@ TEST(OpenSslAdapterTest, EncriptarDesencriptar_Consistencia) {
   EXPECT_EQ(descifrado, texto_original);
 }
 
-// Test que cambia la clave y espera que no se pueda descifrar (o dé texto incorrecto)
+// Test que cambia la clave y espera que no se pueda descifrar (o dé texto
+// incorrecto)
 TEST(OpenSslAdapterTest, Desencriptar_ClaveErronea) {
   std::string texto_original = "datos ultra secretos";
   std::string clave_correcta = "clave123456789012";
   std::string clave_erronea = "clave-incorrecta123";
   std::string tag;
 
-  std::string cifrado = OpenSslAdapter::Encriptar(texto_original, clave_correcta, tag);
-  std::string descifrado = OpenSslAdapter::Desencriptar(cifrado, clave_erronea, tag);
+  std::string cifrado =
+      OpenSslAdapter::Encriptar(texto_original, clave_correcta, tag);
+  std::string descifrado =
+      OpenSslAdapter::Desencriptar(cifrado, clave_erronea, tag);
 
-  // Puede fallar con excepción, string vacío o basura, depende de implementación
+  // Puede fallar con excepción, string vacío o basura, depende de
+  // implementación
   EXPECT_NE(descifrado, texto_original);
 }

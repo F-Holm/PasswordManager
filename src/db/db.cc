@@ -29,7 +29,8 @@ auto DB::Leer(const std::string &nom_arch) -> std::vector<DataBlock> {
   return datos;
 }
 
-void DB::Escribir(const std::string &nom_arch, const std::vector<DataBlock> &datos) {
+void DB::Escribir(const std::string &nom_arch,
+                  const std::vector<DataBlock> &datos) {
   std::ofstream arch(nom_arch, std::ios::binary);
   if (!arch) {
     return;

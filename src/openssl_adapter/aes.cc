@@ -10,7 +10,8 @@
 const static size_t TAG_LEN = 16;
 constexpr static uint8_t iv_len = 96 / 8;
 const static char* PROTOCOLO = "AES-256-GCM";
-static std::string IV = OpenSslAdapter::Hash256_x("Este es un vector de inicializacion super ultra mega secreto", iv_len);
+static std::string IV = OpenSslAdapter::Hash256_x(
+    "Este es un vector de inicializacion super ultra mega secreto", iv_len);
 static std::string ADD = "Esto es algo totalmente innecesario";
 
 /*
@@ -21,13 +22,15 @@ static std::string ADD = "Esto es algo totalmente innecesario";
 static OSSL_LIB_CTX* libctx = nullptr;
 static const char* propq = nullptr;
 
-static void ReleaseMemory(unsigned char*& outbuf, EVP_CIPHER*& cipher, EVP_CIPHER_CTX*& ctx) {
+static void ReleaseMemory(unsigned char*& outbuf, EVP_CIPHER*& cipher,
+                          EVP_CIPHER_CTX*& ctx) {
   delete[] outbuf;
   EVP_CIPHER_free(cipher);
   EVP_CIPHER_CTX_free(ctx);
 }
 
-auto OpenSslAdapter::Encriptar(const std::string& str, std::string key, std::string& tag) -> std::string {
+auto OpenSslAdapter::Encriptar(const std::string& str, std::string key,
+                               std::string& tag) -> std::string {
   key = OpenSslAdapter::Hash256(key);
 
   EVP_CIPHER_CTX* ctx;
@@ -55,7 +58,8 @@ auto OpenSslAdapter::Encriptar(const std::string& str, std::string key, std::str
   }
 
   /* Set IV length if default 96 bits is not appropriate */
-  params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, &gcm_ivlen);
+  params[0] =
+      OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, &gcm_ivlen);
 
   /*
    * Initialise an encrypt operation with the cipher/mode, key, IV and
@@ -64,21 +68,27 @@ auto OpenSslAdapter::Encriptar(const std::string& str, std::string key, std::str
    * application the IV would be generated internally so the iv passed in
    * would be NULL.
    */
-  if (!EVP_EncryptInit_ex2(ctx, cipher, reinterpret_cast<const unsigned char*>(key.c_str()), reinterpret_cast<const unsigned char*>(IV.c_str()), params)) {
+  if (!EVP_EncryptInit_ex2(
+          ctx, cipher, reinterpret_cast<const unsigned char*>(key.c_str()),
+          reinterpret_cast<const unsigned char*>(IV.c_str()), params)) {
     ERR_print_errors_fp(stderr);
     ReleaseMemory(outbuf, cipher, ctx);
     return "";
   }
 
   /* Zero or more calls to specify any AAD */
-  if (!EVP_EncryptUpdate(ctx, NULL, &outlen, reinterpret_cast<const unsigned char*>(ADD.c_str()), ADD.size())) {
+  if (!EVP_EncryptUpdate(ctx, NULL, &outlen,
+                         reinterpret_cast<const unsigned char*>(ADD.c_str()),
+                         ADD.size())) {
     ERR_print_errors_fp(stderr);
     ReleaseMemory(outbuf, cipher, ctx);
     return "";
   }
 
   /* Encrypt plaintext */
-  if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, reinterpret_cast<const unsigned char*>(str.c_str()), str.size())) {
+  if (!EVP_EncryptUpdate(ctx, outbuf, &outlen,
+                         reinterpret_cast<const unsigned char*>(str.c_str()),
+                         str.size())) {
     ERR_print_errors_fp(stderr);
     ReleaseMemory(outbuf, cipher, ctx);
     return "";
@@ -92,7 +102,8 @@ auto OpenSslAdapter::Encriptar(const std::string& str, std::string key, std::str
   }
 
   /* Get tag */
-  params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, outtag, 16);
+  params[0] =
+      OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, outtag, 16);
 
   if (!EVP_CIPHER_CTX_get_params(ctx, params)) {
     ERR_print_errors_fp(stderr);
@@ -109,7 +120,8 @@ auto OpenSslAdapter::Encriptar(const std::string& str, std::string key, std::str
   return rta;
 }
 
-auto OpenSslAdapter::Desencriptar(const std::string& str, std::string key, std::string tag) -> std::string {
+auto OpenSslAdapter::Desencriptar(const std::string& str, std::string key,
+                                  std::string tag) -> std::string {
   key = OpenSslAdapter::Hash256(key);
 
   EVP_CIPHER_CTX* ctx;
@@ -133,34 +145,42 @@ auto OpenSslAdapter::Desencriptar(const std::string& str, std::string key, std::
   }
 
   /* Set IV length if default 96 bits is not appropriate */
-  params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, &gcm_ivlen);
+  params[0] =
+      OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN, &gcm_ivlen);
 
   /*
    * Initialise an encrypt operation with the cipher/mode, key, IV and
    * IV length parameter.
    */
-  if (!EVP_DecryptInit_ex2(ctx, cipher, reinterpret_cast<const unsigned char*>(key.c_str()), reinterpret_cast<const unsigned char*>(IV.c_str()), params)) {
+  if (!EVP_DecryptInit_ex2(
+          ctx, cipher, reinterpret_cast<const unsigned char*>(key.c_str()),
+          reinterpret_cast<const unsigned char*>(IV.c_str()), params)) {
     ERR_print_errors_fp(stderr);
     ReleaseMemory(outbuf, cipher, ctx);
     return "";
   }
 
   /* Zero or more calls to specify any AAD */
-  if (!EVP_DecryptUpdate(ctx, nullptr, &outlen, reinterpret_cast<const unsigned char*>(ADD.c_str()), ADD.size())) {
+  if (!EVP_DecryptUpdate(ctx, nullptr, &outlen,
+                         reinterpret_cast<const unsigned char*>(ADD.c_str()),
+                         ADD.size())) {
     ERR_print_errors_fp(stderr);
     ReleaseMemory(outbuf, cipher, ctx);
     return "";
   }
 
   /* Decrypt plaintext */
-  if (!EVP_DecryptUpdate(ctx, outbuf, &outlen, reinterpret_cast<const unsigned char*>(str.c_str()), str.size())) {
+  if (!EVP_DecryptUpdate(ctx, outbuf, &outlen,
+                         reinterpret_cast<const unsigned char*>(str.c_str()),
+                         str.size())) {
     ERR_print_errors_fp(stderr);
     ReleaseMemory(outbuf, cipher, ctx);
     return "";
   }
 
   /* Set expected tag value. */
-  params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, reinterpret_cast<void*>(&tag[0]), tag.size());
+  params[0] = OSSL_PARAM_construct_octet_string(
+      OSSL_CIPHER_PARAM_AEAD_TAG, reinterpret_cast<void*>(&tag[0]), tag.size());
 
   if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
     ERR_print_errors_fp(stderr);

@@ -1,9 +1,12 @@
 #include "generador.hh"
 
 namespace {
-auto CaracterRandom(const char &base, const uint8_t &rango) -> char { return static_cast<char>((rand() % rango) + base); }
+auto CaracterRandom(const char &base, const uint8_t &rango) -> char {
+  return static_cast<char>((rand() % rango) + base);
+}
 
-auto ContraFacil(const std::string &contra, const Generador::TipoContra &tipo) -> bool {
+auto ContraFacil(const std::string &contra,
+                 const Generador::TipoContra &tipo) -> bool {
   if (contra.size() <= 4)
     return false;
 
@@ -88,7 +91,8 @@ auto Caracter(const Generador::TipoContra &tipo) -> char {
 }
 }  // namespace
 
-auto Generador::GenerarContra(const size_t &largo, const Generador::TipoContra &tipo) -> std::string {
+auto Generador::GenerarContra(
+    const size_t &largo, const Generador::TipoContra &tipo) -> std::string {
   std::string contra;
   do {
     contra = "";
