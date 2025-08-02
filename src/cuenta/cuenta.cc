@@ -4,25 +4,39 @@
 #include "seguridad.hh"
 
 // Constructores, destructores y operators
-Cuenta::Cuenta(std::array<DataBlock, Cuenta::kCantAtributos> datos, const std::string &key) {
-  id_ = std::string(reinterpret_cast<const char *>(datos[0].str), datos[0].largo);
-  descripcion_ = std::string(reinterpret_cast<const char *>(datos[1].str), datos[1].largo);
-  email_ = std::string(reinterpret_cast<const char *>(datos[2].str), datos[2].largo);
-  nombre_usuario_ = std::string(reinterpret_cast<const char *>(datos[3].str), datos[3].largo);
-  contra_ = std::string(reinterpret_cast<const char *>(datos[4].str), datos[4].largo);
-  extra_ = std::string(reinterpret_cast<const char *>(datos[5].str), datos[5].largo);
+Cuenta::Cuenta(std::array<DataBlock, Cuenta::kCantAtributos> datos,
+               const std::string &key) {
+  id_ =
+      std::string(reinterpret_cast<const char *>(datos[0].str), datos[0].largo);
+  descripcion_ =
+      std::string(reinterpret_cast<const char *>(datos[1].str), datos[1].largo);
+  email_ =
+      std::string(reinterpret_cast<const char *>(datos[2].str), datos[2].largo);
+  nombre_usuario_ =
+      std::string(reinterpret_cast<const char *>(datos[3].str), datos[3].largo);
+  contra_ =
+      std::string(reinterpret_cast<const char *>(datos[4].str), datos[4].largo);
+  extra_ =
+      std::string(reinterpret_cast<const char *>(datos[5].str), datos[5].largo);
 
-  id_tag_ = std::string(reinterpret_cast<const char *>(datos[6].str), datos[6].largo);
-  descripcion_tag_ = std::string(reinterpret_cast<const char *>(datos[7].str), datos[7].largo);
-  email_tag_ = std::string(reinterpret_cast<const char *>(datos[8].str), datos[8].largo);
-  nombre_usuario_tag_ = std::string(reinterpret_cast<const char *>(datos[9].str), datos[9].largo);
-  contra_tag_ = std::string(reinterpret_cast<const char *>(datos[10].str), datos[10].largo);
-  extra_tag_ = std::string(reinterpret_cast<const char *>(datos[11].str), datos[11].largo);
+  id_tag_ =
+      std::string(reinterpret_cast<const char *>(datos[6].str), datos[6].largo);
+  descripcion_tag_ =
+      std::string(reinterpret_cast<const char *>(datos[7].str), datos[7].largo);
+  email_tag_ =
+      std::string(reinterpret_cast<const char *>(datos[8].str), datos[8].largo);
+  nombre_usuario_tag_ =
+      std::string(reinterpret_cast<const char *>(datos[9].str), datos[9].largo);
+  contra_tag_ = std::string(reinterpret_cast<const char *>(datos[10].str),
+                            datos[10].largo);
+  extra_tag_ = std::string(reinterpret_cast<const char *>(datos[11].str),
+                           datos[11].largo);
 
   Desencriptar(key);
 }
 
-Cuenta::Cuenta(std::array<std::string, Cuenta::kCantAtributos> datos, const std::string &key) {
+Cuenta::Cuenta(std::array<std::string, Cuenta::kCantAtributos> datos,
+               const std::string &key) {
   id_ = datos[0];
   descripcion_ = datos[1];
   email_ = datos[2];
@@ -56,7 +70,8 @@ Cuenta::Cuenta(std::array<std::string, Cuenta::kCantAtributos / 2> datos) {
   extra_tag_ = "";
 }
 
-Cuenta::Cuenta(std::array<std::string, (Cuenta::kCantAtributos / 2) - 1> datos) {
+Cuenta::Cuenta(
+    std::array<std::string, (Cuenta::kCantAtributos / 2) - 1> datos) {
   id_ = "";
   descripcion_ = datos[0];
   email_ = datos[1];
@@ -98,7 +113,8 @@ void Cuenta::Encriptar(const std::string &key) {
   id_ = Seguridad::Encriptar(id_, key, id_tag_);
   descripcion_ = Seguridad::Encriptar(descripcion_, key, descripcion_tag_);
   email_ = Seguridad::Encriptar(email_, key, email_tag_);
-  nombre_usuario_ = Seguridad::Encriptar(nombre_usuario_, key, nombre_usuario_tag_);
+  nombre_usuario_ =
+      Seguridad::Encriptar(nombre_usuario_, key, nombre_usuario_tag_);
   contra_ = Seguridad::Encriptar(contra_, key, contra_tag_);
   extra_ = Seguridad::Encriptar(extra_, key, extra_tag_);
 }
@@ -107,12 +123,14 @@ void Cuenta::Desencriptar(const std::string &key) {
   id_ = Seguridad::Desencriptar(id_, key, id_tag_);
   descripcion_ = Seguridad::Desencriptar(descripcion_, key, descripcion_tag_);
   email_ = Seguridad::Desencriptar(email_, key, email_tag_);
-  nombre_usuario_ = Seguridad::Desencriptar(nombre_usuario_, key, nombre_usuario_tag_);
+  nombre_usuario_ =
+      Seguridad::Desencriptar(nombre_usuario_, key, nombre_usuario_tag_);
   contra_ = Seguridad::Desencriptar(contra_, key, contra_tag_);
   extra_ = Seguridad::Desencriptar(extra_, key, extra_tag_);
 }
 
-std::array<DataBlock, Cuenta::kCantAtributos> Cuenta::EscribirDataBlocks(const std::string &key) {
+std::array<DataBlock, Cuenta::kCantAtributos> Cuenta::EscribirDataBlocks(
+    const std::string &key) {
   Encriptar(key);
   std::array<DataBlock, Cuenta::kCantAtributos> cuentas;
 

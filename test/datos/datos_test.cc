@@ -20,7 +20,8 @@ Cuenta CrearCuentaConId(const std::string& id) {
   return c;
 }
 
-auto IdUnico(const std::vector<Cuenta>& cuentas, const std::string& id) -> bool {
+auto IdUnico(const std::vector<Cuenta>& cuentas,
+             const std::string& id) -> bool {
   for (int i = 0; i < cuentas.size(); i++)
     if (cuentas[i].id() == id)
       return false;
@@ -31,7 +32,9 @@ class DatosTest : public ::testing::Test {
  protected:
   static void SetUpTestSuite() { SetRand(); }
 
-  static void TearDownTestSuite() { std::remove(Datos::kNombreArchivo.c_str()); }
+  static void TearDownTestSuite() {
+    std::remove(Datos::kNombreArchivo.c_str());
+  }
 
   inline static const std::string key = "clave_test";
   Datos datos_{key};

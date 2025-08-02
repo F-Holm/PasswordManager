@@ -4,7 +4,8 @@
 
 #include <string>
 
-// Test que verifica que Hash256 genera siempre el mismo resultado para la misma entrada
+// Test que verifica que Hash256 genera siempre el mismo resultado para la misma
+// entrada
 TEST(SeguridadTest, Hash256_Determinismo) {
   std::string input = "mensaje de prueba";
   std::string hash1 = Seguridad::Hash256(input);
@@ -42,9 +43,11 @@ TEST(SeguridadTest, Desencriptar_ClaveErronea) {
   std::string clave_erronea = "clave-incorrecta123";
   std::string tag;
 
-  std::string cifrado = Seguridad::Encriptar(texto_original, clave_correcta, tag);
+  std::string cifrado =
+      Seguridad::Encriptar(texto_original, clave_correcta, tag);
   std::string descifrado = Seguridad::Desencriptar(cifrado, clave_erronea, tag);
 
-  // Puede fallar con string vacío, basura o lanzar excepción (según implementación)
+  // Puede fallar con string vacío, basura o lanzar excepción (según
+  // implementación)
   EXPECT_NE(descifrado, texto_original);
 }

@@ -19,7 +19,8 @@ TEST(SetRandTest, CambiaSecuenciaRand) {
     valores_2[i] = rand();
   }
 
-  // Verificamos que las dos secuencias no sean iguales (probablemente distintas)
+  // Verificamos que las dos secuencias no sean iguales (probablemente
+  // distintas)
   bool iguales = true;
   for (int i = 0; i < 5; ++i) {
     if (valores_1[i] != valores_2[i]) {

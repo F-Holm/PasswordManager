@@ -35,7 +35,9 @@ void Datos::AgregarCuenta(Cuenta& cuenta) {
 
 void Datos::AgregarCuentaConId(Cuenta& cuenta) { cuentas_.push_back(cuenta); }
 
-void Datos::ModificarCuenta(const size_t& index, const Cuenta& cuenta) { cuentas_[index] = cuenta; }
+void Datos::ModificarCuenta(const size_t& index, const Cuenta& cuenta) {
+  cuentas_[index] = cuenta;
+}
 
 void Datos::EliminarCuenta(const std::string& id) {
   const auto i = index(id);

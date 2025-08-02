@@ -9,7 +9,8 @@
 #include "data_block.hh"
 
 // Helper para comparar dos vectores de DataBlock
-bool CompararDataBlocks(const std::vector<DataBlock> &a, const std::vector<DataBlock> &b) {
+bool CompararDataBlocks(const std::vector<DataBlock> &a,
+                        const std::vector<DataBlock> &b) {
   if (a.size() != b.size())
     return false;
   for (size_t i = 0; i < a.size(); ++i) {
@@ -24,7 +25,8 @@ bool CompararDataBlocks(const std::vector<DataBlock> &a, const std::vector<DataB
 TEST(DBTest, EscribirYLeerArchivoBasico) {
   const std::string archivo = "test_db_basico.bin";
 
-  std::vector<DataBlock> datos_original = {DataBlock("hola"), DataBlock("mundo"), DataBlock("1234567890")};
+  std::vector<DataBlock> datos_original = {
+      DataBlock("hola"), DataBlock("mundo"), DataBlock("1234567890")};
 
   DB::Escribir(archivo, datos_original);
 
@@ -65,8 +67,9 @@ TEST(DBTest, LeerArchivoNoExistente) {
 TEST(DBTest, EscribirYLeerDatosConCaracteresEspeciales) {
   const std::string archivo = "test_db_especiales.bin";
 
-  std::vector<DataBlock> datos_original = {DataBlock(std::string("abc\n123\t\0xyz", 11)),  // incluye '\0' en medio
-                                           DataBlock(std::string("\xFF\x00\x01", 3))};
+  std::vector<DataBlock> datos_original = {
+      DataBlock(std::string("abc\n123\t\0xyz", 11)),  // incluye '\0' en medio
+      DataBlock(std::string("\xFF\x00\x01", 3))};
 
   DB::Escribir(archivo, datos_original);
 
