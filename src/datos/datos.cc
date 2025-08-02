@@ -44,7 +44,7 @@ void Datos::EliminarCuenta(const std::string& id) {
 }
 
 void Datos::CargarCuentas(const std::string& key) {
-  std::vector<DataBlock> datos = DB::Leer(Datos::NOMBRE_ARCHIVO);
+  std::vector<DataBlock> datos = DB::Leer(Datos::kNombreArchivo);
 
   for (size_t i = 0; i < datos.size(); i += Cuenta::kCantAtributos) {
     std::array<DataBlock, Cuenta::kCantAtributos> c;
@@ -65,5 +65,5 @@ void Datos::GuardarCuentas(const std::string& key) {
     datos.insert(datos.end(), begin(arr), end(arr));
   }
 
-  DB::Escribir(Datos::NOMBRE_ARCHIVO, datos);
+  DB::Escribir(Datos::kNombreArchivo, datos);
 }
