@@ -14,7 +14,7 @@ auto DB::Leer(const std::string &nom_arch) -> std::vector<DataBlock> {
     arch.read(reinterpret_cast<char *>(&largo), sizeof(size_t));
     if (!arch) {
       break;
-  }
+    }
 
     char *str = new char[largo];
     arch.read(reinterpret_cast<char *>(str), largo);
@@ -29,7 +29,7 @@ auto DB::Leer(const std::string &nom_arch) -> std::vector<DataBlock> {
   return datos;
 }
 
-void DB::Escribir(const std::string& nom_arch, const std::vector<DataBlock> &datos) {
+void DB::Escribir(const std::string &nom_arch, const std::vector<DataBlock> &datos) {
   std::ofstream arch(nom_arch, std::ios::binary);
   if (!arch) {
     return;

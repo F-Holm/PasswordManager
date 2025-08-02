@@ -1,33 +1,33 @@
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "cuenta.hh"
 
 class Datos {
-public:
+ public:
   Datos(const std::string &key);
   ~Datos();
 
   inline static const std::string NOMBRE_ARCHIVO = "FEDERICO.HOLM";
 
-  auto index(const std::string& id) const -> int;
+  auto index(const std::string &id) const -> int;
   auto cuentas() const -> std::vector<Cuenta> { return cuentas_; };
 
-  void AgrCuenta(Cuenta &cuenta);
-  void AgrCuentaConId(Cuenta &cuenta);
-  void ModCuenta(const size_t& index, const Cuenta& cuenta);
-  void ElimCuenta(const std::string &id);
+  void AgregarCuenta(Cuenta &cuenta);
+  void AgregarCuentaConId(Cuenta &cuenta);
+  void ModificarCuenta(const size_t &index, const Cuenta &cuenta);
+  void EliminarCuenta(const std::string &id);
 
   void CargarCuentas(const std::string &key);
   void GuardarCuentas(const std::string &key);
 
-  private:
+ private:
   std::vector<Cuenta> cuentas_;
 
-  void SetCuentas(const std::vector<Cuenta> &cuentas) { cuentas_ = cuentas;}
+  void SetCuentas(const std::vector<Cuenta> &cuentas) { cuentas_ = cuentas; }
 
-  auto IdUnico(const std::string& id) const -> bool;
-  auto GenIdUnico() const -> std::string;
+  auto IdUnico(const std::string &id) const -> bool;
+  auto GenerarIdUnico() const -> std::string;
 };

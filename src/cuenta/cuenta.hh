@@ -1,20 +1,20 @@
 #pragma once
 
 #include <array>
-#include <string>
 #include <cstdint>
+#include <string>
 
-#include "db.hh"
 #include "data_block.hh"
+#include "db.hh"
 
 class Cuenta {
-public:
+ public:
   inline static constexpr uint8_t kCantAtributos = 12;
 
   Cuenta(std::array<DataBlock, Cuenta::kCantAtributos> datos, const std::string &key);
   Cuenta(std::array<std::string, Cuenta::kCantAtributos> datos, const std::string &key);
-  explicit Cuenta(std::array<std::string, Cuenta::kCantAtributos / 2> datos); // Con id
-  explicit Cuenta(std::array<std::string, (Cuenta::kCantAtributos / 2) - 1> datos); // Sin id
+  explicit Cuenta(std::array<std::string, Cuenta::kCantAtributos / 2> datos);        // Con id
+  explicit Cuenta(std::array<std::string, (Cuenta::kCantAtributos / 2) - 1> datos);  // Sin id
   ~Cuenta();
   auto operator=(const Cuenta &other) -> Cuenta &;
 
@@ -26,7 +26,7 @@ public:
   void SetContra(const std::string &contra) { contra_ = contra; };
   void SetExtra(const std::string &extra) { extra_ = extra; };
 
-  //Getters
+  // Getters
   auto id() const -> std::string { return id_; };
   auto descripcion() const -> std::string { return descripcion_; };
   auto email() const -> std::string { return email_; };
@@ -47,7 +47,7 @@ public:
   void Encriptar(const std::string &key);
   void Desencriptar(const std::string &key);
 
-  private:
+ private:
   std::string id_, descripcion_, email_, nombre_usuario_, contra_, extra_;
   std::string id_tag_, descripcion_tag_, email_tag_, nombre_usuario_tag_, contra_tag_, extra_tag_;
 

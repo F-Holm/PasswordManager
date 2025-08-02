@@ -9,3 +9,5 @@ target_link_libraries(datos_test PRIVATE
 )
 
 AddTests(datos_test)
+
+Format(datos_test .)

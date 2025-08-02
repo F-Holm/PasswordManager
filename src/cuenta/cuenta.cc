@@ -1,7 +1,7 @@
 #include "cuenta.hh"
 
-#include "seguridad.hh"
 #include "data_block.hh"
+#include "seguridad.hh"
 
 // Constructores, destructores y operators
 Cuenta::Cuenta(std::array<DataBlock, Cuenta::kCantAtributos> datos, const std::string &key) {

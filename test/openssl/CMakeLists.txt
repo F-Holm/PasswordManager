@@ -7,3 +7,5 @@ target_link_libraries(openssl_test PRIVATE
 )
 
 AddTests(openssl_test)
+
+Format(openssl_test .)

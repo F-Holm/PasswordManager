@@ -7,3 +7,5 @@ target_link_libraries(utils_test PRIVATE
 )
 
 AddTests(utils_test)
+
+Format(utils_test .)

@@ -3,3 +3,5 @@ add_library(data_block STATIC
 )
 
 target_include_directories(data_block PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+Format(data_block .)

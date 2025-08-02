@@ -8,3 +8,5 @@ target_link_libraries(gestor_contra
     PUBLIC utils
     PUBLIC datos
 )
+
+Format(gestor_contra .)

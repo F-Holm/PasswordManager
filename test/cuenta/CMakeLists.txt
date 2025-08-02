@@ -8,3 +8,5 @@ target_link_libraries(cuenta_test PRIVATE
 )
 
 AddTests(cuenta_test)
+
+Format(cuenta_test .)

@@ -8,3 +8,5 @@ target_link_libraries(db_test PRIVATE
 )
 
 AddTests(db_test)
+
+Format(db_test .)
