@@ -31,7 +31,7 @@ class DatosTest : public ::testing::Test {
  protected:
   static void SetUpTestSuite() { SetRand(); }
 
-  static void TearDownTestSuite() { std::remove(Datos::NOMBRE_ARCHIVO.c_str()); }
+  static void TearDownTestSuite() { std::remove(Datos::kNombreArchivo.c_str()); }
 
   inline static const std::string key = "clave_test";
   Datos datos_{key};

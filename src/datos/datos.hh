@@ -10,7 +10,7 @@ class Datos {
   Datos(const std::string &key);
   ~Datos();
 
-  inline static const std::string NOMBRE_ARCHIVO = "FEDERICO.HOLM";
+  inline static const std::string kNombreArchivo = "FEDERICO.HOLM";
 
   auto index(const std::string &id) const -> int;
   auto cuentas() const -> std::vector<Cuenta> { return cuentas_; };
