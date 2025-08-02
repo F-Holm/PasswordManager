@@ -7,3 +7,5 @@ target_link_libraries(seguridad_test PRIVATE
 )
 
 AddTests(seguridad_test)
+
+Format(seguridad_test .)

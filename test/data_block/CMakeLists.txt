@@ -7,3 +7,5 @@ target_link_libraries(data_block_test PRIVATE
 )
 
 AddTests(data_block_test)
+
+Format(data_block_test .)

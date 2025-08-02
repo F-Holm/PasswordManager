@@ -7,3 +7,5 @@ target_link_libraries(generador_test PRIVATE
 )
 
 AddTests(generador_test)
+
+Format(generador_test .)

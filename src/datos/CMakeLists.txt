@@ -8,3 +8,5 @@ target_link_libraries(datos
     PRIVATE db
     PUBLIC cuenta
 )
+
+Format(datos .)

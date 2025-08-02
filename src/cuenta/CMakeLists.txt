@@ -9,3 +9,5 @@ target_link_libraries(cuenta
     PUBLIC db
     PRIVATE seguridad
 )
+
+Format(cuenta .)

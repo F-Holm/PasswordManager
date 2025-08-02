@@ -1,8 +1,8 @@
 ﻿#include "gestor_contra.hh"
 
-#include "set_rand.hh"
-
 #include <iostream>
+
+#include "set_rand.hh"
 
 auto run() -> int {
   SetRand();

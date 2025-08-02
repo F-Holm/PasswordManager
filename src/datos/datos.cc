@@ -12,7 +12,7 @@ auto Datos::IdUnico(const std::string& id) const -> bool {
   return true;
 }
 
-auto Datos::GenIdUnico() const -> std::string {
+auto Datos::GenerarIdUnico() const -> std::string {
   std::string str;
   do {
     int num = rand();
@@ -28,22 +28,18 @@ auto Datos::index(const std::string& id) const -> int {
   return -1;
 }
 
-void Datos::AgrCuenta(Cuenta &cuenta) {
-  cuenta.SetId(GenIdUnico());
+void Datos::AgregarCuenta(Cuenta& cuenta) {
+  cuenta.SetId(GenerarIdUnico());
   cuentas_.push_back(cuenta);
 }
 
-void Datos::AgrCuentaConId(Cuenta &cuenta) {
-  cuentas_.push_back(cuenta);
-}
+void Datos::AgregarCuentaConId(Cuenta& cuenta) { cuentas_.push_back(cuenta); }
 
-void Datos::ModCuenta(const size_t& index, const Cuenta& cuenta) {
-  cuentas_[index] = cuenta;
-}
+void Datos::ModificarCuenta(const size_t& index, const Cuenta& cuenta) { cuentas_[index] = cuenta; }
 
-void Datos::ElimCuenta(const std::string& id) {
+void Datos::EliminarCuenta(const std::string& id) {
   const auto i = index(id);
-  if(i != -1)
+  if (i != -1)
     cuentas_.erase(cuentas_.begin() + i);
 }
 

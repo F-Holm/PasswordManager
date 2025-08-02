@@ -8,3 +8,5 @@ target_include_directories(openssl_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(openssl_adapter
     PRIVATE openssl_static
 )
+
+Format(openssl_adapter .)

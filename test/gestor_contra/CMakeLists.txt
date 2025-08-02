@@ -7,3 +7,5 @@ target_link_libraries(gestor_contra_test PRIVATE
 )
 
 AddTests(gestor_contra_test)
+
+Format(gestor_contra_test .)
