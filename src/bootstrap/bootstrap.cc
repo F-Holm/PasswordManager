@@ -1,5 +1,3 @@
 #include "gestor_contra.hh"
 
-auto main() -> int{
-    return run();
-}
+auto main() -> int { return run(); }

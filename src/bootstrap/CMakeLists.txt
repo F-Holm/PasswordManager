@@ -5,3 +5,5 @@ add_executable(GestorContra
 target_link_libraries(GestorContra
     PRIVATE gestor_contra
 )
+
+Format(GestorContra .)
