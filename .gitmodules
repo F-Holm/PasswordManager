@@ -2,3 +2,7 @@
 	path = deps/openssl/openssl-src
 	url = https://github.com/openssl/openssl.git
 	branch = master
+[submodule "deps/googletest/googletest-src"]
+	path = deps/googletest/googletest-src
+	url = https://github.com/google/googletest.git
+	branch = main
