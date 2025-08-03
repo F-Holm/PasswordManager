@@ -1,5 +1,6 @@
-set(OPENSSL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src/")
-set(OPENSSL_BUILD_DIR "${PROJECT_BINARY_DIR}/deps_/openssl")
+set(OPENSSL_REPO_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src/")
+set(OPENSSL_SOURCE_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-src/")
+set(OPENSSL_BUILD_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-build")
 
 # Configurar comandos de compilación
 set(OPENSSL_ENV_VARS "export CC=${CMAKE_C_COMPILER}")
@@ -13,6 +14,9 @@ if(IS_DIRECTORY "${OPENSSL_BUILD_DIR}")
     message(STATUS "OpenSSL ya está compilado")
 else()
     # Compilación
+    message(STATUS "Copiando OpenSSL...")
+    file(MAKE_DIRECTORY "${OPENSSL_SOURCE_DIR}")
+    file(COPY "${OPENSSL_REPO_DIR}/" DESTINATION "${OPENSSL_SOURCE_DIR}")
     message(STATUS "Compilando OpenSSL...")
     execute_process(
         COMMAND bash -c "${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
