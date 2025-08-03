@@ -1,5 +1,6 @@
 set(GOOGLETEST_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/googletest/googletest-src")
 
+# Check GoogleTest submodule
 if(NOT IS_DIRECTORY "${GOOGLETEST_SOURCE_DIR}" OR NOT EXISTS "${GOOGLETEST_SOURCE_DIR}/CMakeLists.txt")
     message(FATAL_ERROR "GoogleTest no está en clonado"
     "\nDescargá los submódulos de git"
