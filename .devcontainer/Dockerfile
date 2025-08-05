@@ -11,6 +11,7 @@ RUN apt update && apt install -y \
     clang-tidy \
     clang-tools \
     llvm \
+    lcov \
     valgrind \
     doxygen \
     graphviz \

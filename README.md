@@ -26,6 +26,7 @@ Para evitar instalar todas las dependencias se puede utilizar `dev containers`
 - `valgrind`
 - `doxygen`
 - `llvm-cov`
+- `lcov`
 - `graphviz`
 - `ccache`
 - `gcc`
