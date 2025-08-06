@@ -4,13 +4,6 @@ function(AddMemcheck target)
     return()
   endif()
 
-  include(FetchContent)
-  FetchContent_Declare(
-    memcheck-cover
-    GIT_REPOSITORY https://github.com/Farigh/memcheck-cover.git
-    GIT_TAG        release-1.2
-  )
-  FetchContent_MakeAvailable(memcheck-cover)
   set(MEMCHECK_PATH ${memcheck-cover_SOURCE_DIR}/bin)
 
   add_custom_target(memcheck

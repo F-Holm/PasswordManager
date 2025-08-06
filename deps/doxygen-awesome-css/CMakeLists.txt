@@ -8,7 +8,8 @@ if(NOT IS_DIRECTORY "${DOXYGEN_AWESOME_CSS_SOURCE_DIR}" OR NOT EXISTS "${DOXYGEN
 endif()
 
 include(FetchContent)
-FetchContent_Declare(doxygen-awesome-css
+FetchContent_Declare(
+  doxygen-awesome-css
   SOURCE_DIR "${DOXYGEN_AWESOME_CSS_SOURCE_DIR}"
 )
 FetchContent_MakeAvailable(doxygen-awesome-css)
