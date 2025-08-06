@@ -2,13 +2,7 @@ set(OPENSSL_REPO_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src/")
 set(OPENSSL_SOURCE_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-src/")
 set(OPENSSL_BUILD_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-build")
 
-# Check OpenSSL submodule
-if(NOT IS_DIRECTORY "${OPENSSL_REPO_DIR}" OR NOT EXISTS "${OPENSSL_REPO_DIR}/README.md")
-    message(FATAL_ERROR "OpenSSL no está en clonado"
-    "\nDescargá los submódulos de git"
-    "\nLo podés hacer mediante 'git submodule update --init --recursive'"
-    "\nTambién podés usar los scripts de 'update_modules.sh' o 'reset_modules.sh'")
-endif()
+verify_submodule_cloned("OpenSSL" "${OPENSSL_REPO_DIR}" "README.md")
 
 # Configurar comandos de compilación
 set(OPENSSL_ENV_VARS "export CC=${CMAKE_C_COMPILER}")
