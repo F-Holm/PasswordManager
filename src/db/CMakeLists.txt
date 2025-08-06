@@ -9,3 +9,4 @@ target_link_libraries(db
 )
 
 Format(db .)
+AddCppCheck(db)

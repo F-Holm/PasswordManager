@@ -10,3 +10,4 @@ target_link_libraries(openssl_adapter
 )
 
 Format(openssl_adapter .)
+AddCppCheck(openssl_adapter)

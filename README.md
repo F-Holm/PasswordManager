@@ -27,6 +27,7 @@ Para evitar instalar todas las dependencias se puede utilizar `dev containers`
 - `doxygen`
 - `llvm-cov`
 - `lcov`
+- `cppcheck`
 - `graphviz`
 - `ccache`
 - `gcc`

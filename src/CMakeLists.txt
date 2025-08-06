@@ -1,3 +1,5 @@
+include(CppCheck)
+
 add_subdirectory(bootstrap)
 add_subdirectory(cuenta)
 add_subdirectory(data_block)
