@@ -19,14 +19,6 @@ function(Doxygen input output)
 endfunction()
 
 macro(UseDoxygenAwesomeCss)
-  include(FetchContent)
-  FetchContent_Declare(doxygen-awesome-css
-    GIT_REPOSITORY
-      https://github.com/jothepro/doxygen-awesome-css.git
-    GIT_TAG
-      v2.3.1
-  )
-  FetchContent_MakeAvailable(doxygen-awesome-css)
   set(DOXYGEN_GENERATE_TREEVIEW     YES)
   set(DOXYGEN_HAVE_DOT              YES)
   set(DOXYGEN_DOT_IMAGE_FORMAT      svg)
