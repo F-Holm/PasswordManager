@@ -12,6 +12,7 @@ RUN apt update && apt install -y \
     clang-tools \
     llvm \
     lcov \
+    cppcheck \
     valgrind \
     doxygen \
     graphviz \

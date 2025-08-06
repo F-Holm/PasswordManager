@@ -10,3 +10,4 @@ target_link_libraries(datos
 )
 
 Format(datos .)
+AddCppCheck(datos)
