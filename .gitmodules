@@ -10,3 +10,6 @@
 	path = deps/doxygen-awesome-css/doxygen-awesome-css-src
 	url = https://github.com/jothepro/doxygen-awesome-css.git
 	branch = main
+[submodule "deps/memcheck-cover/memcheck-cover-src"]
+	path = deps/memcheck-cover/memcheck-cover-src
+	url = https://github.com/Farigh/memcheck-cover.git
