@@ -1,18 +1,18 @@
 function(AddMemcheck target)
-  if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    message(STATUS "Memcheck no se configura porque no estás en Linux.")
-    return()
-  endif()
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        message(STATUS "Memcheck no se configura porque no estás en Linux.")
+        return()
+    endif()
 
-  set(MEMCHECK_PATH ${memcheck-cover_SOURCE_DIR}/bin)
+    set(MEMCHECK_PATH ${memcheck-cover_SOURCE_DIR}/bin)
 
-  add_custom_target(memcheck
-    COMMAND ${MEMCHECK_PATH}/memcheck_runner.sh -o
-            "${CMAKE_BINARY_DIR}/valgrind/report"
-            -- $<TARGET_FILE:${target}>
-    COMMAND ${MEMCHECK_PATH}/generate_html_report.sh
-            -i "${CMAKE_BINARY_DIR}/valgrind"
-            -o "${CMAKE_BINARY_DIR}/valgrind"
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  )
+    add_custom_target(memcheck
+        COMMAND ${MEMCHECK_PATH}/memcheck_runner.sh -o
+                "${CMAKE_BINARY_DIR}/valgrind/report"
+                -- $<TARGET_FILE:${target}>
+        COMMAND ${MEMCHECK_PATH}/generate_html_report.sh
+                -i "${CMAKE_BINARY_DIR}/valgrind"
+                -o "${CMAKE_BINARY_DIR}/valgrind"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
 endfunction()
