@@ -1,15 +1,10 @@
-set(WXWIDGETS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/googletest/googletest-src")
+set(WX_WIDGETS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/wx-widgets-src")
 
-verify_submodule_cloned("GoogleTest" "${GOOGLETEST_SOURCE_DIR}" "CMakeLists.txt")
+verify_submodule_cloned("wxWidgets" "${WX_WIDGETS_SOURCE_DIR}" "CMakeLists.txt")
 
 include(FetchContent)
 FetchContent_Declare(
-  googletest
-  SOURCE_DIR "${GOOGLETEST_SOURCE_DIR}"
+  wx-widgets
+  SOURCE_DIR "${WX_WIDGETS_SOURCE_DIR}"
 )
-# For Windows: Prevent overriding the parent project's
-# compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-option(INSTALL_GMOCK "Install GMock" OFF)
-option(INSTALL_GTEST "Install GTest" OFF)
-FetchContent_MakeAvailable(googletest)
+FetchContent_MakeAvailable(wx-widgets)
