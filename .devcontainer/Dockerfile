@@ -24,7 +24,16 @@ RUN apt update && apt install -y \
     gcc-arm-linux-gnueabihf \
     g++-arm-linux-gnueabihf \
     gcc-aarch64-linux-gnu \
-    g++-aarch64-linux-gnu
+    g++-aarch64-linux-gnu \
+    pkg-config \
+    libgtk-3-dev \
+    libcurl4-openssl-dev \
+    libsecret-1-dev \
+    libwebkit2gtk-4.0-dev \
+    libsoup2.4-dev \
+    libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+    libsdl2-dev \
+    libnotify-dev
 
 # Scripts
 RUN git clone https://github.com/F-Holm/Paquetes-Ubuntu.git
