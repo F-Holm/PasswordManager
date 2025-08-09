@@ -1,4 +1,5 @@
 include(CppCheck)
+include(Doxygen)
 
 add_subdirectory(bootstrap)
 add_subdirectory(cuenta)
@@ -10,3 +11,5 @@ add_subdirectory(gestor_contra)
 add_subdirectory(openssl_adapter)
 add_subdirectory(seguridad)
 add_subdirectory(utils)
+
+Doxygen(src docs)
