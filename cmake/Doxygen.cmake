@@ -1,17 +1,21 @@
+find_package(Doxygen REQUIRED)
+
 function(Doxygen input output)
-    find_package(Doxygen)
-    if (NOT DOXYGEN_FOUND)
-        add_custom_target(doxygen COMMAND false COMMENT "Doxygen not found")
-        return()
+    FetchContent_GetProperties(doxygen-awesome-css doxygen-awesome-css_SOURCE_DIR doxygen-awesome-css_AWESOME_CSS_DIR)
+    set(NAME "doxygen-${target}")
+    set(DOXYGEN_GENERATE_HTML YES)
+    set(DOXYGEN_HTML_OUTPUT   "${PROJECT_BINARY_DIR}/${output}")
+    file(MAKE_DIRECTORY "${DOXYGEN_HTML_OUTPUT}")
+
+    if(NOT EXISTS "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css")
+        message(FATAL_ERROR "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css no encontrado en ${doxygen-awesome-css_SOURCE_DIR}")
     endif()
 
-    set(DOXYGEN_GENERATE_HTML YES)
-    set(DOXYGEN_HTML_OUTPUT   ${PROJECT_BINARY_DIR}/${output})
 
     UseDoxygenAwesomeCss()
     UseDoxygenAwesomeExtensions()
 
-    doxygen_add_docs(doxygen
+    doxygen_add_docs("doxygen-${target}"
         ${PROJECT_SOURCE_DIR}/${input}
         COMMENT "Generate HTML documentation"
     )
@@ -23,20 +27,20 @@ macro(UseDoxygenAwesomeCss)
     set(DOXYGEN_DOT_IMAGE_FORMAT      svg)
     set(DOXYGEN_DOT_TRANSPARENT       YES)
     set(DOXYGEN_HTML_EXTRA_STYLESHEET
-        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css)
+        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css")
 endmacro()
 
 macro(UseDoxygenAwesomeExtensions)
     set(DOXYGEN_HTML_EXTRA_FILES
-        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-darkmode-toggle.js
-        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-fragment-copy-button.js
-        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-paragraph-link.js
-        ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-interactive-toc.js
+        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-darkmode-toggle.js"
+        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-fragment-copy-button.js"
+        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-paragraph-link.js"
+        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-interactive-toc.js"
     )
 
     execute_process(COMMAND doxygen -w html header.html footer.html style.css
-                    WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
+                    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
     execute_process(COMMAND sed -i "/<\\/head>/r ${PROJECT_SOURCE_DIR}/cmake/extra_headers.html" header.html
-                    WORKING_DIRECTORY ${PROJECT_BINARY_DIR})
-    set(DOXYGEN_HTML_HEADER ${PROJECT_BINARY_DIR}/header.html)
+                    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
+    set(DOXYGEN_HTML_HEADER "${PROJECT_BINARY_DIR}/header.html")
 endmacro()
