@@ -1,5 +1,5 @@
 set(MEMCHECK_COVER_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/memcheck-cover/memcheck-cover-src")
-
+require_linux_x64("memcheck-cover")
 verify_submodule_cloned("memcheck-cover" "${MEMCHECK_COVER_SOURCE_DIR}" "README.md")
 
 include(FetchContent)
