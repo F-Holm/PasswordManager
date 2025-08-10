@@ -1,3 +1,6 @@
+include(Platform)
+require_linux_x64("GoogleTest")
+
 set(GOOGLETEST_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/googletest/googletest-src")
 
 verify_submodule_cloned("GoogleTest" "${GOOGLETEST_SOURCE_DIR}" "CMakeLists.txt")

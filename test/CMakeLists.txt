@@ -1,3 +1,6 @@
+include(Platform)
+require_linux_x64(GoogleTest)
+
 include(Testing)
 
 add_subdirectory(cuenta)
