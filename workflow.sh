@@ -1,2 +1,2 @@
 #!/bin/bash
-cmake --workflow --preset wf-linux-x64-debug-clang
+./build-all.sh -l -x64 -d -c
