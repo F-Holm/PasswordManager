@@ -5,7 +5,7 @@
     ],
     "configurePresets": [
         {
-            "name": "linux-x64-release",
+            "name": "linux-x64-release-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
@@ -16,7 +16,18 @@
             ]
         },
         {
-            "name": "linux-x64-debug",
+            "name": "linux-x64-release-gcc",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "x64",
+                "gcc-linux-x64",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "linux-x64-debug-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
@@ -27,7 +38,18 @@
             ]
         },
         {
-            "name": "linux-x86-release",
+            "name": "linux-x64-debug-gcc",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "x64",
+                "gcc-linux-x64",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "linux-x86-release-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
@@ -38,7 +60,18 @@
             ]
         },
         {
-            "name": "linux-x86-debug",
+            "name": "linux-x86-release-gcc",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "x86",
+                "gcc-linux-x86",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "linux-x86-debug-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
@@ -49,7 +82,18 @@
             ]
         },
         {
-            "name": "linux-arm64-release",
+            "name": "linux-x86-debug-gcc",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "x86",
+                "gcc-linux-x86",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "linux-arm64-release-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
@@ -60,7 +104,18 @@
             ]
         },
         {
-            "name": "linux-arm64-debug",
+            "name": "linux-arm64-release-gcc",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "arm64",
+                "gcc-linux-arm64",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "linux-arm64-debug-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
@@ -71,7 +126,18 @@
             ]
         },
         {
-            "name": "linux-arm-release",
+            "name": "linux-arm64-debug-gcc",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "arm64",
+                "gcc-linux-arm64",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "linux-arm-release-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
@@ -82,12 +148,34 @@
             ]
         },
         {
-            "name": "linux-arm-debug",
+            "name": "linux-arm-release-gcc",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "arm",
+                "gcc-linux-arm",
+                "default",
+                "release"
+            ]
+        },
+        {
+            "name": "linux-arm-debug-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
                 "arm",
                 "clang-linux-arm",
+                "default",
+                "debug"
+            ]
+        },
+        {
+            "name": "linux-arm-debug-gcc",
+            "inherits": [
+                "host-linux",
+                "target-linux",
+                "arm",
+                "gcc-linux-arm",
                 "default",
                 "debug"
             ]
@@ -95,57 +183,113 @@
     ],
     "buildPresets": [
         {
-            "name": "build-linux-x64-release",
-            "configurePreset": "linux-x64-release",
+            "name": "build-linux-x64-release-clang",
+            "configurePreset": "linux-x64-release-clang",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-x64-debug",
-            "configurePreset": "linux-x64-debug",
+            "name": "build-linux-x64-release-gcc",
+            "configurePreset": "linux-x64-release-gcc",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-x86-release",
-            "configurePreset": "linux-x86-release",
+            "name": "build-linux-x64-debug-clang",
+            "configurePreset": "linux-x64-debug-clang",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-x86-debug",
-            "configurePreset": "linux-x86-debug",
+            "name": "build-linux-x64-debug-gcc",
+            "configurePreset": "linux-x64-debug-gcc",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-arm64-release",
-            "configurePreset": "linux-arm64-release",
+            "name": "build-linux-x86-release-clang",
+            "configurePreset": "linux-x86-release-clang",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-arm64-debug",
-            "configurePreset": "linux-arm64-debug",
+            "name": "build-linux-x86-release-gcc",
+            "configurePreset": "linux-x86-release-gcc",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-arm-release",
-            "configurePreset": "linux-arm-release",
+            "name": "build-linux-x86-debug-clang",
+            "configurePreset": "linux-x86-debug-clang",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-arm-debug",
-            "configurePreset": "linux-arm-debug",
+            "name": "build-linux-x86-debug-gcc",
+            "configurePreset": "linux-x86-debug-gcc",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm64-release-clang",
+            "configurePreset": "linux-arm64-release-clang",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm64-release-gcc",
+            "configurePreset": "linux-arm64-release-gcc",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm64-debug-clang",
+            "configurePreset": "linux-arm64-debug-clang",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm64-debug-gcc",
+            "configurePreset": "linux-arm64-debug-gcc",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm-release-clang",
+            "configurePreset": "linux-arm-release-clang",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm-release-gcc",
+            "configurePreset": "linux-arm-release-gcc",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm-debug-clang",
+            "configurePreset": "linux-arm-debug-clang",
+            "inherits": [
+                "host-linux"
+            ]
+        },
+        {
+            "name": "build-linux-arm-debug-gcc",
+            "configurePreset": "linux-arm-debug-gcc",
             "inherits": [
                 "host-linux"
             ]
@@ -153,64 +297,128 @@
     ],
     "testPresets": [
         {
-            "name": "test-linux-x64-release",
-            "configurePreset": "linux-x64-release",
+            "name": "test-linux-x64-release-clang",
+            "configurePreset": "linux-x64-release-clang",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-x64-debug",
-            "configurePreset": "linux-x64-debug",
+            "name": "test-linux-x64-release-gcc",
+            "configurePreset": "linux-x64-release-gcc",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-x86-release",
-            "configurePreset": "linux-x86-release",
+            "name": "test-linux-x64-debug-clang",
+            "configurePreset": "linux-x64-debug-clang",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-x86-debug",
-            "configurePreset": "linux-x86-debug",
+            "name": "test-linux-x64-debug-gcc",
+            "configurePreset": "linux-x64-debug-gcc",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-arm64-release",
-            "configurePreset": "linux-arm64-release",
+            "name": "test-linux-x86-release-clang",
+            "configurePreset": "linux-x86-release-clang",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-arm64-debug",
-            "configurePreset": "linux-arm64-debug",
+            "name": "test-linux-x86-release-gcc",
+            "configurePreset": "linux-x86-release-gcc",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-arm-release",
-            "configurePreset": "linux-arm-release",
+            "name": "test-linux-x86-debug-clang",
+            "configurePreset": "linux-x86-debug-clang",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-arm-debug",
-            "configurePreset": "linux-arm-debug",
+            "name": "test-linux-x86-debug-gcc",
+            "configurePreset": "linux-x86-debug-gcc",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm64-release-clang",
+            "configurePreset": "linux-arm64-release-clang",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm64-release-gcc",
+            "configurePreset": "linux-arm64-release-gcc",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm64-debug-clang",
+            "configurePreset": "linux-arm64-debug-clang",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm64-debug-gcc",
+            "configurePreset": "linux-arm64-debug-gcc",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm-release-clang",
+            "configurePreset": "linux-arm-release-clang",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm-release-gcc",
+            "configurePreset": "linux-arm-release-gcc",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm-debug-clang",
+            "configurePreset": "linux-arm-debug-clang",
+            "inherits": [
+                "host-linux",
+                "options"
+            ]
+        },
+        {
+            "name": "test-linux-arm-debug-gcc",
+            "configurePreset": "linux-arm-debug-gcc",
             "inherits": [
                 "host-linux",
                 "options"
