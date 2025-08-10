@@ -137,45 +137,45 @@
             ]
         },
         {
-            "name": "windows-arm-release-clang",
+            "name": "windows-armv7-release-clang",
             "inherits": [
                 "host-linux",
                 "target-windows",
-                "arm",
-                "mingw-clang-linux-arm",
+                "armv7",
+                "mingw-clang-linux-armv7",
                 "default",
                 "release"
             ]
         },
         {
-            "name": "windows-arm-release-gcc",
+            "name": "windows-armv7-release-gcc",
             "inherits": [
                 "host-linux",
                 "target-windows",
-                "arm",
-                "mingw-gcc-linux-arm",
+                "armv7",
+                "mingw-gcc-linux-armv7",
                 "default",
                 "release"
             ]
         },
         {
-            "name": "windows-arm-debug-clang",
+            "name": "windows-armv7-debug-clang",
             "inherits": [
                 "host-linux",
                 "target-windows",
-                "arm",
-                "mingw-clang-linux-arm",
+                "armv7",
+                "mingw-clang-linux-armv7",
                 "default",
                 "debug"
             ]
         },
         {
-            "name": "windows-arm-debug-gcc",
+            "name": "windows-armv7-debug-gcc",
             "inherits": [
                 "host-linux",
                 "target-windows",
-                "arm",
-                "mingw-gcc-linux-arm",
+                "armv7",
+                "mingw-gcc-linux-armv7",
                 "default",
                 "debug"
             ]
@@ -267,29 +267,29 @@
             ]
         },
         {
-            "name": "build-windows-arm-release-clang",
-            "configurePreset": "windows-arm-release-clang",
+            "name": "build-windows-armv7-release-clang",
+            "configurePreset": "windows-armv7-release-clang",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-windows-arm-release-gcc",
-            "configurePreset": "windows-arm-release-gcc",
+            "name": "build-windows-armv7-release-gcc",
+            "configurePreset": "windows-armv7-release-gcc",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-windows-arm-debug-clang",
-            "configurePreset": "windows-arm-debug-clang",
+            "name": "build-windows-armv7-debug-clang",
+            "configurePreset": "windows-armv7-debug-clang",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-windows-arm-debug-gcc",
-            "configurePreset": "windows-arm-debug-gcc",
+            "name": "build-windows-armv7-debug-gcc",
+            "configurePreset": "windows-armv7-debug-gcc",
             "inherits": [
                 "host-linux"
             ]
@@ -393,32 +393,32 @@
             ]
         },
         {
-            "name": "test-windows-arm-release-clang",
-            "configurePreset": "windows-arm-release-clang",
+            "name": "test-windows-armv7-release-clang",
+            "configurePreset": "windows-armv7-release-clang",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-windows-arm-release-gcc",
-            "configurePreset": "windows-arm-release-gcc",
+            "name": "test-windows-armv7-release-gcc",
+            "configurePreset": "windows-armv7-release-gcc",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-windows-arm-debug-clang",
-            "configurePreset": "windows-arm-debug-clang",
+            "name": "test-windows-armv7-debug-clang",
+            "configurePreset": "windows-armv7-debug-clang",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-windows-arm-debug-gcc",
-            "configurePreset": "windows-arm-debug-gcc",
+            "name": "test-windows-armv7-debug-gcc",
+            "configurePreset": "windows-armv7-debug-gcc",
             "inherits": [
                 "host-linux",
                 "options"

@@ -137,45 +137,45 @@
             ]
         },
         {
-            "name": "linux-arm-release-clang",
+            "name": "linux-armv7-release-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "arm",
-                "clang-linux-arm",
+                "armv7",
+                "clang-linux-armv7",
                 "default",
                 "release"
             ]
         },
         {
-            "name": "linux-arm-release-gcc",
+            "name": "linux-armv7-release-gcc",
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "arm",
-                "gcc-linux-arm",
+                "armv7",
+                "gcc-linux-armv7",
                 "default",
                 "release"
             ]
         },
         {
-            "name": "linux-arm-debug-clang",
+            "name": "linux-armv7-debug-clang",
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "arm",
-                "clang-linux-arm",
+                "armv7",
+                "clang-linux-armv7",
                 "default",
                 "debug"
             ]
         },
         {
-            "name": "linux-arm-debug-gcc",
+            "name": "linux-armv7-debug-gcc",
             "inherits": [
                 "host-linux",
                 "target-linux",
-                "arm",
-                "gcc-linux-arm",
+                "armv7",
+                "gcc-linux-armv7",
                 "default",
                 "debug"
             ]
@@ -267,29 +267,29 @@
             ]
         },
         {
-            "name": "build-linux-arm-release-clang",
-            "configurePreset": "linux-arm-release-clang",
+            "name": "build-linux-armv7-release-clang",
+            "configurePreset": "linux-armv7-release-clang",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-arm-release-gcc",
-            "configurePreset": "linux-arm-release-gcc",
+            "name": "build-linux-armv7-release-gcc",
+            "configurePreset": "linux-armv7-release-gcc",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-arm-debug-clang",
-            "configurePreset": "linux-arm-debug-clang",
+            "name": "build-linux-armv7-debug-clang",
+            "configurePreset": "linux-armv7-debug-clang",
             "inherits": [
                 "host-linux"
             ]
         },
         {
-            "name": "build-linux-arm-debug-gcc",
-            "configurePreset": "linux-arm-debug-gcc",
+            "name": "build-linux-armv7-debug-gcc",
+            "configurePreset": "linux-armv7-debug-gcc",
             "inherits": [
                 "host-linux"
             ]
@@ -393,32 +393,32 @@
             ]
         },
         {
-            "name": "test-linux-arm-release-clang",
-            "configurePreset": "linux-arm-release-clang",
+            "name": "test-linux-armv7-release-clang",
+            "configurePreset": "linux-armv7-release-clang",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-arm-release-gcc",
-            "configurePreset": "linux-arm-release-gcc",
+            "name": "test-linux-armv7-release-gcc",
+            "configurePreset": "linux-armv7-release-gcc",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-arm-debug-clang",
-            "configurePreset": "linux-arm-debug-clang",
+            "name": "test-linux-armv7-debug-clang",
+            "configurePreset": "linux-armv7-debug-clang",
             "inherits": [
                 "host-linux",
                 "options"
             ]
         },
         {
-            "name": "test-linux-arm-debug-gcc",
-            "configurePreset": "linux-arm-debug-gcc",
+            "name": "test-linux-armv7-debug-gcc",
+            "configurePreset": "linux-armv7-debug-gcc",
             "inherits": [
                 "host-linux",
                 "options"

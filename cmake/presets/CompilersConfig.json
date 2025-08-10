@@ -71,7 +71,7 @@
             }
         },
         {
-            "name": "arm",
+            "name": "armv7",
             "hidden": true,
             "cacheVariables": {
                 "CMAKE_SYSTEM_PROCESSOR": "armv7"
