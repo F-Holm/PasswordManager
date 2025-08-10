@@ -95,31 +95,31 @@
       ]
     },
     {
-      "name": "wf-windows-arm-release-clang",
+      "name": "wf-windows-armv7-release-clang",
       "steps": [
-        { "type": "configure", "name": "windows-arm-release-clang" },
-        { "type": "build", "name": "build-windows-arm-release-clang" }
+        { "type": "configure", "name": "windows-armv7-release-clang" },
+        { "type": "build", "name": "build-windows-armv7-release-clang" }
       ]
     },
     {
-      "name": "wf-windows-arm-release-gcc",
+      "name": "wf-windows-armv7-release-gcc",
       "steps": [
-        { "type": "configure", "name": "windows-arm-release-gcc" },
-        { "type": "build", "name": "build-windows-arm-release-gcc" }
+        { "type": "configure", "name": "windows-armv7-release-gcc" },
+        { "type": "build", "name": "build-windows-armv7-release-gcc" }
       ]
     },
     {
-      "name": "wf-windows-arm-debug-clang",
+      "name": "wf-windows-armv7-debug-clang",
       "steps": [
-        { "type": "configure", "name": "windows-arm-debug-clang" },
-        { "type": "build", "name": "build-windows-arm-debug-clang" }
+        { "type": "configure", "name": "windows-armv7-debug-clang" },
+        { "type": "build", "name": "build-windows-armv7-debug-clang" }
       ]
     },
     {
-      "name": "wf-windows-arm-debug-gcc",
+      "name": "wf-windows-armv7-debug-gcc",
       "steps": [
-        { "type": "configure", "name": "windows-arm-debug-gcc" },
-        { "type": "build", "name": "build-windows-arm-debug-gcc" }
+        { "type": "configure", "name": "windows-armv7-debug-gcc" },
+        { "type": "build", "name": "build-windows-armv7-debug-gcc" }
       ]
     },
     {
@@ -211,31 +211,31 @@
       ]
     },
     {
-      "name": "wf-linux-arm-release-clang",
+      "name": "wf-linux-armv7-release-clang",
       "steps": [
-        { "type": "configure", "name": "linux-arm-release-clang" },
-        { "type": "build", "name": "build-linux-arm-release-clang" }
+        { "type": "configure", "name": "linux-armv7-release-clang" },
+        { "type": "build", "name": "build-linux-armv7-release-clang" }
       ]
     },
     {
-      "name": "wf-linux-arm-release-gcc",
+      "name": "wf-linux-armv7-release-gcc",
       "steps": [
-        { "type": "configure", "name": "linux-arm-release-gcc" },
-        { "type": "build", "name": "build-linux-arm-release-gcc" }
+        { "type": "configure", "name": "linux-armv7-release-gcc" },
+        { "type": "build", "name": "build-linux-armv7-release-gcc" }
       ]
     },
     {
-      "name": "wf-linux-arm-debug-clang",
+      "name": "wf-linux-armv7-debug-clang",
       "steps": [
-        { "type": "configure", "name": "linux-arm-debug-clang" },
-        { "type": "build", "name": "build-linux-arm-debug-clang" }
+        { "type": "configure", "name": "linux-armv7-debug-clang" },
+        { "type": "build", "name": "build-linux-armv7-debug-clang" }
       ]
     },
     {
-      "name": "wf-linux-arm-debug-gcc",
+      "name": "wf-linux-armv7-debug-gcc",
       "steps": [
-        { "type": "configure", "name": "linux-arm-debug-gcc" },
-        { "type": "build", "name": "build-linux-arm-debug-gcc" }
+        { "type": "configure", "name": "linux-armv7-debug-gcc" },
+        { "type": "build", "name": "build-linux-armv7-debug-gcc" }
       ]
     }
   ]

@@ -35,7 +35,7 @@
             }
         },
         {
-            "name": "mingw-gcc-linux-arm",
+            "name": "mingw-gcc-linux-armv7",
             "hidden": true,
             "inherits": "mingw-gcc-linux",
             "cacheVariables": {
@@ -81,7 +81,7 @@
             }
         },
         {
-            "name": "mingw-clang-linux-arm",
+            "name": "mingw-clang-linux-armv7",
             "hidden": true,
             "inherits": [
                 "mingw-clang-linux"
@@ -129,7 +129,7 @@
             }
         },
         {
-            "name": "gcc-linux-arm",
+            "name": "gcc-linux-armv7",
             "hidden": true,
             "inherits": [
                 "gcc-linux"
@@ -177,7 +177,7 @@
             }
         },
         {
-            "name": "clang-linux-arm",
+            "name": "clang-linux-armv7",
             "hidden": true,
             "inherits": [
                 "clang-linux"
