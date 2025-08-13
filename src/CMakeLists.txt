@@ -1,4 +1,5 @@
 include(CppCheck)
+include(ClangTidy)
 include(Doxygen)
 
 add_subdirectory(bootstrap)

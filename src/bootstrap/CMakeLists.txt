@@ -8,3 +8,4 @@ target_link_libraries(GestorContra
 
 Format(GestorContra .)
 AddCppCheck(GestorContra)
+AddClangTidy(GestorContra)

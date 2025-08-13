@@ -12,3 +12,4 @@ target_link_libraries(cuenta
 
 Format(cuenta .)
 AddCppCheck(cuenta)
+AddClangTidy(cuenta)
