@@ -1,6 +1,7 @@
 set(OPENSSL_REPO_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src/")
 set(OPENSSL_SOURCE_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-src/")
 set(OPENSSL_BUILD_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-build")
+set(OPENSSL_ARCHIVO_BUILD_EXITOSA "${OPENSSL_BUILD_DIR}/.build-exitosa")
 
 verify_submodule_cloned("OpenSSL" "${OPENSSL_REPO_DIR}" "README.md")
 
@@ -12,9 +13,12 @@ set(OPENSSL_COMPILAR [[make -j$(nproc)]])
 set(OPENSSL_INSTALAR "make install_sw")
 set(OPENSSL_LIMPIAR "make clean")
 
-if(IS_DIRECTORY "${OPENSSL_BUILD_DIR}")
+if(IS_DIRECTORY "${OPENSSL_BUILD_DIR}" AND EXISTS "${OPENSSL_ARCHIVO_BUILD_EXITOSA}")
     message(STATUS "OpenSSL ya está compilado")
 else()
+    if(IS_DIRECTORY "${OPENSSL_BUILD_DIR}")
+        file(REMOVE_RECURSE "${OPENSSL_BUILD_DIR}")
+    endif()
     # Compilación
     message(STATUS "Copiando OpenSSL...")
     file(MAKE_DIRECTORY "${OPENSSL_SOURCE_DIR}")
@@ -40,6 +44,8 @@ else()
         message(FATAL_ERROR "OpenSSL build falló")
     endif()
 endif()
+
+file(WRITE "${OPENSSL_ARCHIVO_BUILD_EXITOSA}")
 
 # Configurar ruta librerías
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
