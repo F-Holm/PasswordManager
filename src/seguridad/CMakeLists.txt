@@ -10,3 +10,4 @@ target_link_libraries(seguridad
 
 Format(seguridad .)
 AddCppCheck(seguridad)
+AddClangTidy(seguridad)

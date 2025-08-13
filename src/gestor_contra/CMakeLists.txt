@@ -11,3 +11,4 @@ target_link_libraries(gestor_contra
 
 Format(gestor_contra .)
 AddCppCheck(gestor_contra)
+AddClangTidy(gestor_contra)
