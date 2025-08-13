@@ -8,6 +8,8 @@ target_link_libraries(db
     PUBLIC data_block
 )
 
+InstrumentForCoverage(db)
+CleanCoverage(db)
 Format(db .)
 AddCppCheck(db)
 AddClangTidy(db)

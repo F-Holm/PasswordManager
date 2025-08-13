@@ -10,6 +10,8 @@ target_link_libraries(cuenta
     PRIVATE seguridad
 )
 
+InstrumentForCoverage(cuenta)
+CleanCoverage(cuenta)
 Format(cuenta .)
 AddCppCheck(cuenta)
 AddClangTidy(cuenta)

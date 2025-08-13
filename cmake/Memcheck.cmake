@@ -1,8 +1,8 @@
+include(Platform)
+
 function(AddMemcheck target)
-    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        message(STATUS "Memcheck no se configura porque no estás en Linux.")
-        return()
-    endif()
+    return() # Desactivar MemCheck
+    require_linux_x64(Memcheck)
 
     set(MEMCHECK_PATH ${memcheck-cover_SOURCE_DIR}/bin)
 

@@ -9,6 +9,8 @@ target_link_libraries(gestor_contra
     PUBLIC datos
 )
 
+InstrumentForCoverage(gestor_contra)
+CleanCoverage(gestor_contra)
 Format(gestor_contra .)
 AddCppCheck(gestor_contra)
 AddClangTidy(gestor_contra)

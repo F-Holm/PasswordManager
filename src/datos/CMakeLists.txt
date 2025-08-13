@@ -9,6 +9,8 @@ target_link_libraries(datos
     PUBLIC cuenta
 )
 
+InstrumentForCoverage(datos)
+CleanCoverage(datos)
 Format(datos .)
 AddCppCheck(datos)
 AddClangTidy(datos)
