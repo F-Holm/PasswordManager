@@ -9,6 +9,8 @@ target_link_libraries(openssl_adapter
     PRIVATE openssl_static
 )
 
+InstrumentForCoverage(openssl_adapter)
+CleanCoverage(openssl_adapter)
 Format(openssl_adapter .)
 AddCppCheck(openssl_adapter)
 AddClangTidy(openssl_adapter)

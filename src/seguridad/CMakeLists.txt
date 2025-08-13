@@ -8,6 +8,8 @@ target_link_libraries(seguridad
     PRIVATE openssl_adapter
 )
 
+InstrumentForCoverage(seguridad)
+CleanCoverage(seguridad)
 Format(seguridad .)
 AddCppCheck(seguridad)
 AddClangTidy(seguridad)

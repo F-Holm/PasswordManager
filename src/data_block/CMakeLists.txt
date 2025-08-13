@@ -4,6 +4,8 @@ add_library(data_block STATIC
 
 target_include_directories(data_block PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+InstrumentForCoverage(data_block)
+CleanCoverage(data_block)
 Format(data_block .)
 AddCppCheck(data_block)
 AddClangTidy(data_block)
