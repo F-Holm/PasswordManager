@@ -1,5 +1,5 @@
 #!/bin/bash
-#./build-all.sh -w -x64 -d -c
+#./build-all.sh -w -x64 -d -g
 cmake --workflow --preset wf-linux-x64-debug-clang
 
 # No funciona:
@@ -8,12 +8,12 @@ cmake --workflow --preset wf-linux-x64-debug-clang
 # Linux arm64 Clang     - (is not able to compile a simple test program)
 # Linux armv7 Clang     - (is not able to compile a simple test program)
 
-# Windows x64 GCC       - (is not able to compile a simple test program)
-# Windows x86 GCC       - (is not able to compile a simple test program)
-# Windows arm64 GCC     - (is not able to compile a simple test program)
-# Windows armv7 GCC     - (is not able to compile a simple test program)
+# Windows x64 GCC       - (No encuentra librerías)
+# Windows x86 GCC       - (No encuentra librerías)
+# Windows arm64 GCC     - (No encuentra librerías)
+# Windows armv7 GCC     - (No encuentra librerías)
 
-# Windows x64 Clang     - (is not able to compile a simple test program)
-# Windows x86 Clang     - (is not able to compile a simple test program)
-# Windows arm64 Clang   - (is not able to compile a simple test program)
-# Windows armv7 Clang   - (is not able to compile a simple test program)
+# Windows x64 Clang     - (No encuentra librerías)
+# Windows x86 Clang     - (No encuentra librerías)
+# Windows arm64 Clang   - (No encuentra librerías)
+# Windows armv7 Clang   - (No encuentra librerías)
