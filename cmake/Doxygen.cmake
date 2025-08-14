@@ -16,7 +16,7 @@ function(Doxygen input output)
     UseDoxygenAwesomeExtensions()
 
     doxygen_add_docs("doxygen-${target}"
-        ${PROJECT_SOURCE_DIR}/${input}
+        "${PROJECT_SOURCE_DIR}/${input}"
         COMMENT "Generate HTML documentation"
     )
 endfunction()
@@ -26,8 +26,7 @@ macro(UseDoxygenAwesomeCss)
     set(DOXYGEN_HAVE_DOT              YES)
     set(DOXYGEN_DOT_IMAGE_FORMAT      svg)
     set(DOXYGEN_DOT_TRANSPARENT       YES)
-    set(DOXYGEN_HTML_EXTRA_STYLESHEET
-        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css")
+    set(DOXYGEN_HTML_EXTRA_STYLESHEET "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css")
 endmacro()
 
 macro(UseDoxygenAwesomeExtensions)
