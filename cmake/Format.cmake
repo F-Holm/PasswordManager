@@ -5,7 +5,7 @@ function(Format target directory)
     file(GLOB_RECURSE SOURCE_FILES FOLLOW_SYMLINKS
         LIST_DIRECTORIES false ${EXPRESSION}
     )
-    add_custom_command(TARGET ${target} PRE_BUILD COMMAND
-        ${CLANG-FORMAT_PATH} -i --style=file ${SOURCE_FILES}
+    add_custom_command(TARGET "${target}" PRE_BUILD COMMAND
+        "${CLANG-FORMAT_PATH}" -i --style=file ${SOURCE_FILES}
     )
 endfunction()
