@@ -1,5 +1,5 @@
 #!/bin/bash
-#./build-all.sh -l -x86 -d -g
+#./build-all.sh -w -x64 -d -c
 cmake --workflow --preset wf-linux-x64-debug-clang
 
 # No funciona:

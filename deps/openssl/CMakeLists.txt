@@ -6,13 +6,36 @@ set(OPENSSL_ARCHIVO_BUILD_EXITOSA "${OPENSSL_BUILD_DIR}/.build-exitosa")
 verify_submodule_cloned("OpenSSL" "${OPENSSL_REPO_DIR}" "README.md")
 
 # Configurar comandos de compilación
-set(OPENSSL_ENV_VARS "export CC=${CMAKE_C_COMPILER}")
+set(OPENSSL_ENV_VARS "export CC=")
+set(OPENSSL_ENV_VARS_UCRT [[export CFLAGS="-D__USE_MINGW_ANSI_STDIO=1" && export CXXFLAGS="$CFLAGS"]])
+set(OPENSSL_CROSS_COMPILE_PREFIX "--cross-compile-prefix=")
 set(OPENSSL_FLAGS_BASE "shared no-tests no-apps no-docs")
-set(OPENSSL_CONFIGURAR "perl Configure ${OPENSSL_ARCH_TARGET} ${OPENSSL_FLAGS_BASE} --prefix=${OPENSSL_BUILD_DIR}")
 set(OPENSSL_COMPILAR [[make -j$(nproc)]])
 set(OPENSSL_INSTALAR "make install_sw")
 set(OPENSSL_LIMPIAR "make clean")
 
+# Get compiler name
+if("${CMAKE_C_COMPILER}" MATCHES ".*gcc.*")
+    set(COMPILER_RECORTADO "gcc")
+elseif("${CMAKE_C_COMPILER}" MATCHES ".*clang.*")
+    set(COMPILER_RECORTADO "clang")
+else()
+    message(FATAL_ERROR "Compilador no soportado")
+endif()
+set(OPENSSL_ENV_VARS "${OPENSSL_ENV_VARS}${COMPILER_RECORTADO}")
+
+# Get compiler prefix
+string(REGEX REPLACE "(${COMPILER_RECORTADO}.*)" "" COMPILER_PREFIJO "${CMAKE_C_COMPILER}")
+set(OPENSSL_CROSS_COMPILE_PREFIX "${OPENSSL_CROSS_COMPILE_PREFIX}${COMPILER_PREFIJO}")
+
+# Add windows flags
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+    set(OPENSSL_ENV_VARS "${OPENSSL_ENV_VARS} && ${OPENSSL_ENV_VARS_UCRT}")
+endif()
+
+set(OPENSSL_CONFIGURAR "perl Configure ${OPENSSL_CROSS_COMPILE_PREFIX} ${OPENSSL_ARCH_TARGET} ${OPENSSL_FLAGS_BASE} --prefix=${OPENSSL_BUILD_DIR}")
+
+# Build check
 if(IS_DIRECTORY "${OPENSSL_BUILD_DIR}" AND EXISTS "${OPENSSL_ARCHIVO_BUILD_EXITOSA}")
     message(STATUS "OpenSSL ya está compilado")
 else()
@@ -29,7 +52,7 @@ else()
     message(STATUS "Compilando OpenSSL...")
     execute_process(
         COMMAND bash -c "${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
-        WORKING_DIRECTORY ${OPENSSL_SOURCE_DIR}
+        WORKING_DIRECTORY "${OPENSSL_SOURCE_DIR}"
         RESULT_VARIABLE OPENSSL_BUILD_RESULT
         OUTPUT_VARIABLE OPENSSL_BUILD_OUTPUT
         ERROR_VARIABLE OPENSSL_BUILD_ERROR
@@ -51,17 +74,17 @@ endif()
 file(WRITE "${OPENSSL_ARCHIVO_BUILD_EXITOSA}")
 
 # Configurar ruta librerías
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
     set(STATIC_EXT "a")
     set(SHARED_EXT "dll")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set(STATIC_EXT "a")
     set(SHARED_EXT "so")
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
     set(OPENSSL_LIB_DIR "${OPENSSL_BUILD_DIR}/lib64")
-elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+elseif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686" OR "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7" OR "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
     set(OPENSSL_LIB_DIR "${OPENSSL_BUILD_DIR}/lib")
 endif()
 
