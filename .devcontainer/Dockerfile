@@ -14,5 +14,6 @@ RUN apt update && apt install -y \
     graphviz \
     ccache \
     libssl-dev \
+    libwxgtk3.2-dev \
     libgtk-3-dev \
     pkg-config

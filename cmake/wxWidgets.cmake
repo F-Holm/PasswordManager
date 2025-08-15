@@ -1,0 +1,6 @@
+macro(LinkWxWidgets target)
+    find_package(wxWidgets REQUIRED COMPONENTS core base)
+    include(${wxWidgets_USE_FILE})
+    target_link_libraries("${target}" PRIVATE ${wxWidgets_LIBRARIES})
+    target_include_directories("${target}" PRIVATE ${wxWidgets_INCLUDE_DIRS})
+endmacro()
