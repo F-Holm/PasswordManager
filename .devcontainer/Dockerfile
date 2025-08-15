@@ -3,7 +3,6 @@ FROM mcr.microsoft.com/devcontainers/base:ubuntu
 RUN apt update && apt install -y \
     cmake \
     ninja-build \
-    perl \
     clang \
     clang-format \
     clang-tidy \
@@ -13,4 +12,5 @@ RUN apt update && apt install -y \
     valgrind \
     doxygen \
     graphviz \
-    ccache
+    ccache \
+    libssl-dev
