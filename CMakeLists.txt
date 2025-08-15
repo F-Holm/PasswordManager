@@ -7,6 +7,7 @@ include(NoInSourceBuilds)
 include(CTest)
 include(Format)
 include(Coverage)
+include(OpenSSL)
 
 add_subdirectory(deps)
 add_subdirectory(src bin)

@@ -2,9 +2,7 @@ add_executable(openssl_test
     openssl_test.cc
 )
 
-target_link_libraries(openssl_test PRIVATE
-    openssl_static
-)
+LinkOpenSSL(openssl_test)
 
 AddTests(openssl_test)
 
