@@ -1,7 +1,3 @@
-[submodule "deps/openssl/openssl-src"]
-	path = deps/openssl/openssl-src
-	url = https://github.com/openssl/openssl.git
-	branch = master
 [submodule "deps/googletest/googletest-src"]
 	path = deps/googletest/googletest-src
 	url = https://github.com/google/googletest.git
@@ -13,8 +9,4 @@
 [submodule "deps/memcheck-cover/memcheck-cover-src"]
 	path = deps/memcheck-cover/memcheck-cover-src
 	url = https://github.com/Farigh/memcheck-cover.git
-	branch = master
-[submodule "deps/wx-widgets/wx-widgets-src"]
-	path = deps/wx-widgets/wx-widgets-src
-	url = https://github.com/wxWidgets/wxWidgets.git
 	branch = master
