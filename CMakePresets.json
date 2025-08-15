@@ -5,25 +5,154 @@
     "minor": 28,
     "patch": 3
   },
-  "include": [
-    "cmake/presets/Base.json"
-  ],
-  "workflowPresets": [
-    {
-      "name": "wf-release",
-      "steps": [
-        { "type": "configure", "name": "release" },
-        { "type": "build", "name": "build-release" },
-        { "type": "test", "name": "test-release" }
-      ]
-    },
-    {
-      "name": "wf-debug",
-      "steps": [
-        { "type": "configure", "name": "debug" },
-        { "type": "build", "name": "build-debug" },
-        { "type": "test", "name": "test-debug" }
-      ]
-    }
-  ]
+  "include": [],
+  "configurePresets": [
+        {
+            "name": "std-23",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_STANDARD": "23",
+                "CMAKE_C_STANDARD_REQUIRED": "ON",
+                "CMAKE_CXX_STANDARD": "23",
+                "CMAKE_CXX_STANDARD_REQUIRED": "ON"
+            }
+        },
+        {
+            "name": "std",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_STANDARD_REQUIRED": true,
+                "CMAKE_CXX_STANDARD_REQUIRED": true
+            }
+        },
+        {
+            "name": "no-std",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_STANDARD_REQUIRED": false,
+                "CMAKE_CXX_STANDARD_REQUIRED": false
+            }
+        },
+        {
+            "name": "debug_conf",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release_conf",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "ccache",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+                "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+            }
+        },
+        {
+            "name": "color-output",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_COLOR_DIAGNOSTICS": true,
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
+        {
+            "name": "ninja",
+            "hidden": true,
+            "generator": "Ninja"
+        },
+        {
+            "name": "clang",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
+            }
+        },
+        {
+            "name": "default",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/install/${presetName}",
+            "cmakeExecutable": "cmake",
+            "inherits": [
+                "color-output",
+                "ninja",
+                "std",
+                "std-23",
+                "clang",
+                "ccache"
+            ]
+        },
+        {
+            "name": "release",
+            "inherits": [
+                "default",
+                "release_conf"
+            ]
+        },
+        {
+            "name": "debug",
+            "inherits": [
+                "default",
+                "debug_conf"
+            ]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "build-debug",
+            "configurePreset": "debug"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "options",
+            "hidden": true,
+            "configuration": "Debug"
+        },
+        {
+            "name": "test-release",
+            "configurePreset": "release",
+            "inherits": [
+                "options"
+            ]
+        },
+        {
+            "name": "test-debug",
+            "configurePreset": "debug",
+            "inherits": [
+                "options"
+            ]
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "wf-release",
+            "steps": [
+                { "type": "configure", "name": "release" },
+                { "type": "build", "name": "build-release" },
+                { "type": "test", "name": "test-release" }
+            ]
+        },
+        {
+            "name": "wf-debug",
+            "steps": [
+                { "type": "configure", "name": "debug" },
+                { "type": "build", "name": "build-debug" },
+                { "type": "test", "name": "test-debug" }
+            ]
+        }
+    ]
 }
