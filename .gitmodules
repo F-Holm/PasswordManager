@@ -1,12 +1,12 @@
 [submodule "deps/googletest/googletest-src"]
 	path = deps/googletest/googletest-src
 	url = https://github.com/google/googletest.git
-	branch = main
 [submodule "deps/doxygen-awesome-css/doxygen-awesome-css-src"]
 	path = deps/doxygen-awesome-css/doxygen-awesome-css-src
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-	branch = main
 [submodule "deps/memcheck-cover/memcheck-cover-src"]
 	path = deps/memcheck-cover/memcheck-cover-src
 	url = https://github.com/Farigh/memcheck-cover.git
-	branch = master
+[submodule "deps/wx-widgets/wx-widgets-src"]
+	path = deps/wx-widgets/wx-widgets-src
+	url = https://github.com/wxWidgets/wxWidgets.git
