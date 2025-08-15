@@ -66,7 +66,10 @@
         {
             "name": "ninja",
             "hidden": true,
-            "generator": "Ninja"
+            "generator": "Ninja",
+            "inherits": [
+                "color-output"
+            ]
         },
         {
             "name": "clang",
@@ -83,7 +86,6 @@
             "installDir": "${sourceDir}/install/${presetName}",
             "cmakeExecutable": "cmake",
             "inherits": [
-                "color-output",
                 "ninja",
                 "std",
                 "std-23",
