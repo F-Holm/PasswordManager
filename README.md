@@ -16,6 +16,7 @@
 - `graphviz`
 - `ccache`
 - `openssl`
+- `wxWidgets`
 
 ## Instalar dependencias
 
@@ -38,7 +39,10 @@ sudo apt install \
     doxygen \
     graphviz \
     ccache \
-    libssl-dev
+    libssl-dev \
+    libwxgtk3.2-dev \
+    libgtk-3-dev \
+    pkg-config
 ```
 
 ### Windows 10/11

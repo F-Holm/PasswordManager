@@ -7,6 +7,3 @@
 [submodule "deps/memcheck-cover/memcheck-cover-src"]
 	path = deps/memcheck-cover/memcheck-cover-src
 	url = https://github.com/Farigh/memcheck-cover.git
-[submodule "deps/wx-widgets/wx-widgets-src"]
-	path = deps/wx-widgets/wx-widgets-src
-	url = https://github.com/wxWidgets/wxWidgets.git

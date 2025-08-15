@@ -8,6 +8,7 @@ include(CTest)
 include(Format)
 include(Coverage)
 include(OpenSSL)
+include(wxWidgets)
 
 add_subdirectory(deps)
 add_subdirectory(src bin)
