@@ -10,7 +10,7 @@
             "hidden": true,
             "cacheVariables": {
                 "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "NEVER",
-                "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "ONLY",
+                "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "ALWAYS",
                 "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "ONLY"
             }
         },

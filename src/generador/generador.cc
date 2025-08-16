@@ -1,5 +1,7 @@
 #include "generador.hh"
 
+#include <cstdlib>
+
 namespace {
 auto CaracterRandom(const char &base, const uint8_t &rango) -> char {
   return static_cast<char>((rand() % rango) + base);
