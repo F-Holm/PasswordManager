@@ -35,20 +35,20 @@ endif()
 
 set(OPENSSL_CONFIGURAR "perl Configure ${OPENSSL_CROSS_COMPILE_PREFIX} ${OPENSSL_ARCH_TARGET} ${OPENSSL_FLAGS_BASE} --prefix=${OPENSSL_BUILD_DIR}")
 
-# Build check
-if(IS_DIRECTORY "${OPENSSL_BUILD_DIR}" AND EXISTS "${OPENSSL_ARCHIVO_BUILD_EXITOSA}")
-    message(STATUS "OpenSSL ya está compilado")
-else()
-    if(IS_DIRECTORY "${OPENSSL_BUILD_DIR}")
-        file(REMOVE_RECURSE "${OPENSSL_BUILD_DIR}")
-    endif()
-    if(IS_DIRECTORY "${OPENSSL_SOURCE_DIR}")
-        file(REMOVE_RECURSE "${OPENSSL_SOURCE_DIR}")
-    endif()
-    # Compilación
+set(CHECK FALSE)
+
+# Copiando
+CheckCopy("${OPENSSL_SOURCE_DIR}" ${CHECK})
+if (NOT ${CHECK})
     message(STATUS "Copiando OpenSSL...")
     file(MAKE_DIRECTORY "${OPENSSL_SOURCE_DIR}")
     file(COPY "${OPENSSL_REPO_DIR}/" DESTINATION "${OPENSSL_SOURCE_DIR}")
+    AddCheckCopy("${OPENSSL_SOURCE_DIR}")
+endif()
+
+# Compilando
+CheckBuilt("${OPENSSL_SOURCE_DIR}" ${CHECK})
+if (NOT ${CHECK})
     message(STATUS "Compilando OpenSSL...")
     execute_process(
         COMMAND bash -c "${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
@@ -60,7 +60,7 @@ else()
         ERROR_STRIP_TRAILING_WHITESPACE 
     )
 
-    if(NOT OPENSSL_BUILD_RESULT EQUAL 0)
+    if(NOT ${OPENSSL_BUILD_RESULT} EQUAL 0)
         message("OpenSSL repo dir: ${OPENSSL_REPO_DIR}")
         message("OpenSSL source dir: ${OPENSSL_SOURCE_DIR}")
         message("OpenSSL build dir: ${OPENSSL_BUILD_DIR}")
@@ -69,9 +69,8 @@ else()
         message("OpenSSL build error: ${OPENSSL_BUILD_ERROR}")
         message(FATAL_ERROR "OpenSSL build falló")
     endif()
+    AddCheckBuilt("${OPENSSL_SOURCE_DIR}")
 endif()
-
-file(WRITE "${OPENSSL_ARCHIVO_BUILD_EXITOSA}")
 
 # Configurar ruta librerías
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
