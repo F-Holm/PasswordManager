@@ -54,5 +54,6 @@ Para evitar instalar todas las dependencias se puede utilizar `dev containers`
 - `gcc-aarch64-linux-gnu`
 - `g++-aarch64-linux-gnu`
 - `mingw-w64`
+- `python` (no obligatorio pero útil para usar los scripts)
 
 Para ver como se instalan las dependencias en la imagen docker: [`Dockerfile`](.devcontainer/Dockerfile)
