@@ -24,8 +24,7 @@ RUN apt update && apt install -y \
     gcc-arm-linux-gnueabihf \
     g++-arm-linux-gnueabihf \
     gcc-aarch64-linux-gnu \
-    g++-aarch64-linux-gnu \
-    mingw-w64
+    g++-aarch64-linux-gnu
     #pkg-config \
     #libgtk-3-dev \
     #libcurl4-openssl-dev \
