@@ -1,23 +1,18 @@
 [submodule "deps/openssl/openssl-src"]
 	path = deps/openssl/openssl-src
 	url = https://github.com/openssl/openssl.git
-	branch = master
 [submodule "deps/googletest/googletest-src"]
 	path = deps/googletest/googletest-src
 	url = https://github.com/google/googletest.git
-	branch = main
 [submodule "deps/doxygen-awesome-css/doxygen-awesome-css-src"]
 	path = deps/doxygen-awesome-css/doxygen-awesome-css-src
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-	branch = main
 [submodule "deps/memcheck-cover/memcheck-cover-src"]
 	path = deps/memcheck-cover/memcheck-cover-src
 	url = https://github.com/Farigh/memcheck-cover.git
-	branch = master
 [submodule "deps/wx-widgets/wx-widgets-src"]
 	path = deps/wx-widgets/wx-widgets-src
 	url = https://github.com/wxWidgets/wxWidgets.git
-	branch = master
 [submodule "deps/wx-widgets/gtk/gtk-src"]
 	path = deps/wx-widgets/gtk/gtk-src
 	url = https://github.com/GNOME/gtk.git
