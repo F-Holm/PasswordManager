@@ -1,7 +1,6 @@
-set(OPENSSL_REPO_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src/")
-set(OPENSSL_SOURCE_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-src/")
+set(OPENSSL_REPO_DIR "${CMAKE_SOURCE_DIR}/deps/openssl/openssl-src")
+set(OPENSSL_SOURCE_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-src")
 set(OPENSSL_BUILD_DIR "${PROJECT_BINARY_DIR}/_deps/openssl-build")
-set(OPENSSL_ARCHIVO_BUILD_EXITOSA "${OPENSSL_BUILD_DIR}/.build-exitosa")
 
 verify_submodule_cloned("OpenSSL" "${OPENSSL_REPO_DIR}" "README.md")
 
@@ -35,20 +34,20 @@ endif()
 
 set(OPENSSL_CONFIGURAR "perl Configure ${OPENSSL_CROSS_COMPILE_PREFIX} ${OPENSSL_ARCH_TARGET} ${OPENSSL_FLAGS_BASE} --prefix=${OPENSSL_BUILD_DIR}")
 
-set(CHECK FALSE)
-
 # Copiando
-CheckCopy("${OPENSSL_SOURCE_DIR}" ${CHECK})
-if (NOT ${CHECK})
+CheckCopy("${OPENSSL_SOURCE_DIR}")
+if (NOT ${COPY})
     message(STATUS "Copiando OpenSSL...")
     file(MAKE_DIRECTORY "${OPENSSL_SOURCE_DIR}")
     file(COPY "${OPENSSL_REPO_DIR}/" DESTINATION "${OPENSSL_SOURCE_DIR}")
     AddCheckCopy("${OPENSSL_SOURCE_DIR}")
 endif()
+unset(COPY)
 
 # Compilando
-CheckBuilt("${OPENSSL_SOURCE_DIR}" ${CHECK})
-if (NOT ${CHECK})
+CheckBuilt("${OPENSSL_BUILD_DIR}")
+
+if (NOT ${BUILT})
     message(STATUS "Compilando OpenSSL...")
     execute_process(
         COMMAND bash -c "${OPENSSL_ENV_VARS} && ${OPENSSL_CONFIGURAR} && ${OPENSSL_COMPILAR} && ${OPENSSL_INSTALAR} && ${OPENSSL_LIMPIAR}"
@@ -69,8 +68,9 @@ if (NOT ${CHECK})
         message("OpenSSL build error: ${OPENSSL_BUILD_ERROR}")
         message(FATAL_ERROR "OpenSSL build falló")
     endif()
-    AddCheckBuilt("${OPENSSL_SOURCE_DIR}")
+    AddCheckBuilt("${OPENSSL_BUILD_DIR}")
 endif()
+unset(BUILT)
 
 # Configurar ruta librerías
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
