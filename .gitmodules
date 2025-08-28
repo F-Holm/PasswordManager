@@ -42,3 +42,9 @@
 [submodule "deps/wx-widgets/gtk/xkb-common/xkb-common-src"]
 	path = deps/wx-widgets/gtk/xkb-common/xkb-common-src
 	url = https://github.com/xkbcommon/libxkbcommon.git
+[submodule "deps/wx-widgets/gtk/cairo/cairo-src"]
+	path = deps/wx-widgets/gtk/cairo/cairo-src
+	url = https://gitlab.freedesktop.org/cairo/cairo.git
+[submodule "deps/wx-widgets/gtk/meson/meson-src"]
+	path = deps/wx-widgets/gtk/meson/meson-src
+	url = https://github.com/mesonbuild/meson.git
