@@ -1,0 +1,10 @@
+require_linux("GTK")
+
+add_subdirectory(epoxy)
+add_subdirectory(gdk-pixbuf)
+add_subdirectory(glib)
+add_subdirectory(gobject-introspection)
+add_subdirectory(graphene)
+add_subdirectory(meson)
+add_subdirectory(pango)
+add_subdirectory(xkb-common)

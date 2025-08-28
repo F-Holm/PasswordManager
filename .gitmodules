@@ -18,3 +18,27 @@
 	path = deps/wx-widgets/wx-widgets-src
 	url = https://github.com/wxWidgets/wxWidgets.git
 	branch = master
+[submodule "deps/wx-widgets/gtk/gtk-src"]
+	path = deps/wx-widgets/gtk/gtk-src
+	url = https://github.com/GNOME/gtk.git
+[submodule "deps/wx-widgets/gtk/glib/glib-src"]
+	path = deps/wx-widgets/gtk/glib/glib-src
+	url = https://github.com/GNOME/glib.git
+[submodule "deps/wx-widgets/gtk/gdk-pixbuf/gdk-pixbuf-src"]
+	path = deps/wx-widgets/gtk/gdk-pixbuf/gdk-pixbuf-src
+	url = https://github.com/GNOME/gdk-pixbuf.git
+[submodule "deps/wx-widgets/gtk/gobject-introspection/gobject-introspection-src"]
+	path = deps/wx-widgets/gtk/gobject-introspection/gobject-introspection-src
+	url = https://github.com/GNOME/gobject-introspection.git
+[submodule "deps/wx-widgets/gtk/pango/pango-src"]
+	path = deps/wx-widgets/gtk/pango/pango-src
+	url = https://github.com/GNOME/pango.git
+[submodule "deps/wx-widgets/gtk/epoxy/epoxy-src"]
+	path = deps/wx-widgets/gtk/epoxy/epoxy-src
+	url = https://github.com/anholt/libepoxy.git
+[submodule "deps/wx-widgets/gtk/graphene/graphene-src"]
+	path = deps/wx-widgets/gtk/graphene/graphene-src
+	url = https://github.com/ebassi/graphene.git
+[submodule "deps/wx-widgets/gtk/xkb-common/xkb-common-src"]
+	path = deps/wx-widgets/gtk/xkb-common/xkb-common-src
+	url = https://github.com/xkbcommon/libxkbcommon.git
