@@ -1,4 +1,3 @@
-
 #!/usr/bin/env pwsh
 
 Remove-Item -Path "./build"   -Recurse -Force -ErrorAction SilentlyContinue
