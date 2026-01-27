@@ -1,3 +1,3 @@
 #!/usr/bin/env pwsh
 
-git submodule update --force --init --recursive --checkout
+git submodule update --init --recursive --depth 1 --force
