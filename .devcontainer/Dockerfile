@@ -20,7 +20,5 @@ RUN apt update && apt install -y \
     doxygen \
     graphviz \
     ccache \
-    libssl-dev \
-    libwxgtk3.2-dev \
     libgtk-3-dev \
     pkg-config
