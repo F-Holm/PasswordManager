@@ -1,1 +1,17 @@
 * text eol=lf
+
+# Text
+*.ps1       text
+*.cmake     text
+*.txt       text
+*.json      text
+Dockerfile* text
+*.html      text
+*.cc        text
+*.h         text
+*.clang*    text
+.git*       text
+*.md        text
+*.py        text
+
+# Binary
