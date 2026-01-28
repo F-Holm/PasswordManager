@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+#!/usr/bin/env bash
 
 git submodule sync
 git submodule update --init --recursive --depth 1 --force

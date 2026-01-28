@@ -1,5 +1,5 @@
 {
-  "name": "C++ Dev",
+  "name": "C++ Dev Ubuntu",
   "build": {
     "dockerfile": "Dockerfile"
   },
