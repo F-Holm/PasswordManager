@@ -10,6 +10,5 @@ include(Coverage)
 include(TLS)
 include(wxWidgets)
 
-add_subdirectory(deps)
 add_subdirectory(src bin)
 add_subdirectory(test)

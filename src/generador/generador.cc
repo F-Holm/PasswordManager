@@ -7,8 +7,7 @@ auto CaracterRandom(const char &base, const uint8_t &rango) -> char {
 
 auto ContraFacil(const std::string &contra,
                  const Generador::TipoContra &tipo) -> bool {
-  if (contra.size() <= 4)
-    return false;
+  if (contra.size() <= 4) return false;
 
   bool min = false, may = false, num = false, sim = false;
   for (char chr : contra) {
