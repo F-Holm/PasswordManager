@@ -6,7 +6,7 @@ include(FetchContent)
 FetchContent_Declare(
     memcheck-cover
     GIT_REPOSITORY https://github.com/Farigh/memcheck-cover.git
-    GIT_TAG        v1.2
+    GIT_TAG        release-1.2
 )
 FetchContent_MakeAvailable(memcheck-cover)
 
