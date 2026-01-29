@@ -1,5 +1,13 @@
 find_package(Doxygen REQUIRED)
 
+include(FetchContent)
+FetchContent_Declare(
+  doxygen-awesome-css
+  GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
+  GIT_TAG v2.4.1
+)
+FetchContent_MakeAvailable(doxygen-awesome-css)
+
 function(Doxygen input output)
     FetchContent_GetProperties(doxygen-awesome-css doxygen-awesome-css_SOURCE_DIR doxygen-awesome-css_AWESOME_CSS_DIR)
     set(NAME "doxygen-${target}")

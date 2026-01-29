@@ -1,5 +1,15 @@
 include(Platform)
 
+require_linux_x64("memcheck-cover")
+
+include(FetchContent)
+FetchContent_Declare(
+    memcheck-cover
+    GIT_REPOSITORY https://github.com/Farigh/memcheck-cover.git
+    GIT_TAG        v1.2
+)
+FetchContent_MakeAvailable(memcheck-cover)
+
 function(AddMemcheck target)
     return() # Desactivar MemCheck
     require_linux_x64(Memcheck)
