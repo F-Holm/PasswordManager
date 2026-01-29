@@ -7,7 +7,7 @@ add_library(openssl_adapter SHARED
 
 target_include_directories(openssl_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-LinkOpenSSL(openssl_adapter)
+Link_TLS(openssl_adapter)
 
 InstrumentForCoverage(openssl_adapter)
 CleanCoverage(openssl_adapter)

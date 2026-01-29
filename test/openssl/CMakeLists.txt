@@ -2,7 +2,7 @@ add_executable(openssl_test
     openssl_test.cc
 )
 
-LinkOpenSSL(openssl_test)
+Link_TLS(openssl_test)
 
 AddTests(openssl_test)
 

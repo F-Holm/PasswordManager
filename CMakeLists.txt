@@ -7,7 +7,7 @@ include(NoInSourceBuilds)
 include(CTest)
 include(Format)
 include(Coverage)
-include(OpenSSL)
+include(TLS)
 include(wxWidgets)
 
 add_subdirectory(deps)
