@@ -12,7 +12,7 @@ constexpr static uint8_t iv_len = 96 / 8;
 const static char* PROTOCOLO = "AES-256-GCM";
 static std::string IV = OpenSslAdapter::Hash256_x(
     "Este es un vector de inicializacion super ultra mega secreto", iv_len);
-static std::string ADD = "Esto es algo totalmente innecesario";
+static std::string AAD = "Esto es algo totalmente innecesario";
 
 /*
  * A library context and property query can be used to select & filter
@@ -78,8 +78,8 @@ auto OpenSslAdapter::Encriptar(const std::string& str, std::string key,
 
   /* Zero or more calls to specify any AAD */
   if (!EVP_EncryptUpdate(ctx, NULL, &outlen,
-                         reinterpret_cast<const unsigned char*>(ADD.c_str()),
-                         ADD.size())) {
+                         reinterpret_cast<const unsigned char*>(AAD.c_str()),
+                         AAD.size())) {
     ERR_print_errors_fp(stderr);
     ReleaseMemory(outbuf, cipher, ctx);
     return "";
@@ -162,8 +162,8 @@ auto OpenSslAdapter::Desencriptar(const std::string& str, std::string key,
 
   /* Zero or more calls to specify any AAD */
   if (!EVP_DecryptUpdate(ctx, nullptr, &outlen,
-                         reinterpret_cast<const unsigned char*>(ADD.c_str()),
-                         ADD.size())) {
+                         reinterpret_cast<const unsigned char*>(AAD.c_str()),
+                         AAD.size())) {
     ERR_print_errors_fp(stderr);
     ReleaseMemory(outbuf, cipher, ctx);
     return "";

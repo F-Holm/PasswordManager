@@ -7,8 +7,7 @@ Datos::~Datos() {}
 
 auto Datos::IdUnico(const std::string& id) const -> bool {
   for (int i = 0; i < cuentas_.size(); i++)
-    if (cuentas_[i].id() == id)
-      return false;
+    if (cuentas_[i].id() == id) return false;
   return true;
 }
 
@@ -23,8 +22,7 @@ auto Datos::GenerarIdUnico() const -> std::string {
 
 auto Datos::index(const std::string& id) const -> int {
   for (int i = 0; i < cuentas_.size(); i++)
-    if (cuentas_[i].id() == id)
-      return i;
+    if (cuentas_[i].id() == id) return i;
   return -1;
 }
 
@@ -41,8 +39,7 @@ void Datos::ModificarCuenta(const size_t& index, const Cuenta& cuenta) {
 
 void Datos::EliminarCuenta(const std::string& id) {
   const auto i = index(id);
-  if (i != -1)
-    cuentas_.erase(cuentas_.begin() + i);
+  if (i != -1) cuentas_.erase(cuentas_.begin() + i);
 }
 
 void Datos::CargarCuentas(const std::string& key) {
@@ -51,8 +48,7 @@ void Datos::CargarCuentas(const std::string& key) {
   for (size_t i = 0; i < datos.size(); i += Cuenta::kCantAtributos) {
     std::array<DataBlock, Cuenta::kCantAtributos> c;
 
-    for (int j = 0; j < Cuenta::kCantAtributos; j++)
-      c[j] = datos[i + j];
+    for (int j = 0; j < Cuenta::kCantAtributos; j++) c[j] = datos[i + j];
 
     cuentas_.emplace_back(c, key);
   }

@@ -5,8 +5,7 @@
 
 #include "data_block.hh"
 
-class DB{
-};
+class DB {};
 
 namespace DB {
 auto Leer(const std::string &nom_arch) -> std::vector<DataBlock>;

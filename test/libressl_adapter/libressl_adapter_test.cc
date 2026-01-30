@@ -1,8 +1,8 @@
-#include "openssl_adapter.hh"
-
 #include <gtest/gtest.h>
 
 #include <string>
+
+#include "openssl_adapter.hh"
 
 // Test que verifica que Hash256 genera siempre el mismo resultado para la misma
 // entrada

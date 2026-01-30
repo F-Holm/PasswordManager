@@ -11,11 +11,9 @@
 // Helper para comparar dos vectores de DataBlock
 bool CompararDataBlocks(const std::vector<DataBlock> &a,
                         const std::vector<DataBlock> &b) {
-  if (a.size() != b.size())
-    return false;
+  if (a.size() != b.size()) return false;
   for (size_t i = 0; i < a.size(); ++i) {
-    if (a[i].largo != b[i].largo)
-      return false;
+    if (a[i].largo != b[i].largo) return false;
     if (std::string(a[i].str, a[i].largo) != std::string(b[i].str, b[i].largo))
       return false;
   }

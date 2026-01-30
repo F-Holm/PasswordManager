@@ -3,8 +3,8 @@
 #include "types/account_binary.h"
 
 struct AccountIndex {
-    char description[kDescriptionSize];
+  char description[kDescriptionSize];
 
-    void SetZero() noexcept;
-    ~AccountIndex() noexcept;
+  void SetZero() noexcept;
+  ~AccountIndex() noexcept;
 };

@@ -1,6 +1,5 @@
 #include "seguridad.hh"
-
-#include "openssl_adapter.hh"
+#include "tls_adapter.hh"
 
 auto Seguridad::Hash256(const std::string& str) -> std::string {
   return OpenSslAdapter::Hash256(str);
