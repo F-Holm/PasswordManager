@@ -1,10 +1,10 @@
-#include "set_rand.hh"
-
 #include <gtest/gtest.h>
 
 #include <cstdlib>
 #include <ctime>
 #include <random>
+
+#include "set_rand.hh"
 
 TEST(SetRandTest, CambiaSecuenciaRand) {
   SetRand();

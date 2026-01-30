@@ -8,7 +8,7 @@
 
 TEST(SetRandTest, ChangesRandSequence) {
   kAttempts = 10;
-  
+
   SetRand();
   int values_1[kAttempts];
   for (int i = 0; i < kAttempts; ++i) {

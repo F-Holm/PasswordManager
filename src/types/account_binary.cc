@@ -4,10 +4,8 @@
 
 #include <openssl/crypto.h>
 
-void AccountBinary::SetZero() noexcept{
-    explicit_bzero(this, sizeof(AccountBinary));
+void AccountBinary::SetZero() noexcept {
+  explicit_bzero(this, sizeof(AccountBinary));
 }
 
-AccountBinary::~AccountBinary() noexcept {
-    this->SetZero();
-}
+AccountBinary::~AccountBinary() noexcept { this->SetZero(); }

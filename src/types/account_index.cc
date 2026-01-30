@@ -4,10 +4,8 @@
 
 #include <openssl/crypto.h>
 
-void AccountIndex::SetZero() noexcept{
-    explicit_bzero(this, sizeof(AccountIndex));
+void AccountIndex::SetZero() noexcept {
+  explicit_bzero(this, sizeof(AccountIndex));
 }
 
-AccountIndex::~AccountIndex() noexcept {
-    this->SetZero();
-}
+AccountIndex::~AccountIndex() noexcept { this->SetZero(); }

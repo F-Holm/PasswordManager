@@ -23,8 +23,7 @@ Cuenta CrearCuentaConId(const std::string& id) {
 auto IdUnico(const std::vector<Cuenta>& cuentas,
              const std::string& id) -> bool {
   for (int i = 0; i < cuentas.size(); i++)
-    if (cuentas[i].id() == id)
-      return false;
+    if (cuentas[i].id() == id) return false;
   return true;
 }
 
@@ -124,10 +123,8 @@ TEST_F(DatosTest, GuardarYCargarCuentas) {
   // Verifico que al menos una cuenta tenga id7 o id8
   bool tiene_id7 = false, tiene_id8 = false;
   for (const auto& c : cuentas) {
-    if (c.id() == id[0])
-      tiene_id7 = true;
-    if (c.id() == id[1])
-      tiene_id8 = true;
+    if (c.id() == id[0]) tiene_id7 = true;
+    if (c.id() == id[1]) tiene_id8 = true;
   }
   EXPECT_TRUE(tiene_id7);
   EXPECT_TRUE(tiene_id8);
