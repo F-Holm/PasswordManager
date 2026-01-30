@@ -1,4 +1,4 @@
-#include "set_rand.hh"
+#include "set_rand.h"
 
 #include <gtest/gtest.h>
 
@@ -6,28 +6,29 @@
 #include <ctime>
 #include <random>
 
-TEST(SetRandTest, CambiaSecuenciaRand) {
+TEST(SetRandTest, ChangesRandSequence) {
+  kAttempts = 10;
+  
   SetRand();
-  int valores_1[5];
-  for (int i = 0; i < 5; ++i) {
-    valores_1[i] = rand();
+  int values_1[kAttempts];
+  for (int i = 0; i < kAttempts; ++i) {
+    values_1[i] = rand();
   }
 
   SetRand();
-  int valores_2[5];
-  for (int i = 0; i < 5; ++i) {
-    valores_2[i] = rand();
+  int values_2[kAttempts];
+  for (int i = 0; i < kAttempts; ++i) {
+    values_2[i] = rand();
   }
 
-  // Verificamos que las dos secuencias no sean iguales (probablemente
-  // distintas)
-  bool iguales = true;
-  for (int i = 0; i < 5; ++i) {
-    if (valores_1[i] != valores_2[i]) {
-      iguales = false;
+  // We verify that the two sequences are not equal (very likely different)
+  bool equal = true;
+  for (int i = 0; i < kAttempts; ++i) {
+    if (values_1[i] != values_2[i]) {
+      equal = false;
       break;
     }
   }
 
-  EXPECT_FALSE(iguales);
+  EXPECT_FALSE(equal);
 }

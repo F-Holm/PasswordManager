@@ -1,4 +1,4 @@
-#include "set_rand.hh"
+#include "set_rand.h"
 
 #include <cstdlib>
 #include <ctime>

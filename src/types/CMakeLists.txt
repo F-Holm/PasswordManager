@@ -1,9 +1,9 @@
 add_library(types STATIC)
 
 add_library(types STATIC
-    cuenta_arch.cc
-    cuenta.cc
-    ind_cuenta.cc
+    account_binary.cc
+    account_index.cc
+    account.cc
 )
 
 target_include_directories(types PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
