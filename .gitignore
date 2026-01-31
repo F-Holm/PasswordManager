@@ -2,6 +2,7 @@ mounted/
 build/
 install/
 lib/
+*.tar.gz
 
 #Visual Studio
 .vs/
