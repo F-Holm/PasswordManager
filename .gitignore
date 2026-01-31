@@ -1,6 +1,7 @@
 mounted/
 build/
 install/
+lib/
 
 #Visual Studio
 .vs/
