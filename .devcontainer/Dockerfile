@@ -20,6 +20,7 @@ RUN apt update && \
     graphviz \
     ccache \
     libgtk-3-dev \
+    libpng-dev \
     pkg-config \
     gcc \
     g++ \
