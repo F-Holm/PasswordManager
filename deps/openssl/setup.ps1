@@ -6,7 +6,7 @@ $OpenSSLVersion = "3.6.1"
 $OpenSSLName    = "openssl-$OpenSSLVersion"
 $Url            = "https://github.com/openssl/openssl/releases/download/$OpenSSLName/$OpenSSLName.tar.gz"
 
-$SrcDir        = "$PSScriptRoot/$OpenSSLName"
+$SrcDir        = Join-Path $PSScriptRoot $OpenSSLName
 $Tarball       = Join-Path $PSScriptRoot "$OpenSSLName.tar.gz"
 $InstallDir    = Join-Path $PSScriptRoot "../../lib/openssl/"
 $LlvmMingwBinPath = "/opt/llvm-mingw/bin"
@@ -14,7 +14,7 @@ $LlvmMingwBinPath = "/opt/llvm-mingw/bin"
 Set-Location $PSScriptRoot
 
 Write-Host "==> OpenSSL version: $OpenSSLVersion"
-Write-Host "==> Working dir: $SrcDir"
+Write-Host "==> Working dir: $PSScriptRoot"
 
 # -------------------------------------------------------------------
 # Download
@@ -39,6 +39,7 @@ Write-Host "==> Extracting OpenSSL..."
 tar -xzf $Tarball -C $PSScriptRoot
 
 Set-Location $SrcDir
+Write-Host "==> Working dir: $SrcDir"
 
 # -------------------------------------------------------------------
 # Configuration and Build
@@ -47,12 +48,12 @@ Set-Location $SrcDir
 # SO | Arch | Compiler | Compiler Prefix | UCRT Flags | Target
 
 $configs = @(
-    @{ OS="linux";   Arch="x64";   CC="clang"; Prefix="";                                      UCRT=0; Target="linux-x86_64-clang" },
-    @{ OS="linux";   Arch="x86";   CC="gcc";   Prefix="i686-linux-gnu-";                       UCRT=0; Target="linux-x86" },
-    @{ OS="linux";   Arch="arm64"; CC="gcc";   Prefix="aarch64-linux-gnu-";                    UCRT=0; Target="linux-aarch64" },
-    @{ OS="windows"; Arch="x64";   CC="clang"; Prefix="$LlvmMingwBinPath/x86_64-w64-mingw32-"; UCRT=1; Target="mingw64" }
-    @{ OS="windows"; Arch="x86";   CC="clang"; Prefix="$LlvmMingwBinPath/i686-w64-mingw32-";   UCRT=1; Target="mingw" },
-    @{ OS="windows"; Arch="arm64"; CC="clang"; Prefix="$LlvmMingwBinPath/aarch64-w64-mingw32-";UCRT=1; Target="mingwarm64" }
+    @{ OS="Linux";   Arch="x86_64";  CC="clang"; Prefix="";                                       UCRT=0; Target="linux-x86_64-clang" },
+    @{ OS="Linux";   Arch="x86";     CC="gcc";   Prefix="i686-linux-gnu-";                        UCRT=0; Target="linux-x86" },
+    @{ OS="Linux";   Arch="aarch64"; CC="gcc";   Prefix="aarch64-linux-gnu-";                     UCRT=0; Target="linux-aarch64" },
+    @{ OS="Windows"; Arch="x86_64";  CC="clang"; Prefix="$LlvmMingwBinPath/x86_64-w64-mingw32-";  UCRT=1; Target="mingw64" },
+    @{ OS="Windows"; Arch="x86";     CC="clang"; Prefix="$LlvmMingwBinPath/i686-w64-mingw32-";    UCRT=1; Target="mingw" },
+    @{ OS="Windows"; Arch="aarch64"; CC="clang"; Prefix="$LlvmMingwBinPath/aarch64-w64-mingw32-"; UCRT=1; Target="mingwarm64" }
 )
 
 $Jobs      = [Environment]::ProcessorCount
