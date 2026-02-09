@@ -1,8 +1,17 @@
 # Build Directory
-*/build
-*/target
 build/
 install/
+
+# Core
+build/
+install/
+
+# Crypto
+Cargo.lock
+crypto/target/
+
+# GUI
+build/
 
 # Visual Studio
 .vs/
