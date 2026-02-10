@@ -1,15 +1,11 @@
 add_library(crypto STATIC
-    aes_gcm_256.cc
-    secure_clear.cc
-    sha_256.cc
+    crypto.cc
 )
 
 target_include_directories(crypto PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-Link_TLS(crypto)
+target_link_libraries(crypto PRIVATE rust_crypto)
 
-InstrumentForCoverage(crypto)
-CleanCoverage(crypto)
 Format(crypto .)
+Format(crypto ./*)
 AddCppCheck(crypto)
-AddClangTidy(crypto)
