@@ -2,21 +2,21 @@ extern crate cbindgen;
 
 use std::env;
 use std::path::PathBuf;
-use cbindgen::{Config, Language, ExportConfig};
+use cbindgen::{Config, Language, LineEndingStyle};
 
 fn main() {
+    let profile = env::var("PROFILE").unwrap();
+
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
     let mut config = Config::default();
     config.language = Language::Cxx;
-    config.include_guard = Some("RUST_CRYPTO_LIB_H".to_string());
+    config.pragma_once = true;
     config.cpp_compat = true;
-    config.export = ExportConfig {
-        include: vec!["size_t".to_string()],
-        ..Default::default()
-    };
+    config.line_endings = LineEndingStyle::LF;
+    config.usize_is_size_t = true;
 
-    let target_dir = PathBuf::from(&crate_dir).join("target").join("rust");
+    let target_dir = PathBuf::from(&crate_dir).join("target").join(profile).join("rust");
     if !target_dir.exists() {
         std::fs::create_dir_all(&target_dir).unwrap();
     }
