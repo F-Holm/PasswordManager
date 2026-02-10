@@ -11,7 +11,6 @@ pub const SHA3_512_OUT_SIZE: usize = 64;
 pub const AES256_KEY_SIZE: usize = 32;
 pub const AES256_IV_SIZE: usize = 12;
 pub const AES256_TAG_SIZE: usize = 16;
-pub const ARGON2_OUT_SIZE: usize = 32;
 
 /// Macro to verify that pointers are not null before proceeding
 macro_rules! check_null {
@@ -22,10 +21,11 @@ macro_rules! check_null {
 
 // --- FFI Functions ---
 
+#[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub extern "C" fn sha3_256_hash(input: *const u8, len: u64, output: *mut u8) -> bool {
+pub unsafe extern "C" fn sha3_256_hash(input: *const u8, len: usize, output: *mut u8) -> bool {
     check_null!(input, output);
-    let input_slice = unsafe { slice::from_raw_parts(input, len as usize) };
+    let input_slice = unsafe { slice::from_raw_parts(input, len) };
     let output_slice = unsafe { slice::from_raw_parts_mut(output, SHA3_256_OUT_SIZE) };
 
     let mut hasher = Sha3_256::new();
@@ -34,10 +34,11 @@ pub extern "C" fn sha3_256_hash(input: *const u8, len: u64, output: *mut u8) -> 
     true
 }
 
+#[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub extern "C" fn sha3_512_hash(input: *const u8, len: u64, output: *mut u8) -> bool {
+pub unsafe extern "C" fn sha3_512_hash(input: *const u8, len: usize, output: *mut u8) -> bool {
     check_null!(input, output);
-    let input_slice = unsafe { slice::from_raw_parts(input, len as usize) };
+    let input_slice = unsafe { slice::from_raw_parts(input, len) };
     let output_slice = unsafe { slice::from_raw_parts_mut(output, SHA3_512_OUT_SIZE) };
 
     let mut hasher = Sha3_512::new();
@@ -46,14 +47,15 @@ pub extern "C" fn sha3_512_hash(input: *const u8, len: u64, output: *mut u8) -> 
     true
 }
 
+#[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub extern "C" fn encrypt_aes_gcm_256(
+pub unsafe extern "C" fn encrypt_aes_gcm_256(
     key: *const u8,
     iv: *const u8,
     aad: *const u8,
-    aad_len: u64,
+    aad_len: usize,
     data: *mut u8,
-    data_len: u64,
+    data_len: usize,
     tag_out: *mut u8,
 ) -> bool {
     check_null!(key, iv, data, tag_out);
@@ -67,9 +69,9 @@ pub extern "C" fn encrypt_aes_gcm_256(
     let aad_slice = if aad.is_null() {
         &[]
     } else {
-        unsafe { slice::from_raw_parts(aad, aad_len as usize) }
+        unsafe { slice::from_raw_parts(aad, aad_len) }
     };
-    let data_slice = unsafe { slice::from_raw_parts_mut(data, data_len as usize) };
+    let data_slice = unsafe { slice::from_raw_parts_mut(data, data_len) };
 
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key_slice));
     let nonce = Nonce::from_slice(iv_slice);
@@ -84,15 +86,16 @@ pub extern "C" fn encrypt_aes_gcm_256(
     }
 }
 
+#[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub extern "C" fn decrypt_aes_gcm_256(
+pub unsafe extern "C" fn decrypt_aes_gcm_256(
     key: *const u8,
     iv: *const u8,
     aad: *const u8,
-    aad_len: u64,
+    aad_len: usize,
     tag: *const u8,
     data: *mut u8,
-    data_len: u64,
+    data_len: usize,
 ) -> bool {
     check_null!(key, iv, tag, data);
 
@@ -105,10 +108,10 @@ pub extern "C" fn decrypt_aes_gcm_256(
     let aad_slice = if aad.is_null() {
         &[]
     } else {
-        unsafe { slice::from_raw_parts(aad, aad_len as usize) }
+        unsafe { slice::from_raw_parts(aad, aad_len) }
     };
     let tag_slice = unsafe { slice::from_raw_parts(tag, AES256_TAG_SIZE) };
-    let data_slice = unsafe { slice::from_raw_parts_mut(data, data_len as usize) };
+    let data_slice = unsafe { slice::from_raw_parts_mut(data, data_len) };
 
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key_slice));
     let nonce = Nonce::from_slice(iv_slice);
@@ -119,29 +122,32 @@ pub extern "C" fn decrypt_aes_gcm_256(
         .is_ok()
 }
 
+#[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub extern "C" fn argon2id_hash(
+pub unsafe extern "C" fn argon2id_hash(
     password: *const u8,
-    pass_len: u64,
+    pass_len: usize,
     salt: *const u8,
-    salt_len: u64,
+    salt_len: usize,
     output: *mut u8,
+    output_len: usize,
 ) -> bool {
     check_null!(password, salt, output);
-    let pwd = unsafe { slice::from_raw_parts(password, pass_len as usize) };
-    let slt = unsafe { slice::from_raw_parts(salt, salt_len as usize) };
-    let out = unsafe { slice::from_raw_parts_mut(output, ARGON2_OUT_SIZE) };
+    let pwd = unsafe { slice::from_raw_parts(password, pass_len) };
+    let slt = unsafe { slice::from_raw_parts(salt, salt_len) };
+    let out = unsafe { slice::from_raw_parts_mut(output, output_len) };
 
     let argon2 = Argon2::default();
     argon2.hash_password_into(pwd, slt, out).is_ok()
 }
 
+#[allow(clippy::missing_safety_doc)]
 #[no_mangle]
-pub extern "C" fn secure_set_zero(ptr: *mut u8, len: u64) -> bool {
+pub unsafe extern "C" fn secure_set_zero(ptr: *mut u8, len: usize) -> bool {
     if ptr.is_null() {
         return false;
     }
-    let data = unsafe { slice::from_raw_parts_mut(ptr, len as usize) };
+    let data = unsafe { slice::from_raw_parts_mut(ptr, len) };
     data.zeroize();
     true
 }
@@ -158,62 +164,53 @@ mod tests {
         let mut output = [0u8; SHA3_256_OUT_SIZE];
 
         // input null
-        assert!(!sha3_256_hash(
-            std::ptr::null(),
-            input.len() as u64,
-            output.as_mut_ptr()
-        ));
+        unsafe {
+            assert!(!sha3_256_hash(
+                std::ptr::null(),
+                input.len(),
+                output.as_mut_ptr()
+            ));
 
-        // output null
-        assert!(!sha3_256_hash(
-            input.as_ptr(),
-            input.len() as u64,
-            std::ptr::null_mut()
-        ));
+            // output null
+            assert!(!sha3_256_hash(
+                input.as_ptr(),
+                input.len(),
+                std::ptr::null_mut()
+            ));
+        }
     }
 
     #[test]
     fn test_sha3_512_null_parameters() {
         let input = b"data";
         let mut output = [0u8; SHA3_512_OUT_SIZE];
+        unsafe {
+            // input null
+            assert!(!sha3_512_hash(
+                std::ptr::null(),
+                input.len(),
+                output.as_mut_ptr()
+            ));
 
-        // input null
-        assert!(!sha3_512_hash(
-            std::ptr::null(),
-            input.len() as u64,
-            output.as_mut_ptr()
-        ));
-
-        // output null
-        assert!(!sha3_512_hash(
-            input.as_ptr(),
-            input.len() as u64,
-            std::ptr::null_mut()
-        ));
-    }
-
-    #[test]
-    fn test_null_pointers() {
-        // All should return false if they receive null pointers
-        assert!(!sha3_256_hash(std::ptr::null(), 0, std::ptr::null_mut()));
-        assert!(!argon2id_hash(
-            std::ptr::null(),
-            0,
-            std::ptr::null(),
-            0,
-            std::ptr::null_mut()
-        ));
-        assert!(!secure_set_zero(std::ptr::null_mut(), 10));
+            // output null
+            assert!(!sha3_512_hash(
+                input.as_ptr(),
+                input.len(),
+                std::ptr::null_mut()
+            ));
+        }
     }
 
     #[test]
     fn test_sha3_512() {
         let input = b"rust";
         let mut output = [0u8; SHA3_512_OUT_SIZE];
-        let res = sha3_512_hash(input.as_ptr(), input.len() as u64, output.as_mut_ptr());
-        assert!(res);
-        // Verify output is not all zeros
-        assert!(output.iter().any(|&x| x != 0));
+        unsafe {
+            let res = sha3_512_hash(input.as_ptr(), input.len(), output.as_mut_ptr());
+            assert!(res);
+            // Verify output is not all zeros
+            assert!(output.iter().any(|&x| x != 0));
+        }
     }
 
     #[test]
@@ -223,61 +220,62 @@ mod tests {
         let aad = [3u8; 8];
         let mut data = *b"secret data";
         let mut tag = [0u8; AES256_TAG_SIZE];
+        unsafe {
+            // key null
+            assert!(!encrypt_aes_gcm_256(
+                std::ptr::null(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                0,
+                data.as_mut_ptr(),
+                data.len(),
+                tag.as_mut_ptr()
+            ));
 
-        // key null
-        assert!(!encrypt_aes_gcm_256(
-            std::ptr::null(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            0,
-            data.as_mut_ptr(),
-            data.len() as u64,
-            tag.as_mut_ptr()
-        ));
+            // iv null
+            assert!(!encrypt_aes_gcm_256(
+                key.as_ptr(),
+                std::ptr::null(),
+                std::ptr::null(),
+                0,
+                data.as_mut_ptr(),
+                data.len(),
+                tag.as_mut_ptr()
+            ));
 
-        // iv null
-        assert!(!encrypt_aes_gcm_256(
-            key.as_ptr(),
-            std::ptr::null(),
-            std::ptr::null(),
-            0,
-            data.as_mut_ptr(),
-            data.len() as u64,
-            tag.as_mut_ptr()
-        ));
+            // data null
+            assert!(!encrypt_aes_gcm_256(
+                key.as_ptr(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                0,
+                std::ptr::null_mut(),
+                data.len(),
+                tag.as_mut_ptr()
+            ));
 
-        // data null
-        assert!(!encrypt_aes_gcm_256(
-            key.as_ptr(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            0,
-            std::ptr::null_mut(),
-            data.len() as u64,
-            tag.as_mut_ptr()
-        ));
+            // tag_out null
+            assert!(!encrypt_aes_gcm_256(
+                key.as_ptr(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                0,
+                data.as_mut_ptr(),
+                data.len(),
+                std::ptr::null_mut()
+            ));
 
-        // tag_out null
-        assert!(!encrypt_aes_gcm_256(
-            key.as_ptr(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            0,
-            data.as_mut_ptr(),
-            data.len() as u64,
-            std::ptr::null_mut()
-        ));
-
-        // aad_len > 0 pero aad null
-        assert!(!encrypt_aes_gcm_256(
-            key.as_ptr(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            aad.len() as u64,
-            data.as_mut_ptr(),
-            data.len() as u64,
-            tag.as_mut_ptr()
-        ));
+            // aad_len > 0 pero aad null
+            assert!(!encrypt_aes_gcm_256(
+                key.as_ptr(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                aad.len(),
+                data.as_mut_ptr(),
+                data.len(),
+                tag.as_mut_ptr()
+            ));
+        }
     }
 
     #[test]
@@ -287,61 +285,62 @@ mod tests {
         let aad = [3u8; 8];
         let mut data = *b"secret data";
         let tag = [9u8; AES256_TAG_SIZE];
+        unsafe {
+            // key null
+            assert!(!decrypt_aes_gcm_256(
+                std::ptr::null(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                0,
+                tag.as_ptr(),
+                data.as_mut_ptr(),
+                data.len()
+            ));
 
-        // key null
-        assert!(!decrypt_aes_gcm_256(
-            std::ptr::null(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            0,
-            tag.as_ptr(),
-            data.as_mut_ptr(),
-            data.len() as u64
-        ));
+            // iv null
+            assert!(!decrypt_aes_gcm_256(
+                key.as_ptr(),
+                std::ptr::null(),
+                std::ptr::null(),
+                0,
+                tag.as_ptr(),
+                data.as_mut_ptr(),
+                data.len()
+            ));
 
-        // iv null
-        assert!(!decrypt_aes_gcm_256(
-            key.as_ptr(),
-            std::ptr::null(),
-            std::ptr::null(),
-            0,
-            tag.as_ptr(),
-            data.as_mut_ptr(),
-            data.len() as u64
-        ));
+            // tag null
+            assert!(!decrypt_aes_gcm_256(
+                key.as_ptr(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                0,
+                std::ptr::null(),
+                data.as_mut_ptr(),
+                data.len()
+            ));
 
-        // tag null
-        assert!(!decrypt_aes_gcm_256(
-            key.as_ptr(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            0,
-            std::ptr::null(),
-            data.as_mut_ptr(),
-            data.len() as u64
-        ));
+            // data null
+            assert!(!decrypt_aes_gcm_256(
+                key.as_ptr(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                0,
+                tag.as_ptr(),
+                std::ptr::null_mut(),
+                data.len()
+            ));
 
-        // data null
-        assert!(!decrypt_aes_gcm_256(
-            key.as_ptr(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            0,
-            tag.as_ptr(),
-            std::ptr::null_mut(),
-            data.len() as u64
-        ));
-
-        // aad_len > 0 pero aad null
-        assert!(!decrypt_aes_gcm_256(
-            key.as_ptr(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            aad.len() as u64,
-            tag.as_ptr(),
-            data.as_mut_ptr(),
-            data.len() as u64
-        ));
+            // aad_len > 0 pero aad null
+            assert!(!decrypt_aes_gcm_256(
+                key.as_ptr(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                aad.len(),
+                tag.as_ptr(),
+                data.as_mut_ptr(),
+                data.len()
+            ));
+        }
     }
 
     #[test]
@@ -350,92 +349,121 @@ mod tests {
         let iv = [2u8; 12];
         let mut data = *b"super secret message";
         let mut tag = [0u8; 16];
+        unsafe {
+            // Encrypt
+            let enc_res = encrypt_aes_gcm_256(
+                key.as_ptr(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                0,
+                data.as_mut_ptr(),
+                data.len(),
+                tag.as_mut_ptr(),
+            );
+            assert!(enc_res);
+            assert_ne!(&data, b"super secret message"); // Data must have changed
 
-        // Encrypt
-        let enc_res = encrypt_aes_gcm_256(
-            key.as_ptr(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            0,
-            data.as_mut_ptr(),
-            data.len() as u64,
-            tag.as_mut_ptr(),
-        );
-        assert!(enc_res);
-        assert_ne!(&data, b"super secret message"); // Data must have changed
-
-        // Decrypt
-        let dec_res = decrypt_aes_gcm_256(
-            key.as_ptr(),
-            iv.as_ptr(),
-            std::ptr::null(),
-            0,
-            tag.as_ptr(),
-            data.as_mut_ptr(),
-            data.len() as u64,
-        );
-        assert!(dec_res);
-        assert_eq!(&data, b"super secret message"); // Data must be back to original
+            // Decrypt
+            let dec_res = decrypt_aes_gcm_256(
+                key.as_ptr(),
+                iv.as_ptr(),
+                std::ptr::null(),
+                0,
+                tag.as_ptr(),
+                data.as_mut_ptr(),
+                data.len(),
+            );
+            assert!(dec_res);
+            assert_eq!(&data, b"super secret message"); // Data must be back to original
+        }
     }
 
     #[test]
     fn test_argon2id_null_parameters() {
         let pass = b"password";
         let salt = b"salt";
-        let mut out = [0u8; ARGON2_OUT_SIZE];
+        let mut out = [0u8; 32];
+        unsafe {
+            // password null
+            assert!(!argon2id_hash(
+                std::ptr::null(),
+                pass.len(),
+                salt.as_ptr(),
+                salt.len(),
+                out.as_mut_ptr(),
+                out.len()
+            ));
 
-        // password null
-        assert!(!argon2id_hash(
-            std::ptr::null(),
-            pass.len() as u64,
-            salt.as_ptr(),
-            salt.len() as u64,
-            out.as_mut_ptr()
-        ));
+            // salt null
+            assert!(!argon2id_hash(
+                pass.as_ptr(),
+                pass.len(),
+                std::ptr::null(),
+                salt.len(),
+                out.as_mut_ptr(),
+                out.len()
+            ));
 
-        // salt null
-        assert!(!argon2id_hash(
-            pass.as_ptr(),
-            pass.len() as u64,
-            std::ptr::null(),
-            salt.len() as u64,
-            out.as_mut_ptr()
-        ));
-
-        // output null
-        assert!(!argon2id_hash(
-            pass.as_ptr(),
-            pass.len() as u64,
-            salt.as_ptr(),
-            salt.len() as u64,
-            std::ptr::null_mut()
-        ));
+            // output null
+            assert!(!argon2id_hash(
+                pass.as_ptr(),
+                pass.len(),
+                salt.as_ptr(),
+                salt.len(),
+                std::ptr::null_mut(),
+                1
+            ));
+        }
     }
 
     #[test]
-    fn test_argon2id() {
+    fn test_argon2id_variable_lengths() {
         let pass = b"password";
         let salt = b"somesalt";
-        let mut out = [0u8; ARGON2_OUT_SIZE];
-        assert!(argon2id_hash(
-            pass.as_ptr(),
-            pass.len() as u64,
-            salt.as_ptr(),
-            salt.len() as u64,
-            out.as_mut_ptr()
-        ));
+        let sizes = [16, 32, 64];
+
+        for &size in sizes.iter() {
+            let mut out = vec![0u8; size];
+            unsafe {
+                let success = argon2id_hash(
+                    pass.as_ptr(),
+                    pass.len(),
+                    salt.as_ptr(),
+                    salt.len(),
+                    out.as_mut_ptr(),
+                    out.len(),
+                );
+
+                assert!(success, "Failed to generate hash for size: {}", size);
+                assert!(
+                    out.iter().any(|&x| x != 0),
+                    "Hash output is empty for size: {}",
+                    size
+                );
+                assert_eq!(
+                    out.len(),
+                    size,
+                    "The output buffer length ({}) does not match the requested size ({})",
+                    out.len(),
+                    size
+                );
+            }
+        }
     }
 
     #[test]
     fn test_secure_set_zero_null_parameter() {
-        // ptr null
-        assert!(!secure_set_zero(std::ptr::null_mut(), 16));
+        unsafe {
+            assert!(!secure_set_zero(std::ptr::null_mut(), 16));
+        }
     }
 
     #[test]
     fn test_zeroize() {
         let mut sensitive_data = [5u8; 10];
-        secure_set_zero(sensitive_data.as_mut_ptr(), sensitive_data.len() as u64);
+        unsafe {
+            secure_set_zero(sensitive_data.as_mut_ptr(), sensitive_data.len());
+        }
         assert_eq!(sensitive_data, [0u8; 10]);
     }
 }
