@@ -13,13 +13,9 @@ RUN apt update && \
     update-alternatives --install /usr/bin/lld lld /usr/bin/lld-20 100 && \
     update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-20 100
 
-# Rust
-#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-#RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
 # Other
 RUN apt install -y \
-    clang-format \    
+    clang-format \
     clang-tidy \
     cmake \
     ninja-build \
