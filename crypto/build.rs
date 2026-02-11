@@ -16,7 +16,7 @@ fn main() {
     config.line_endings = LineEndingStyle::LF;
     config.usize_is_size_t = true;
 
-    let target_dir = PathBuf::from(&crate_dir).join("target").join(profile).join("rust");
+    let target_dir = PathBuf::from(&crate_dir).join("target").join(profile);
     if !target_dir.exists() {
         std::fs::create_dir_all(&target_dir).unwrap();
     }
