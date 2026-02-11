@@ -4,7 +4,7 @@ add_library(crypto STATIC
 
 target_include_directories(crypto PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(crypto PRIVATE rust_crypto)
+target_link_libraries(crypto PUBLIC rust_crypto)
 
 Format(crypto .)
 Format(crypto ./*)

@@ -93,9 +93,9 @@ pub unsafe extern "C" fn decrypt_aes_gcm_256(
     iv: *const u8,
     aad: *const u8,
     aad_len: usize,
-    tag: *const u8,
     data: *mut u8,
     data_len: usize,
+    tag: *const u8,
 ) -> bool {
     check_null!(key, iv, tag, data);
 
