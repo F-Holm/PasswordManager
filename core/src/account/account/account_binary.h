@@ -1,6 +1,7 @@
 #pragma once
 
 #include "account/account_size.h"
+#include "crypto/crypto.h"
 
 struct AccountBinary {
   char description[AccountSize::kDescription];
