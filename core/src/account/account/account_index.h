@@ -1,9 +1,9 @@
 #pragma once
 
-#include "types/account_binary.h"
+#include "account/account_size.h"
 
 struct AccountIndex {
-  char description[kDescriptionSize];
+  char description[AccountSize::kDescription];
 
   void SetZero() noexcept;
   ~AccountIndex() noexcept;
