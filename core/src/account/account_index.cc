@@ -1,11 +1,14 @@
 #pragma once
 
-#include "types/account_index.h"
+#include "account/account_index.h"
 
-#include <openssl/crypto.h>
+#include "crypto/crypto.h"
+
+#include <cstddef>
+#include <span>
 
 void AccountIndex::SetZero() noexcept {
-  explicit_bzero(this, sizeof(AccountIndex));
+  SecureClear(std::as_writable_bytes(std::span{description}));
 }
 
 AccountIndex::~AccountIndex() noexcept { this->SetZero(); }
