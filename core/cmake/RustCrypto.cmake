@@ -1,5 +1,5 @@
 if (WIN32)
-    set(CRYPTO_LIB_NAME "librust_crypto.lib")
+    set(CRYPTO_LIB_NAME "rust_crypto.lib")
 else()
     set(CRYPTO_LIB_NAME "librust_crypto.a")
 endif()
