@@ -1,5 +1,5 @@
 [package]
-name = "rust_crypto_lib"
+name = "rust_crypto"
 version = "1.0.0"
 edition = "2021"
 
