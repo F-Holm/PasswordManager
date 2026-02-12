@@ -21,7 +21,6 @@ TEST(SetRandTest, ChangesRandSequence) {
     values_2[i] = rand();
   }
 
-  // We verify that the two sequences are not equal (very likely different)
   bool equal = true;
   for (int i = 0; i < kAttempts; ++i) {
     if (values_1[i] != values_2[i]) {
