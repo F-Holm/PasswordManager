@@ -7,6 +7,9 @@
     "ghcr.io/devcontainers/features/rust:1": {
       "version": "stable",
       "components": "rustfmt,clippy"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+        "version": "latest"
     }
   },
   "customizations": {

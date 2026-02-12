@@ -1,7 +1,13 @@
 FROM mcr.microsoft.com/devcontainers/base:ubuntu
 
+# Powershell
+RUN wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm ./packages-microsoft-prod.deb
+
 RUN sudo apt update && \
     apt install -y \
+    powershell \
     clang \
     clangd \
     lldb \
@@ -14,3 +20,6 @@ RUN sudo apt update && \
     ninja-build \
     cppcheck \
     ccache
+
+# Act
+RUN curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
