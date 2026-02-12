@@ -1,4 +1,4 @@
-#include "set_rand.h"
+#include "utils/set_rand.h"
 
 #include <gtest/gtest.h>
 
@@ -7,7 +7,7 @@
 #include <random>
 
 TEST(SetRandTest, ChangesRandSequence) {
-  kAttempts = 10;
+  constexpr size_t kAttempts = 100;
 
   SetRand();
   int values_1[kAttempts];
