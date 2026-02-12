@@ -292,9 +292,9 @@ mod tests {
                 iv.as_ptr(),
                 std::ptr::null(),
                 0,
-                tag.as_ptr(),
                 data.as_mut_ptr(),
-                data.len()
+                data.len(),
+                tag.as_ptr()
             ));
 
             // iv null
@@ -303,9 +303,9 @@ mod tests {
                 std::ptr::null(),
                 std::ptr::null(),
                 0,
-                tag.as_ptr(),
                 data.as_mut_ptr(),
-                data.len()
+                data.len(),
+                tag.as_ptr()
             ));
 
             // tag null
@@ -314,9 +314,9 @@ mod tests {
                 iv.as_ptr(),
                 std::ptr::null(),
                 0,
-                std::ptr::null(),
                 data.as_mut_ptr(),
-                data.len()
+                data.len(),
+                std::ptr::null()
             ));
 
             // data null
@@ -325,9 +325,9 @@ mod tests {
                 iv.as_ptr(),
                 std::ptr::null(),
                 0,
-                tag.as_ptr(),
                 std::ptr::null_mut(),
-                data.len()
+                data.len(),
+                tag.as_ptr()
             ));
 
             // aad_len > 0 pero aad null
@@ -336,9 +336,9 @@ mod tests {
                 iv.as_ptr(),
                 std::ptr::null(),
                 aad.len(),
-                tag.as_ptr(),
                 data.as_mut_ptr(),
-                data.len()
+                data.len(),
+                tag.as_ptr()
             ));
         }
     }
@@ -369,9 +369,9 @@ mod tests {
                 iv.as_ptr(),
                 std::ptr::null(),
                 0,
-                tag.as_ptr(),
                 data.as_mut_ptr(),
                 data.len(),
+                tag.as_ptr(),
             );
             assert!(dec_res);
             assert_eq!(&data, b"super secret message"); // Data must be back to original
