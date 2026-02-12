@@ -6,7 +6,7 @@ add_library(account STATIC
 
 target_include_directories(account PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(account PRIVATE crypto)
+target_link_libraries(account PUBLIC crypto)
 
 Format(account .)
 Format(account ./*)
