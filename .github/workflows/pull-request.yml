@@ -36,7 +36,10 @@ jobs:
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
-        run: choco install cmake ninja cppcheck ccache llvm
+        run: |
+          choco install cmake ninja cppcheck ccache llvm
+          echo "C:\Program Files\Cppcheck" >> $GITHUB_PATH
+          echo "CPPCHECK_LIBRARY_PATH=C:\Program Files\Cppcheck\cfg" >> $GITHUB_ENV
 
       # --- EXECUTION ---
       - name: Run test script
