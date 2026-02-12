@@ -5,7 +5,6 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let profile = env::var("PROFILE").unwrap();
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
     let config = Config {
@@ -17,11 +16,13 @@ fn main() {
         ..Default::default()
     };
 
-    let target_dir = PathBuf::from(&crate_dir).join("target").join(profile);
-    if !target_dir.exists() {
-        std::fs::create_dir_all(&target_dir).unwrap();
+    let include_dir = PathBuf::from(&crate_dir)
+        .join("include")
+        .join("rust_crypto");
+    if !include_dir.exists() {
+        std::fs::create_dir_all(&include_dir).unwrap();
     }
-    let output_file = target_dir.join("rust_crypto.h");
+    let output_file = include_dir.join("rust_crypto.h");
 
     cbindgen::Builder::new()
         .with_crate(crate_dir)
