@@ -8,4 +8,4 @@ target_link_libraries(account_test PRIVATE account)
 
 AddTests(account_test)
 
-Format(account_test .)
+FormatTest(account_test)
