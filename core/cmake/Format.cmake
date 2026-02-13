@@ -11,3 +11,12 @@ function(Format target directory)
         )
     endif()
 endfunction()
+
+function(FormatTest target)
+    Format(${target} ".")
+endfunction()
+
+function(FormatModule target)
+    Format(${target} ".")
+    Format(${target} "./include/*")
+endfunction()
