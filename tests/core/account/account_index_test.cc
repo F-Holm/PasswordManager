@@ -30,7 +30,7 @@ TEST(AccountIndexTest, ConstructorCopiesDescriptionCorrectly) {
 
 TEST(AccountIndexTest, SetZeroClearsData) {
   AccountBinary binary;
-  std::memset(binary.description, 0xAA, AccountSize::kDescription);
+  std::memset(binary.description.data(), 0xAA, AccountSize::kDescription);
 
   AccountIndex index(binary);
   ASSERT_FALSE(IsDescriptionZeroed(index));
@@ -45,7 +45,7 @@ TEST(AccountIndexTest, DestructorImplicitlyClearsData) {
 
   {
     AccountBinary binary;
-    std::memset(binary.description, 0xBB, AccountSize::kDescription);
+    std::memset(binary.description.data(), 0xBB, AccountSize::kDescription);
 
     AccountIndex* index = new (buffer) AccountIndex(binary);
     ASSERT_FALSE(IsDescriptionZeroed(*index));

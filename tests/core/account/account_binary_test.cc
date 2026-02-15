@@ -16,23 +16,26 @@ bool IsBufferZeroed(const std::byte* data, size_t size) {
 TEST(AccountBinaryTest, SetZeroClearsAllFields) {
   AccountBinary account;
 
-  std::memset(account.description, 0xAA, sizeof(account.description));
-  std::memset(account.data, 0xBB, sizeof(account.data));
-  std::memset(account.iv_description, 0xCC, sizeof(account.iv_description));
-  std::memset(account.iv_data, 0xDD, sizeof(account.iv_data));
-  std::memset(account.tag_description, 0xEE, sizeof(account.tag_description));
-  std::memset(account.tag_data, 0xFF, sizeof(account.tag_data));
+  std::memset(account.description.data(), 0xAA, account.description.size());
+  std::memset(account.data.data(), 0xBB, account.data.size());
+  std::memset(account.iv_description.data(), 0xCC,
+              account.iv_description.size());
+  std::memset(account.iv_data.data(), 0xDD, account.iv_data.size());
+  std::memset(account.tag_description.data(), 0xEE,
+              account.tag_description.size());
+  std::memset(account.tag_data.data(), 0xFF, account.tag_data.size());
 
   account.SetZero();
 
-  EXPECT_TRUE(IsBufferZeroed(account.description, sizeof(account.description)));
-  EXPECT_TRUE(IsBufferZeroed(account.data, sizeof(account.data)));
   EXPECT_TRUE(
-      IsBufferZeroed(account.iv_description, sizeof(account.iv_description)));
-  EXPECT_TRUE(IsBufferZeroed(account.iv_data, sizeof(account.iv_data)));
-  EXPECT_TRUE(
-      IsBufferZeroed(account.tag_description, sizeof(account.tag_description)));
-  EXPECT_TRUE(IsBufferZeroed(account.tag_data, sizeof(account.tag_data)));
+      IsBufferZeroed(account.description.data(), account.description.size()));
+  EXPECT_TRUE(IsBufferZeroed(account.data.data(), account.data.size()));
+  EXPECT_TRUE(IsBufferZeroed(account.iv_description.data(),
+                             account.iv_description.size()));
+  EXPECT_TRUE(IsBufferZeroed(account.iv_data.data(), account.iv_data.size()));
+  EXPECT_TRUE(IsBufferZeroed(account.tag_description.data(),
+                             account.tag_description.size()));
+  EXPECT_TRUE(IsBufferZeroed(account.tag_data.data(), account.tag_data.size()));
 }
 
 TEST(AccountBinaryTest, DestructorImplicitlyCallsSetZero) {
@@ -40,8 +43,8 @@ TEST(AccountBinaryTest, DestructorImplicitlyCallsSetZero) {
   {
     AccountBinary* account = new (raw_mem) AccountBinary();
 
-    std::memset(account->data, 0x42, sizeof(account->data));
-    ASSERT_FALSE(IsBufferZeroed(account->data, sizeof(account->data)));
+    std::memset(account->data.data(), 0x42, account->data.size());
+    ASSERT_FALSE(IsBufferZeroed(account->data.data(), account->data.size()));
 
     account->~AccountBinary();
   }

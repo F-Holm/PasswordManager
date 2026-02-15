@@ -10,3 +10,4 @@ target_link_libraries(account PUBLIC crypto)
 
 FormatModule(account)
 AddCppCheck(account)
+AddClangTidy(account)
