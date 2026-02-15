@@ -8,6 +8,7 @@ include(CppCheck)
 include(CTest)
 include(Format)
 include(Rust)
+include(Testing)
 
 add_subdirectory(crypto)
 add_subdirectory(core)
