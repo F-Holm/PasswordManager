@@ -13,7 +13,6 @@ FetchContent_MakeAvailable(googletest)
 
 include(GoogleTest)
 
-
 macro(AddTests target)
     #message("Adding tests to ${target}")
     target_link_libraries("${target}" PRIVATE gtest_main gmock)
