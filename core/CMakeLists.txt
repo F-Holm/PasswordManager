@@ -1,12 +1,4 @@
-cmake_minimum_required(VERSION 3.28.3)
-project(core VERSION 1.0.0 LANGUAGES C CXX)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-
-include(NoInSourceBuilds)
-include(CTest)
-include(Format)
-include(RustCrypto)
-
-add_subdirectory(src bin)
-add_subdirectory(test)
+add_subdirectory(account)
+#add_subdirectory(core_interface)
+add_subdirectory(crypto)
+add_subdirectory(utils)

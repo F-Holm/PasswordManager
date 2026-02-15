@@ -15,5 +15,7 @@ function(AddCppCheck target)
             PROPERTIES CXX_CPPCHECK
             "${CPPCHECK_PATH};--enable=warning;--error-exitcode=1;--force;--quiet"
         )
+    else()
+        message(WARNING "cppcheck not found. Skipping cppcheck for ${target}.")
     endif()
 endfunction()

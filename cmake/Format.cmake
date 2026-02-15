@@ -7,8 +7,10 @@ function(Format target directory)
             LIST_DIRECTORIES false ${EXPRESSION}
         )
         add_custom_command(TARGET "${target}" PRE_BUILD COMMAND
-            "${CLANG-FORMAT_PATH}" -i --style=Google ${SOURCE_FILES}
+            "${CLANG-FORMAT_PATH}" -i --style=file ${SOURCE_FILES}
         )
+    else()
+        message(WARNING "clang-format not found. Skipping clang-format for ${target}.")
     endif()
 endfunction()
 
