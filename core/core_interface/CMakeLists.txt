@@ -8,3 +8,4 @@ target_link_libraries(core_interface PUBLIC account)
 
 FormatModule(core_interface)
 AddCppCheck(core_interface)
+AddClangTidy(core_interface)

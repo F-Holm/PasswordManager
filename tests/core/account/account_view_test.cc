@@ -20,19 +20,19 @@ TEST(AccountViewTest, ConstructorCorrectlyMapsOffsets) {
 
   AccountView view(binary);
 
-  EXPECT_EQ(view.description.data(), binary.description);
+  EXPECT_EQ(view.description.data(), binary.description.data());
   EXPECT_EQ(view.description[0], std::byte{0xDE});
   EXPECT_EQ(view.description.size(), AccountSize::kDescription);
 
-  EXPECT_EQ(view.email.data(), binary.data);
+  EXPECT_EQ(view.email.data(), binary.data.data());
   EXPECT_EQ(view.email[0], std::byte{0xE1});
   EXPECT_EQ(view.email.size(), AccountSize::kEmail);
 
-  EXPECT_EQ(view.user_name.data(), binary.data + AccountSize::kEmail);
+  EXPECT_EQ(view.user_name.data(), binary.data.data() + AccountSize::kEmail);
   EXPECT_EQ(view.user_name[0], std::byte{0x02});
 
   EXPECT_EQ(view.password.data(),
-            binary.data + AccountSize::kEmail + AccountSize::kUsername);
+            binary.data.data() + AccountSize::kEmail + AccountSize::kUsername);
   EXPECT_EQ(view.password[0], std::byte{0x03});
 }
 
@@ -56,7 +56,7 @@ TEST(AccountViewTest, ClearSetsSpansToNull) {
 
 TEST(AccountViewTest, DestructorInvalidatesViewButPreservesBinary) {
   AccountBinary binary;
-  std::memset(binary.description, 0x42, AccountSize::kDescription);
+  std::memset(binary.description.data(), 0x42, AccountSize::kDescription);
 
   {
     AccountView view(binary);

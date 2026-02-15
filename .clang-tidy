@@ -1,0 +1,20 @@
+Checks: >
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  misc-unused-parameters,
+  misc-const-correctness,
+  readability-braces-around-statements,
+  readability-implicit-bool-conversion,
+  readability-qualified-auto,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-interfaces-global-init,
+  cppcoreguidelines-narrowing-conversions,
+  -modernize-use-trailing-return-type
+
+WarningsAsErrors: '*'
+
+HeaderFilterRegex: '.*'
+
+FormatStyle: file

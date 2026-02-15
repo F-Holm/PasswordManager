@@ -3,18 +3,17 @@
 #include "account/account_size.h"
 
 AccountView::AccountView(AccountBinary& account) noexcept
-    : description(reinterpret_cast<std::byte*>(account.description),
-                  AccountSize::kDescription),
-      email(reinterpret_cast<std::byte*>(account.data), AccountSize::kEmail),
-      user_name(
-          reinterpret_cast<std::byte*>(account.data) + AccountSize::kEmail,
-          AccountSize::kUsername),
-      password(reinterpret_cast<std::byte*>(account.data) +
-                   AccountSize::kEmail + AccountSize::kUsername,
-               AccountSize::kPassword),
-      extra(reinterpret_cast<std::byte*>(account.data) + AccountSize::kEmail +
-                AccountSize::kUsername + AccountSize::kPassword,
-            AccountSize::kExtra) {}
+    : description(account.description),
+      email(std::span(account.data).first(AccountSize::kEmail)),
+      user_name(std::span(account.data)
+                    .subspan(AccountSize::kEmail, AccountSize::kUsername)),
+      password(std::span(account.data)
+                   .subspan(AccountSize::kEmail + AccountSize::kUsername,
+                            AccountSize::kPassword)),
+      extra(std::span(account.data)
+                .subspan(AccountSize::kEmail + AccountSize::kUsername +
+                             AccountSize::kPassword,
+                         AccountSize::kExtra)) {}
 
 void AccountView::Clear() noexcept {
   description = {};

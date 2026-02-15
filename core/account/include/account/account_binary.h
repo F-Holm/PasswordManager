@@ -1,15 +1,18 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
+
 #include "account/account_size.h"
 #include "crypto/crypto.h"
 
 struct AccountBinary {
-  std::byte description[AccountSize::kDescription];
-  std::byte data[AccountSize::kData];
-  std::byte iv_description[Crypto::Size::kIv];
-  std::byte iv_data[Crypto::Size::kIv];
-  std::byte tag_description[Crypto::Size::kTag];
-  std::byte tag_data[Crypto::Size::kTag];
+  std::array<std::byte, AccountSize::kDescription> description;
+  std::array<std::byte, AccountSize::kData> data;
+  std::array<std::byte, Crypto::Size::kIv> iv_description;
+  std::array<std::byte, Crypto::Size::kIv> iv_data;
+  std::array<std::byte, Crypto::Size::kTag> tag_description;
+  std::array<std::byte, Crypto::Size::kTag> tag_data;
 
   void SetZero() noexcept;
   ~AccountBinary() noexcept;
