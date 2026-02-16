@@ -4,6 +4,4 @@ add_executable(crypto_test
 
 target_link_libraries(crypto_test PRIVATE crypto)
 
-AddTests(crypto_test)
-
-FormatTest(crypto_test)
+ConfigTest(crypto_test)

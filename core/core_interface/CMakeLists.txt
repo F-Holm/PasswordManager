@@ -6,6 +6,4 @@ target_include_directories(core_interface PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/in
 
 target_link_libraries(core_interface PUBLIC account)
 
-FormatModule(core_interface)
-AddCppCheck(core_interface)
-AddClangTidy(core_interface)
+ConfigModule(core_interface)
