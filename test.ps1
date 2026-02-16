@@ -3,10 +3,7 @@
 $ErrorActionPreference = "Stop"
 
 $Tasks = @(
-    @{ Path = "crypto"; Exec = "cargo"; Args = "fmt" }
-    @{ Path = "crypto"; Exec = "cargo"; Args = "clippy" }
-    @{ Path = "crypto"; Exec = "cargo"; Args = "test" }
-    @{ Path = "core";   Exec = "cmake"; Args = "--workflow", "--preset", "wf-debug" }
+    @{ Path = ".";   Exec = "cmake"; Args = "--workflow", "--preset", "wf-debug" }
 )
 
 $SuccessCount = 0

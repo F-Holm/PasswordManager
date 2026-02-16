@@ -5,14 +5,10 @@ $ErrorActionPreference = "Stop"
 $Paths = @(
     "build"
     "install"
-    "core/build"
-    "core/install"
     "crypto/Cargo.lock"
     "crypto/target"
     "gui/build"
     "gui/install"
-    "cli/build"
-    "cli/install"
 )
 
 foreach ($Path in $Paths) {

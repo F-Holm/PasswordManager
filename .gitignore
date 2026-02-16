@@ -2,10 +2,6 @@
 build/
 install/
 
-# Core
-core/build/
-core/install/
-
 # Crypto
 crypto/Cargo.lock
 crypto/target/
@@ -14,10 +10,6 @@ crypto/include/
 # GUI
 gui/build
 gui/install
-
-# CLI
-cli/build/
-cli/install/
 
 # Visual Studio
 .vs/
