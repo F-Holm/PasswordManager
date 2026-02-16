@@ -21,4 +21,5 @@ RUN sudo apt update && \
     cppcheck \
     ccache \
     doxygen \
-    graphviz
+    graphviz \
+    valgrind
