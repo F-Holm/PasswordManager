@@ -7,5 +7,4 @@ add_executable(account_test
 target_link_libraries(account_test PRIVATE account)
 
 AddTests(account_test)
-
 FormatTest(account_test)
