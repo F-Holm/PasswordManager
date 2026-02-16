@@ -23,23 +23,21 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      # --- C++ / LLVM DEPENDENCIES ---
+      # --- C++ / LLVM / DOCUMENTATION DEPENDENCIES ---
       - name: Install Dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt update
-          sudo apt install -y clang clangd lldb lld llvm clang-format clang-tidy clang-tools cmake ninja-build cppcheck ccache
+          sudo apt install -y clang clangd lldb lld llvm clang-format clang-tidy clang-tools cmake ninja-build cppcheck ccache doxygen graphviz
 
       - name: Install Dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install llvm cmake ninja cppcheck ccache
+        run: brew install llvm cmake ninja cppcheck ccache doxygen graphviz
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          choco install cmake ninja cppcheck ccache llvm
-          echo "C:\Program Files\Cppcheck" >> $GITHUB_PATH
-          echo "CPPCHECK_LIBRARY_PATH=C:\Program Files\Cppcheck\cfg" >> $GITHUB_ENV
+          choco install cmake ninja cppcheck ccache llvm doxygen.install graphviz
 
       # --- EXECUTION ---
       - name: Run test script
