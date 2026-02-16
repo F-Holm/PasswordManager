@@ -1,4 +1,4 @@
-set(ENABLE_VALGRIND FALSE)
+option(ENABLE_VALGRIND "Enable Valgrind" OFF)
 
 if(ENABLE_VALGRIND)
     message(STATUS "Valgrind is enabled")
