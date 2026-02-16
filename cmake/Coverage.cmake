@@ -1,0 +1,12 @@
+function(AddCoverageInstrumentation target)
+    if(ENABLE_COVERAGE)
+        if(MSVC)
+            message(WARNING "Coverage for MSVC not implemented yet")
+        else()
+            target_compile_options("${target}" PRIVATE --coverage -O0 -g)
+            target_link_options("${target}" PRIVATE --coverage)
+            
+            message(STATUS "Coverage instrumentation applied to: ${target}")
+        endif()
+    endif()
+endfunction()

@@ -1,5 +1,3 @@
-option(ENABLE_VALGRIND "Enable Valgrind" OFF)
-
 if(ENABLE_VALGRIND)
     message(STATUS "Valgrind is enabled")
     find_program(VALGRIND_PATH valgrind)

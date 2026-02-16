@@ -1,0 +1,10 @@
+macro(ConfigModule target)
+    FormatModule("${target}")
+    AddCppCheck("${target}")
+    AddClangTidy("${target}")
+endmacro()
+
+macro(ConfigTest target)
+    FormatTest("${target}")
+    AddTests("${target}")
+endmacro()
