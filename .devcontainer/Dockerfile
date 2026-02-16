@@ -19,4 +19,6 @@ RUN sudo apt update && \
     cmake \
     ninja-build \
     cppcheck \
-    ccache
+    ccache \
+    doxygen \
+    graphviz
