@@ -6,6 +6,4 @@ target_link_libraries(utils_test PRIVATE
     utils
 )
 
-AddTests(utils_test)
-
-FormatTest(utils_test)
+ConfigTest(utils_test)
