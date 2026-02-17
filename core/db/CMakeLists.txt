@@ -4,6 +4,4 @@ add_library(db STATIC
 
 target_include_directories(db PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-FormatModule(db)
-AddCppCheck(db)
-AddClangTidy(db)
+ConfigModule(db)

@@ -22,4 +22,5 @@ RUN sudo apt update && \
     ccache \
     doxygen \
     graphviz \
-    valgrind
+    valgrind \
+    lcov
