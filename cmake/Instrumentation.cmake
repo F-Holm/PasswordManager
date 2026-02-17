@@ -1,5 +1,4 @@
 include(ASan)
-include(Coverage)
 include(Valgrind)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -16,5 +15,4 @@ function(AddInstrumentation target)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND ENABLE_VALGRIND)
         AddValgrindInstrumentation("${target}")
     endif()
-    AddCoverageInstrumentation("${target}")
 endfunction()
