@@ -120,22 +120,27 @@
     ],
     "testPresets": [
         {
-            "name": "options",
+            "name": "base-test",
             "hidden": true,
-            "configuration": "Debug"
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": false
+            }
         },
         {
             "name": "test-release",
             "configurePreset": "release",
+            "configuration": "Release",
             "inherits": [
-                "options"
+                "base-test"
             ]
         },
         {
             "name": "test-debug",
             "configurePreset": "debug",
+            "configuration": "Debug",
             "inherits": [
-                "options"
+                "base-test"
             ]
         }
     ],

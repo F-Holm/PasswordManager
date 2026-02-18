@@ -1,0 +1,6 @@
+add_subdirectory(utils)
+add_subdirectory(crypto)
+#add_subdirectory(db)
+add_subdirectory(account)
+#add_subdirectory(core)
+#add_subdirectory(core_interface)
