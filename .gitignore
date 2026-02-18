@@ -1,10 +1,17 @@
-mounted/
+# Build Directory
 build/
 install/
-lib/
-*.tar.gz
 
-#Visual Studio
+# Crypto
+crypto/Cargo.lock
+crypto/target/
+crypto/include/
+
+# GUI
+gui/build
+gui/install
+
+# Visual Studio
 .vs/
 out/
 

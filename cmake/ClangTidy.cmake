@@ -1,8 +1,13 @@
+find_program(CLANG-TIDY_PATH clang-tidy)
+if(NOT CLANG-TIDY_PATH)
+    message(WARNING "clang-tidy not found")
+endif()
+
 function(AddClangTidy target)
-    return() # Desactivado por ahora
-    find_program(CLANG-TIDY_PATH clang-tidy REQUIRED)
-    set_target_properties("${target}"
-        PROPERTIES CXX_CLANG_TIDY
-        "${CLANG-TIDY_PATH};-checks=*;--warnings-as-errors=*"
-    )
+    if(CLANG-TIDY_PATH)
+        set_target_properties("${target}"
+            PROPERTIES
+            CXX_CLANG_TIDY "${CLANG-TIDY_PATH}"
+        )
+    endif()
 endfunction()
