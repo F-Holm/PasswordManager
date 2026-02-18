@@ -1,53 +1,31 @@
-find_package(Doxygen REQUIRED)
+find_package(Doxygen)
+find_program(DOXYGEN_DOT_EXECUTABLE NAMES dot)
 
-include(FetchContent)
-FetchContent_Declare(
-  doxygen-awesome-css
-  GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
-  GIT_TAG v2.4.1
-)
-FetchContent_MakeAvailable(doxygen-awesome-css)
-
-function(Doxygen input output)
-    FetchContent_GetProperties(doxygen-awesome-css doxygen-awesome-css_SOURCE_DIR doxygen-awesome-css_AWESOME_CSS_DIR)
-    set(NAME "doxygen-${target}")
+if(DOXYGEN_FOUND)
+    set(DOXYGEN_PROJECT_NAME "${PROJECT_NAME}")
+    set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/docs")
     set(DOXYGEN_GENERATE_HTML YES)
-    set(DOXYGEN_HTML_OUTPUT   "${PROJECT_BINARY_DIR}/${output}")
-    file(MAKE_DIRECTORY "${DOXYGEN_HTML_OUTPUT}")
-
-    if(NOT EXISTS "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css")
-        message(FATAL_ERROR "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css no encontrado en ${doxygen-awesome-css_SOURCE_DIR}")
+    
+    if(DOXYGEN_DOT_FOUND)
+        set(DOXYGEN_HAVE_DOT YES)
+        set(DOXYGEN_CALL_GRAPH YES)
+        set(DOXYGEN_CALLER_GRAPH YES)
+        set(DOXYGEN_CLASS_GRAPH YES)
+        set(DOXYGEN_GRAPHICAL_HIERARCHY YES)
+        set(DOXYGEN_DIRECTORY_GRAPH YES)
+        set(DOXYGEN_DOT_IMAGE_FORMAT "svg")
+        set(DOXYGEN_INTERACTIVE_SVG YES)
+    else()
+        message(WARNING "Doxygen Graphviz not found")
+        set(DOXYGEN_HAVE_DOT NO)
     endif()
 
-
-    UseDoxygenAwesomeCss()
-    UseDoxygenAwesomeExtensions()
-
-    doxygen_add_docs("doxygen-${target}"
-        "${PROJECT_SOURCE_DIR}/${input}"
-        COMMENT "Generate HTML documentation"
+    doxygen_add_docs(docs
+        "${PROJECT_SOURCE_DIR}/README.md"
+        "${PROJECT_SOURCE_DIR}/core"
+        ALL
+        COMMENT "Generating documentation (Doxygen)..."
     )
-endfunction()
-
-macro(UseDoxygenAwesomeCss)
-    set(DOXYGEN_GENERATE_TREEVIEW     YES)
-    set(DOXYGEN_HAVE_DOT              YES)
-    set(DOXYGEN_DOT_IMAGE_FORMAT      svg)
-    set(DOXYGEN_DOT_TRANSPARENT       YES)
-    set(DOXYGEN_HTML_EXTRA_STYLESHEET "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css")
-endmacro()
-
-macro(UseDoxygenAwesomeExtensions)
-    set(DOXYGEN_HTML_EXTRA_FILES
-        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-darkmode-toggle.js"
-        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-fragment-copy-button.js"
-        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-paragraph-link.js"
-        "${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-interactive-toc.js"
-    )
-
-    execute_process(COMMAND doxygen -w html header.html footer.html style.css
-                    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
-    execute_process(COMMAND sed -i "/<\\/head>/r ${PROJECT_SOURCE_DIR}/cmake/extra_headers.html" header.html
-                    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}")
-    set(DOXYGEN_HTML_HEADER "${PROJECT_BINARY_DIR}/header.html")
-endmacro()
+else()
+    message(WARNING "Doxygen not found")
+endif()

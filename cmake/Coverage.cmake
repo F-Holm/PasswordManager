@@ -1,97 +1,101 @@
-include(Platform)
+set(COVERAGE_SUPPORTED FALSE)
 
-function(AddCoverage target)
-    return() # Desactivar Coverage
-    require_linux_x64(Coverage)
-    if ("${CMAKE_C_COMPILER}" STREQUAL "clang" AND "${CMAKE_CXX_COMPILER}" STREQUAL "clang++")
-        AddCoverageClang(${target})
-    elseif ("${CMAKE_C_COMPILER}" STREQUAL "gcc" AND "${CMAKE_CXX_COMPILER}" STREQUAL "g++")
-        AddCoverageGcc(${target})
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Coverage disabled in Release")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    find_program(LCOV_PATH lcov)
+    find_program(GENHTML_PATH genhtml)
+    
+    if(LCOV_PATH AND GENHTML_PATH)
+        set(COVERAGE_SUPPORTED TRUE)
+        set(COVERAGE_HANDLER "GCC")
+        message(STATUS "[Coverage] GCC detected. Using lcov/genhtml engine.")
+    else()
+        message(WARNING "[Coverage] GCC detected but lcov or genhtml tools were not found. Coverage targets will be skipped.")
     endif()
-endfunction()
 
-function(CleanCoverage target)
-    return() # Desactivar Coverage
-    require_linux_x64(Coverage)
-    if ("${CMAKE_C_COMPILER}" STREQUAL "clang" AND "${CMAKE_CXX_COMPILER}" STREQUAL "clang++")
-        CleanCoverageClang(${target})
-    elseif ("${CMAKE_C_COMPILER}" STREQUAL "gcc" AND "${CMAKE_CXX_COMPILER}" STREQUAL "g++")
-        CleanCoverageGcc(${target})
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    find_program(LLVM_PROFDATA_PATH llvm-profdata)
+    find_program(LLVM_COV_PATH llvm-cov)
+    find_program(GENHTML_PATH genhtml)
+
+    if(LLVM_PROFDATA_PATH AND LLVM_COV_PATH AND GENHTML_PATH)
+        set(COVERAGE_SUPPORTED TRUE)
+        set(COVERAGE_HANDLER "CLANG")
+        message(STATUS "[Coverage] Clang detected. Using llvm-cov/genhtml engine.")
+    else()
+        message(WARNING "[Coverage] Clang detected but LLVM coverage tools (llvm-profdata/llvm-cov) were not found.")
     endif()
-endfunction()
+
+else()
+    message(WARNING "[Coverage] Compiler ${CMAKE_CXX_COMPILER_ID} is not supported for automated coverage reporting.")
+endif()
+
 
 function(InstrumentForCoverage target)
-    return() # Desactivar Coverage
-    require_linux_x64(Coverage)
-    if ("${CMAKE_C_COMPILER}" STREQUAL "clang" AND "${CMAKE_CXX_COMPILER}" STREQUAL "clang++")
-        InstrumentForCoverageClang(${target})
-    elseif ("${CMAKE_C_COMPILER}" STREQUAL "gcc" AND "${CMAKE_CXX_COMPILER}" STREQUAL "g++")
-        InstrumentForCoverageGcc(${target})
+    if(NOT COVERAGE_SUPPORTED)
+        return()
+    endif()
+
+    if(COVERAGE_HANDLER STREQUAL "GCC")
+        target_compile_options(${target} PRIVATE --coverage -fno-inline)
+        target_link_options(${target} PUBLIC --coverage)
+    else()
+        target_compile_options(${target} PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+        target_link_options(${target} PUBLIC -fprofile-instr-generate -fcoverage-mapping)
     endif()
 endfunction()
 
-# Clang
-function(AddCoverageClang target)
-    find_program(LLVM_PROFDATA llvm-profdata REQUIRED)
-    find_program(LLVM_COV llvm-cov REQUIRED)
 
-    add_custom_target(coverage-${target}
-        # Limpia datos previos de profiling
-        COMMAND "${LLVM_PROFDATA}" merge -sparse default.profraw -o default.profdata || true
+function(AddCoverage target)
+    if(NOT COVERAGE_SUPPORTED)
+        return()
+    endif()
 
-        # Ejecuta el target para generar archivos .profraw
-        COMMAND $<TARGET_FILE:${target}>
+    if(COVERAGE_HANDLER STREQUAL "GCC")
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${LCOV_PATH} -d . --zerocounters
+            COMMAND $<TARGET_FILE:${target}>
+            COMMAND ${LCOV_PATH} -d . --capture -o coverage.info
+            COMMAND ${LCOV_PATH} -r coverage.info '/usr/include/*' '*/tests/*' '*/test/*' -o filtered.info
+            COMMAND ${GENHTML_PATH} -o coverage-${target} filtered.info --legend
+            COMMAND ${CMAKE_COMMAND} -E rm -f coverage.info filtered.info
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating HTML coverage report for ${target} (GCC/LCOV)"
+        )
 
-        # Genera el reporte HTML con llvm-cov
-        COMMAND "${LLVM_COV}" show
-                "$<TARGET_FILE:${target}>"
-                "-instr-profile=default.profdata"
-                "-format=html"
-                "-output-dir=coverage-${target}"
-                "-ignore-filename-regex='.*(\/usr\/include\/|tests?).*'"
-
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    )
-endfunction()
-
-function(CleanCoverageClang target)
-    add_custom_command(TARGET ${target} PRE_BUILD COMMAND
-        cmake -E rm -f "${CMAKE_BINARY_DIR}/default.profraw"
-        cmake -E rm -rf "${CMAKE_BINARY_DIR}/coverage-${target}"
-    )
-endfunction()
-
-function(InstrumentForCoverageClang target)
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL Debug)
-        target_compile_options("${target}" PRIVATE "-fprofile-instr-generate -fcoverage-mapping")
-        target_link_options("${target}" PRIVATE "-fprofile-instr-generate -fcoverage-mapping")
+    else()
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE="${target}.profraw" $<TARGET_FILE:${target}>
+            COMMAND ${LLVM_PROFDATA_PATH} merge -sparse ${target}.profraw -o ${target}.profdata
+            COMMAND ${LLVM_COV_PATH} export $<TARGET_FILE:${target}> -instr-profile=${target}.profdata -format=lcov > coverage.info
+            COMMAND ${GENHTML_PATH} -o coverage-${target} coverage.info --legend
+            COMMAND ${CMAKE_COMMAND} -E rm -f ${target}.profraw ${target}.profdata coverage.info
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating HTML coverage report for ${target} (Clang/LLVM)"
+        )
     endif()
 endfunction()
 
-# GCC
-function(AddCoverageGcc target)
-    find_program(LCOV_PATH lcov REQUIRED)
-    find_program(GENHTML_PATH genhtml REQUIRED)
-    add_custom_target("coverage-${target}"
-        COMMAND "${LCOV_PATH}" -d . --zerocounters
-        COMMAND "$<TARGET_FILE:${target}>"
-        COMMAND "${LCOV_PATH}" -d . --capture -o coverage.info
-        COMMAND "${LCOV_PATH}" -r coverage.info '/usr/include/*' -o filtered.info
-        COMMAND "${GENHTML_PATH}" -o coverage-${target} filtered.info --legend
-        COMMAND rm -rf coverage.info filtered.info
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    )
-endfunction()
 
-function(CleanCoverageGcc target)
-    add_custom_command(TARGET "${target}" PRE_BUILD COMMAND
-                       find "${CMAKE_BINARY_DIR}" -type f
-                       -name '*.gcda' -exec cmake -E rm {} +)
-endfunction()
+function(CleanCoverage target)
+    if(NOT COVERAGE_SUPPORTED)
+        return()
+    endif()
 
-function(InstrumentForCoverageGcc target)
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL Debug)
-        target_compile_options("${target}" PRIVATE "--coverage -fno-inline")
-        target_link_options("${target}" PUBLIC "--coverage")
+    if(COVERAGE_HANDLER STREQUAL "GCC")
+        add_custom_command(TARGET ${target} PRE_BUILD
+            COMMAND ${LCOV_PATH} -d . --zerocounters || ${CMAKE_COMMAND} -E true
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "coverage-${target}"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Cleaning up GCC coverage counters."
+        )
+    else()
+        add_custom_command(TARGET ${target} PRE_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rm -f "${target}.profraw" "${target}.profdata" "coverage.info"
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "coverage-${target}"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Cleaning up Clang coverage files."
+        )
     endif()
 endfunction()
