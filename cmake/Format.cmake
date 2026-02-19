@@ -3,6 +3,8 @@ if(NOT CLANG-FORMAT_PATH)
     message(WARNING "clang-format not found")
 endif()
 
+set(FORMAT_ID 0)
+
 function(Format target directory)
     if(CLANG-FORMAT_PATH)
         set(EXPRESSION h hpp hh c cc cxx cpp)
@@ -10,9 +12,17 @@ function(Format target directory)
         file(GLOB_RECURSE SOURCE_FILES FOLLOW_SYMLINKS
             LIST_DIRECTORIES false ${EXPRESSION}
         )
-        add_custom_command(TARGET "${target}" PRE_BUILD COMMAND
-            "${CLANG-FORMAT_PATH}" -i --style=file ${SOURCE_FILES}
+
+        math(EXPR LOCAL_COUNT "${FORMAT_ID} + 1")
+        set(FORMAT_ID ${LOCAL_COUNT} PARENT_SCOPE)
+
+        set(FORMAT_STEP_NAME "format_${target}_${FORMAT_ID}")
+        add_custom_target(${FORMAT_STEP_NAME}
+            COMMAND "${CLANG-FORMAT_PATH}" -i --style=file ${SOURCE_FILES}
+            COMMENT "Formateando código en ${directory} para el target ${target}..."
+            VERBATIM
         )
+        add_dependencies(${target} ${FORMAT_STEP_NAME})
     endif()
 endfunction()
 
@@ -22,5 +32,9 @@ endfunction()
 
 function(FormatModule target)
     Format(${target} ".")
+    Format(${target} "./include/*")
+endfunction()
+
+function(FormatInterface target)
     Format(${target} "./include/*")
 endfunction()
