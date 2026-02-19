@@ -1,6 +1,8 @@
 set(COVERAGE_SUPPORTED FALSE)
 
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(NOT ENABLE_COVERAGE)
+    message(STATUS "Coverage is disabled")
+elseif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Coverage disabled in Release")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "GNU")
     find_program(LCOV_PATH lcov)
