@@ -34,6 +34,14 @@
             }
         },
         {
+            "name": "verbose",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_VERBOSE_MAKEFILE": "ON",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
             "name": "debug_conf",
             "hidden": true,
             "cacheVariables": {
@@ -104,7 +112,8 @@
             "name": "debug",
             "inherits": [
                 "default",
-                "debug_conf"
+                "debug_conf",
+                "verbose"
             ]
         }
     ],
