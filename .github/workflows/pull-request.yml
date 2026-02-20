@@ -32,12 +32,12 @@ jobs:
 
       - name: Install Dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install llvm cmake ninja cppcheck ccache doxygen graphviz lcov
+        run: brew install llvm cmake ninja cppcheck ccache
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          choco install cmake ninja cppcheck ccache llvm doxygen.install graphviz
+          choco install cmake ninja cppcheck ccache llvm
 
       # --- EXECUTION ---
       - name: Run test script
