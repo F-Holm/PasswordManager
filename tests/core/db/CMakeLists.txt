@@ -4,4 +4,4 @@ add_executable(db_test
 
 target_link_libraries(db_test PRIVATE db)
 
-ConfigTestInterface(db_test)
+ConfigTest(db_test)
