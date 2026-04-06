@@ -10,7 +10,10 @@
 
 ## Dev Dependencies
 
-[Dockerfile](.devcontainer/Dockerfile)
+- [Dockerfile](.devcontainer/Dockerfile)
+- `Cargo`
+- `Cargo fmt`
+- `Cargo Clippy`
 
 ---
 

@@ -27,16 +27,16 @@ build-dev:
     cmake --build --preset build-debug
 
 test:
-    cmake --test --target test-release
+    ctest --preset test-release
 
 test-dev:
-    cmake --test --target test-debug
+    ctest --preset test-debug
 
 install:
-    cmake --install --target install-release
+    cmake --install --preset install-release
 
 install-dev:
-    cmake --install --target install-debug
+    cmake --install --preset install-debug
 
 clean:
     @echo "Cleaning project files..."  
