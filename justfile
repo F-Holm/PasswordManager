@@ -8,6 +8,8 @@ docs_out   := "docs"
 docs_input := "README.md core crypto tests"
 project_name := "Password Manager"
 
+build-install: config build install
+
 config:
     cmake --preset release
 
@@ -29,6 +31,12 @@ test:
 
 test-dev:
     cmake --test --target test-debug
+
+install:
+    cmake --install --target install-release
+
+install-dev:
+    cmake --install --target install-debug
 
 clean:
     @echo "Limpiando archivos del proyecto..."  
