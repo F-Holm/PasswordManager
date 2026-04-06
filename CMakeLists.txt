@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.28.3)
 project(PasswordManager VERSION 1.0.0 LANGUAGES C CXX)
 
-option(ENABLE_ASAN "Enable AddressSanitizer (ASan)" ON)
+option(ENABLE_COVERAGE "Enable Coverage" OFF)
+option(ENABLE_LINT "Enable Lint" OFF)
+option(ENABLE_ASAN "Enable AddressSanitizer (ASan)" OFF)
 option(ENABLE_VALGRIND "Enable Valgrind" OFF)
-option(ENABLE_COVERAGE "Enable Coverage" ON)
-option(ENABLE_DOXYGEN "Enable Doxygen" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -14,8 +14,6 @@ include(Config)
 include(Coverage)
 include(CppCheck)
 include(CTest)
-include(Doxygen)
-include(Format)
 include(Instrumentation)
 include(Rust)
 include(Testing)
