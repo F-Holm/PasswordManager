@@ -39,7 +39,7 @@ install-dev:
     cmake --install --target install-debug
 
 clean:
-    @echo "Limpiando archivos del proyecto..."  
+    @echo "Cleaning project files..."  
     {{ if os() == "windows" { \
         "powershell -Command \"Remove-Item -Recurse -Force build, install, docs, crypto/Cargo.lock, crypto/target -ErrorAction SilentlyContinue\"" \
     } else { \
@@ -47,10 +47,10 @@ clean:
     } }}
 
 format: format-cpp format-rust
-    @echo "¡Todo el código ha sido formateado correctamente!"
+    @echo "All the code has been formated!"
 
 format-cpp:
-    @echo "Formateando C++ en: {{src_dirs}}..."
+    @echo "Formating C++ in: {{src_dirs}}..."
     {{ if os() == "windows" { \
         "powershell -Command \"foreach ($dir in '" + src_dirs + test_src_dirs + "'.Split(' ')) { Get-ChildItem -Path ./$dir -Include *.c,*.cpp,*.c++,*.h,*.hpp,*.hh,*.cc -Recurse -ErrorAction SilentlyContinue | ForEach-Object { clang-format -i $_.FullName } }\"" \
     } else { \
@@ -58,25 +58,25 @@ format-cpp:
     } }}
 
 format-rust:
-    @echo "Formateando Rust en: {{rust_dir}}..."
+    @echo "Formating Rust in: {{rust_dir}}..."
     @cd {{rust_dir}} && cargo fmt
 
 docs:
-    @echo "Verificando herramientas..."
+    @echo "Verifing tools..."
     {{ if os() == "windows" { \
-        "where doxygen >$null 2>&1 || (echo Error: Doxygen no encontrado && exit 1)" \
+        "where doxygen >$null 2>&1 || (echo Error: Doxygen not found && exit 1)" \
     } else { \
-        "command -v doxygen >/dev/null 2>&1 || { echo >&2 'Error: Doxygen no encontrado'; exit 1; }" \
+        "command -v doxygen >/dev/null 2>&1 || { echo >&2 'Error: Doxygen not fount'; exit 1; }" \
     } }}
 
-    @echo "Preparando directorios..."
+    @echo "Preparing directories..."
     {{ if os() == "windows" { \
         "powershell -Command \"if (!(Test-Path " + docs_out + ")) { New-Item -ItemType Directory -Force -Path " + docs_out + " }\"" \
     } else { \
         "mkdir -p " + docs_out \
     } }}
     
-    @echo "Generando configuración temporal de Doxygen..."
+    @echo "Generatins temporary config file for Doxygen..."
     @doxygen -g - > Doxyfile_temp
     
     @echo "PROJECT_NAME = {{project_name}}" >> Doxyfile_temp
@@ -88,12 +88,12 @@ docs:
     @echo "USE_MDFILE_AS_MAINPAGE = README.md" >> Doxyfile_temp
     
     @{{ if os() == "windows" { \
-        "where dot >$null 2>&1 && (echo HAVE_DOT = YES >> Doxyfile_temp && echo CALL_GRAPH = YES >> Doxyfile_temp && echo INTERACTIVE_SVG = YES >> Doxyfile_temp) || echo 'Warning: Graphviz no encontrado'" \
+        "where dot >$null 2>&1 && (echo HAVE_DOT = YES >> Doxyfile_temp && echo CALL_GRAPH = YES >> Doxyfile_temp && echo INTERACTIVE_SVG = YES >> Doxyfile_temp) || echo 'Warning: Graphviz not found'" \
     } else { \
-        "command -v dot >/dev/null 2>&1 && { echo 'HAVE_DOT = YES'; echo 'CALL_GRAPH = YES'; echo 'INTERACTIVE_SVG = YES'; } >> Doxyfile_temp || echo 'Warning: Graphviz no encontrado'" \
+        "command -v dot >/dev/null 2>&1 && { echo 'HAVE_DOT = YES'; echo 'CALL_GRAPH = YES'; echo 'INTERACTIVE_SVG = YES'; } >> Doxyfile_temp || echo 'Warning: Graphviz not found'" \
     } }}
 
-    @echo "Ejecutando Doxygen..."
+    @echo "Executing Doxygen..."
     @doxygen Doxyfile_temp
     {{ if os() == "windows" { "rm Doxyfile_temp" } else { "rm Doxyfile_temp" } }}
-    @echo "Docs generadas en: {{docs_out}}/html/index.html"
+    @echo "Docs generated in: {{docs_out}}/html/index.html"
