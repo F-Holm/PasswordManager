@@ -52,6 +52,6 @@ jobs:
       # --- EXECUTION ---
       - name: Run Execution Pipeline
         run: |
-          just config-env ${{ matrix.env_flags }}
-          just build-env
-          just test-env
+          just config-dev ${{ matrix.env_flags }}
+          just build-dev
+          just test-dev
