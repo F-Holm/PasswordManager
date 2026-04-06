@@ -1,6 +1,7 @@
 # Build Directory
 build/
 install/
+docs/
 
 # Crypto
 crypto/Cargo.lock
