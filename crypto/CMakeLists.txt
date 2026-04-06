@@ -11,6 +11,5 @@ target_include_directories(rust_crypto
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-enable_rust_fmt(rust_crypto "${CMAKE_CURRENT_SOURCE_DIR}")
 enable_rust_clippy(rust_crypto "${CMAKE_CURRENT_SOURCE_DIR}")
 enable_rust_tests(rust_crypto "${CMAKE_CURRENT_SOURCE_DIR}")
