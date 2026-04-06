@@ -5,6 +5,18 @@ option(ENABLE_COVERAGE "Enable Coverage" OFF)
 option(ENABLE_LINT "Enable Lint" OFF)
 option(ENABLE_ASAN "Enable AddressSanitizer (ASan)" OFF)
 option(ENABLE_VALGRIND "Enable Valgrind" OFF)
+option(ENABLE_CCACHE "Enable ccache" ON)
+
+if(ENABLE_CCACHE)
+    find_program(CCACHE_BIN ccache)
+    if(CCACHE_BIN)
+        message(STATUS "ccache found: ${CCACHE_BIN}")
+        set(CMAKE_C_COMPILER_LAUNCHER   "${CCACHE_BIN}")
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_BIN}")
+    else()
+        message(STATUS "ccache not found")
+    endif()
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
