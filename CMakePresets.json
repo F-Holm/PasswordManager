@@ -56,14 +56,6 @@
             }
         },
         {
-            "name": "ccache",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-                "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
-            }
-        },
-        {
             "name": "color-output",
             "hidden": true,
             "cacheVariables": {
@@ -97,8 +89,7 @@
                 "ninja",
                 "std",
                 "std-23",
-                "clang",
-                "ccache"
+                "clang"
             ]
         },
         {
