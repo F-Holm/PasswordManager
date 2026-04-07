@@ -21,5 +21,6 @@ include(Rust)
 include(Testing)
 
 add_subdirectory(crypto)
+add_subdirectory(db)
 add_subdirectory(core)
 add_subdirectory(tests)
