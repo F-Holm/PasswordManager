@@ -1,12 +1,14 @@
 build_dir := "build/debug"
 
-src_dirs := "core"
+src_dirs := "src/core src/db"
 test_src_dirs := "tests"
-rust_dir := "crypto"
+rust_dir := "src/crypto"
 
 docs_out   := "docs"
-docs_input := "README.md core crypto tests"
+docs_input := "README.md src"
 project_name := "Password Manager"
+
+trash_files := ""
 
 build-install: config build install
 
@@ -41,9 +43,9 @@ install-dev:
 clean:
     @echo "Cleaning project files..."  
     {{ if os() == "windows" { \
-        "powershell -Command \"Remove-Item -Recurse -Force build, install, docs, crypto/Cargo.lock, crypto/target -ErrorAction SilentlyContinue\"" \
+        "powershell -Command \"Remove-Item -Recurse -Force build, install, docs, src/crypto/Cargo.lock, src/crypto/target -ErrorAction SilentlyContinue\"" \
     } else { \
-        "rm -rf build install docs crypto/Cargo.lock crypto/target" \
+        "rm -rf build install docs src/crypto/Cargo.lock src/crypto/target" \
     } }}
 
 format: format-cpp format-rust
@@ -52,9 +54,9 @@ format: format-cpp format-rust
 format-cpp:
     @echo "Formating C++ in: {{src_dirs}}..."
     {{ if os() == "windows" { \
-        "powershell -Command \"foreach ($dir in '" + src_dirs + test_src_dirs + "'.Split(' ')) { Get-ChildItem -Path ./$dir -Include *.c,*.cpp,*.c++,*.h,*.hpp,*.hh,*.cc -Recurse -ErrorAction SilentlyContinue | ForEach-Object { clang-format -i $_.FullName } }\"" \
+        "powershell -Command \"foreach ($dir in '" + src_dirs + " " + test_src_dirs + "'.Split(' ')) { Get-ChildItem -Path ./$dir -Include *.c,*.cpp,*.c++,*.h,*.hpp,*.hh,*.cc -Recurse -ErrorAction SilentlyContinue | ForEach-Object { clang-format -i $_.FullName } }\"" \
     } else { \
-        "find " + src_dirs + test_src_dirs + " -type f -regextype posix-extended -regex '.*\\.(c|cpp|c\\+\\+|h|hpp|hh|cc)$' -exec clang-format -i {} +" \
+        "find " + src_dirs + " " + test_src_dirs + " -type f -regextype posix-extended -regex '.*\\.(c|cpp|c\\+\\+|h|hpp|hh|cc)$' -exec clang-format -i {} +" \
     } }}
 
 format-rust:
