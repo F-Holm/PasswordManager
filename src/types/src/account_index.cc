@@ -5,6 +5,10 @@
 
 #include "crypto/crypto.h"
 
+AccountIndex::AccountIndex() noexcept {
+  this->SetZero();
+}
+
 AccountIndex::AccountIndex(AccountBinary& account) noexcept
     : description(account.description) {}
 

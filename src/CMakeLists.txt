@@ -1,5 +1,5 @@
 add_subdirectory(utils)
 add_subdirectory(crypto)
 add_subdirectory(types)
-#add_subdirectory(db)
+add_subdirectory(db)
 #add_subdirectory(core)

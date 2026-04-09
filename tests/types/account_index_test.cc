@@ -14,6 +14,11 @@ bool IsDescriptionZeroed(const AccountIndex& index) {
                      [](std::byte b) { return b == std::byte{0}; });
 }
 
+TEST(AccountIndexTest, DefaultConstructor) {
+  AccountIndex index;
+  EXPECT_TRUE(IsDescriptionZeroed(index));
+}
+
 TEST(AccountIndexTest, ConstructorCopiesDescriptionCorrectly) {
   AccountBinary binary;
   for (size_t i = 0; i < AccountSize::kDescription; ++i) {
