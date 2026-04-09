@@ -6,10 +6,10 @@ install/
 docs/
 Doxyfile_temp
 
-# Crypto
-crypto/Cargo.lock
-crypto/target/
-crypto/include/crypto/rust_crypto.h
+# Rust
+Cargo.lock
+target/
+rust_*.h
 
 # Visual Studio
 .vs/
