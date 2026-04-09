@@ -9,6 +9,7 @@
 struct AccountIndex {
   std::array<std::byte, AccountSize::kDescription> description;
 
+  AccountIndex() noexcept;
   AccountIndex(AccountBinary& account) noexcept;
   void SetZero() noexcept;
   ~AccountIndex() noexcept;

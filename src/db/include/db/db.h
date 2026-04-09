@@ -7,7 +7,7 @@
 
 class DB {
  public:
-  void Open
+  void Open();
  private:
   Storage<AccountBinary> vault;
   Storage<AccountIndex> account_index;

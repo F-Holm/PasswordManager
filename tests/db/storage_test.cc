@@ -1,18 +1,11 @@
-#include "storage/storage.h"
+#include "db/storage.h"
 
 #include <gtest/gtest.h>
 
 #include <cstdio>
 #include <fstream>
 
-struct Record {
-  int id;
-  char name[32];
-
-  bool operator==(const Record& other) const {
-    return id == other.id && std::string(name) == std::string(other.name);
-  }
-};
+#include "types/account_index.h"
 
 class StorageTest : public ::testing::Test {
  protected:
@@ -26,20 +19,31 @@ class StorageTest : public ::testing::Test {
   void TearDown() override { std::remove(test_file.c_str()); }
 };
 
+template<typename... Args>
+AccountIndex CreateElement(Args... bytes){
+  AccountIndex element;
+
+  std::byte array_args[] = { bytes... };
+  
+  for (size_t i = 0; i < sizeof...(bytes); i++)
+    element.description[i] = array_args[i];
+  return element;
+}
+
 // --- Connection Tests ---
 
 TEST_F(StorageTest, FileOpensCorrectly) {
-  Storage<Record> Storage(test_file);
+  Storage<AccountIndex> Storage(test_file);
   EXPECT_TRUE(Storage.IsOpen());
 }
 
 // --- Write and Read Tests ---
 
 TEST_F(StorageTest, AddAndReadSequential) {
-  Storage<Record> Storage(test_file);
+  Storage<AccountIndex> Storage(test_file);
 
-  Record r1 = {1, "Alice"};
-  Record r2 = {2, "Bob"};
+  AccountIndex r1 = CreateElement(std::byte{0xDE}, std::byte{0xAD});
+  AccountIndex r2 = CreateElement(std::byte{0xBE}, std::byte{0xEF});
 
   // Write records
   Storage.element = r1;
@@ -50,39 +54,39 @@ TEST_F(StorageTest, AddAndReadSequential) {
 
   // Read back position 0
   ASSERT_TRUE(Storage.ReadPos(0));
-  EXPECT_EQ(Storage.element.id, 1);
-  EXPECT_STREQ(Storage.element.name, "Alice");
+  EXPECT_EQ(Storage.element.description[0], std::byte{0xDE});
+  EXPECT_EQ(Storage.element.description[1], std::byte{0xAD});
 
   // Read back position 1
   ASSERT_TRUE(Storage.ReadPos(1));
-  EXPECT_EQ(Storage.element.id, 2);
-  EXPECT_STREQ(Storage.element.name, "Bob");
+  EXPECT_EQ(Storage.element.description[0], std::byte{0xBE});
+  EXPECT_EQ(Storage.element.description[1], std::byte{0xEF});
 }
 
 // --- Update Tests ---
 
 TEST_F(StorageTest, UpdateExistingRecord) {
-  Storage<Record> Storage(test_file);
+  Storage<AccountIndex> Storage(test_file);
 
-  Storage.element = {10, "Original"};
+  Storage.element = CreateElement(std::byte{0xDE}, std::byte{0xAD});
   Storage.Add();
 
   // Modify record at pos 0
-  Storage.element = {10, "Updated"};
+  Storage.element = CreateElement(std::byte{0xBE}, std::byte{0xEF});
   EXPECT_TRUE(Storage.UpdatePos(0));
 
   // Verify change
-  Storage.element = {0, ""};  // Reset local element
+  Storage.element = CreateElement(std::byte{0x00});
   Storage.ReadPos(0);
-  EXPECT_STREQ(Storage.element.name, "Updated");
+  EXPECT_EQ(Storage.element.description[0], std::byte{0xBE});
 }
 
 // --- Deletion (Clearing) Tests ---
 
 TEST_F(StorageTest, DeleteRecordAtPosition) {
-  Storage<Record> Storage(test_file);
+  Storage<AccountIndex> Storage(test_file);
 
-  Storage.element = {99, "To Delete"};
+  Storage.element = CreateElement(std::byte{0xDE}, std::byte{0xAD});
   Storage.Add();
 
   // DeletePos calls Clear() and then writes it
@@ -90,14 +94,14 @@ TEST_F(StorageTest, DeleteRecordAtPosition) {
 
   // Verify the record is "cleared" (assuming SecureClear zeros it out)
   Storage.ReadPos(0);
-  EXPECT_EQ(Storage.element.id, 0);
-  EXPECT_STREQ(Storage.element.name, "");
+  EXPECT_EQ(Storage.element.description[0], std::byte{0x00});
+  EXPECT_EQ(Storage.element.description[1], std::byte{0x00});
 }
 
 // --- Edge Cases and Persistence ---
 
 TEST_F(StorageTest, ReadEmptyFileReturnsFalse) {
-  Storage<Record> Storage(test_file);
+  Storage<AccountIndex> Storage(test_file);
   // Should fail as there is no record at index 0
   EXPECT_FALSE(Storage.ReadPos(0));
 }
@@ -105,15 +109,16 @@ TEST_F(StorageTest, ReadEmptyFileReturnsFalse) {
 TEST_F(StorageTest, PersistenceBetweenSessions) {
   // Session 1: Write data
   {
-    Storage<Record> Storage(test_file);
-    Storage.element = {42, "Deep Thought"};
+    Storage<AccountIndex> Storage(test_file);
+    Storage.element = CreateElement(std::byte{0xDE}, std::byte{0xAD});
     Storage.Add();
   }  // File closes here
 
   // Session 2: Read data
   {
-    Storage<Record> Storage(test_file);
+    Storage<AccountIndex> Storage(test_file);
     EXPECT_TRUE(Storage.ReadPos(0));
-    EXPECT_EQ(Storage.element.id, 42);
+    EXPECT_EQ(Storage.element.description[0], std::byte{0xDE});
+    EXPECT_EQ(Storage.element.description[1], std::byte{0xAD});
   }
 }
