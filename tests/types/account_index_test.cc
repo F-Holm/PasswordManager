@@ -3,9 +3,11 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 
 #include "types/account_binary.h"
+#include "types/account_size.h"
 
 namespace {
 
@@ -19,6 +21,14 @@ TEST(AccountIndexTest, DefaultConstructor) {
   EXPECT_TRUE(IsDescriptionZeroed(index));
 }
 
+TEST(AccountIndexTest, PositionConstructor) {
+  std::int64_t position = 27182;
+  AccountIndex index(position);
+
+  EXPECT_EQ(index.position, position);
+  EXPECT_TRUE(IsDescriptionZeroed(index));
+}
+
 TEST(AccountIndexTest, ConstructorCopiesDescriptionCorrectly) {
   AccountBinary binary;
   for (size_t i = 0; i < AccountSize::kDescription; ++i) {
@@ -27,6 +37,23 @@ TEST(AccountIndexTest, ConstructorCopiesDescriptionCorrectly) {
 
   AccountIndex index(binary);
 
+  EXPECT_EQ(index.position, -1);
+  for (size_t i = 0; i < AccountSize::kDescription; ++i) {
+    EXPECT_EQ(index.description[i], static_cast<std::byte>(i + 1))
+        << "Mismatch at index " << i;
+  }
+}
+
+TEST(AccountIndexTest, ConstructorCopiesDescriptionCorrectlyAndPosition) {
+  AccountBinary binary;
+  for (size_t i = 0; i < AccountSize::kDescription; ++i) {
+    binary.description[i] = static_cast<std::byte>(i + 1);
+  }
+
+  std::int64_t position = 27182;
+  AccountIndex index(binary, position);
+
+  EXPECT_EQ(index.position, position);
   for (size_t i = 0; i < AccountSize::kDescription; ++i) {
     EXPECT_EQ(index.description[i], static_cast<std::byte>(i + 1))
         << "Mismatch at index " << i;

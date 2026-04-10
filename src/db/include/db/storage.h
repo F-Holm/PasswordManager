@@ -42,7 +42,8 @@ class Storage {
 
 template <typename T>
 bool Storage<T>::ReadPos(std::size_t pos) {
-  if (!SetFilePos(pos)) return false;
+  if (!SetFilePos(pos))
+    return false;
   return ReadNext();
 }
 
@@ -57,7 +58,8 @@ bool Storage<T>::ReadNext() {
 
 template <typename T>
 bool Storage<T>::UpdatePos(std::size_t pos) {
-  if (!SetFilePos(pos)) return false;
+  if (!SetFilePos(pos))
+    return false;
   return UpdateNext();
 }
 
@@ -73,7 +75,8 @@ bool Storage<T>::UpdateNext() {
 
 template <typename T>
 bool Storage<T>::DeletePos(std::size_t pos) {
-  if (!SetFilePos(pos)) return false;
+  if (!SetFilePos(pos))
+    return false;
   return DeleteNext();
 }
 
@@ -103,7 +106,8 @@ bool Storage<T>::IsOpen() {
 template <typename T>
 Storage<T>::Storage(std::string_view file_name) {
   Open(file_name);
-  if (IsOpen()) UpdateCount();
+  if (IsOpen())
+    UpdateCount();
 }
 
 template <typename T>

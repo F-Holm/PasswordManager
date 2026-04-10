@@ -1,19 +1,31 @@
 # Password Manager
 
-## Dependencies
+## Build and Install
 
-- `clang`
-- `cmake`
-- `ninja`
+Run the following command from the project root to build and install the application:
+
+Note: Ensure all [Build Dependencies](#build-dependencies) are installed before running this command.
+
+```bash
+just build-install
+```
+
+## Build Dependencies
+
+- `Clang`
+- `CMake`
+- `Ninja-Build`
+- `Just`
+- `Rustup`
 
 ---
 
 ## Dev Dependencies
 
 - [Dockerfile](.devcontainer/Dockerfile)
-- `Cargo`
-- `Cargo fmt`
-- `Cargo Clippy`
+- `Rustup`
+- `Rustfmt`
+- `Rust Clippy`
 
 ---
 
@@ -44,7 +56,7 @@ When running `just config-dev`, you can enable specific analysis tools by passin
 
 Order: `coverage` `lint` `asan` `valgrind`
 
-**Example: lint & asan**
+**Example: lint & ASan**
 ```bash
 just config-dev 0 1 1 0
 ```

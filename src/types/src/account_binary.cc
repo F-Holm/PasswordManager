@@ -12,4 +12,6 @@ void AccountBinary::SetZero() noexcept {
   Crypto::SecureClear(tag_data);
 }
 
-AccountBinary::~AccountBinary() noexcept { this->SetZero(); }
+AccountBinary::~AccountBinary() noexcept {
+  this->SetZero();
+}
