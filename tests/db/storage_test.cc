@@ -16,15 +16,17 @@ class StorageTest : public ::testing::Test {
     ofs.close();
   }
 
-  void TearDown() override { std::remove(test_file.c_str()); }
+  void TearDown() override {
+    std::remove(test_file.c_str());
+  }
 };
 
-template<typename... Args>
-AccountIndex CreateElement(Args... bytes){
+template <typename... Args>
+AccountIndex CreateElement(Args... bytes) {
   AccountIndex element;
 
-  std::byte array_args[] = { bytes... };
-  
+  std::byte array_args[] = {bytes...};
+
   for (size_t i = 0; i < sizeof...(bytes); i++)
     element.description[i] = array_args[i];
   return element;

@@ -1,6 +1,6 @@
 build_dir := "build/debug"
 
-src_dirs := "src/core src/db"
+src_dirs := "src"
 test_src_dirs := "tests"
 rust_dir := "src/crypto"
 

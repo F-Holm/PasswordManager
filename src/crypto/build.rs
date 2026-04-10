@@ -16,9 +16,7 @@ fn main() {
         ..Default::default()
     };
 
-    let include_dir = PathBuf::from(&crate_dir)
-        .join("include")
-        .join("crypto");
+    let include_dir = PathBuf::from(&crate_dir).join("include").join("crypto");
     if !include_dir.exists() {
         std::fs::create_dir_all(&include_dir).unwrap();
     }

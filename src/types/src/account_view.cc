@@ -13,7 +13,8 @@ AccountView::AccountView(AccountBinary& account) noexcept
       extra(std::span(account.data)
                 .subspan(AccountSize::kEmail + AccountSize::kUsername +
                              AccountSize::kPassword,
-                         AccountSize::kExtra)) {}
+                         AccountSize::kExtra)) {
+}
 
 void AccountView::Clear() noexcept {
   description = {};
@@ -23,4 +24,6 @@ void AccountView::Clear() noexcept {
   extra = {};
 }
 
-AccountView::~AccountView() noexcept { this->Clear(); }
+AccountView::~AccountView() noexcept {
+  this->Clear();
+}
