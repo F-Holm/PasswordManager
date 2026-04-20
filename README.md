@@ -54,7 +54,7 @@ just build-install
 
 When running `just config-dev`, you can enable specific analysis tools by passing parameters (`1` to enable, `0` to disable).
 
-Order: `coverage` `lint` `asan` `valgrind`
+Order: `coverage` `lint` `ASan` `Valgrind`
 
 **Example: lint & ASan**
 ```bash
