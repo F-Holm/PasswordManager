@@ -88,6 +88,9 @@ docs:
     @echo "GENERATE_HTML = YES" >> Doxyfile_temp
     @echo "HTML_OUTPUT = html" >> Doxyfile_temp
     @echo "USE_MDFILE_AS_MAINPAGE = README.md" >> Doxyfile_temp
+    @echo "EXTRACT_ALL = YES" >> Doxyfile_temp
+    @echo "EXTRACT_STATIC = YES" >> Doxyfile_temp
+    @echo "SHOW_FILES = YES" >> Doxyfile_temp
     
     @{{ if os() == "windows" { \
         "where dot >$null 2>&1 && (echo HAVE_DOT = YES >> Doxyfile_temp && echo CALL_GRAPH = YES >> Doxyfile_temp && echo INTERACTIVE_SVG = YES >> Doxyfile_temp) || echo 'Warning: Graphviz not found'" \
