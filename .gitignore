@@ -1,6 +1,7 @@
 # Build Directory
 build/
 install/
+package/
 
 # Docs
 docs/

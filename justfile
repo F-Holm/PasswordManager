@@ -51,9 +51,9 @@ package-dev:
 clean:
     @echo "Cleaning project files..."  
     {{ if os() == "windows" { \
-        "powershell -Command \"Remove-Item -Recurse -Force build, install, docs, src/crypto/Cargo.lock, src/crypto/target -ErrorAction SilentlyContinue\"" \
+        "powershell -Command \"Remove-Item -Recurse -Force build, install, package, docs, src/crypto/Cargo.lock, src/crypto/target -ErrorAction SilentlyContinue\"" \
     } else { \
-        "rm -rf build install docs src/crypto/Cargo.lock src/crypto/target" \
+        "rm -rf build install package docs src/crypto/Cargo.lock src/crypto/target" \
     } }}
 
 format: format-cpp format-rust
