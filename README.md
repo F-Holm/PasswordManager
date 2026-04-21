@@ -39,8 +39,10 @@ just build-install
 | `just config-dev` | Configures the project with the **Debug** preset. |
 | `just build` | Compiles the project in **Release** mode. |
 | `just build-dev` | Compiles the project in **Debug** mode. |
-| `just install` | Installs the **Release** binaries. |
-| `just install-dev` | Installs the **Debug** binaries. |
+| `just install` | Installs the **Release** binaries in the `install` folder. |
+| `just install-dev` | Installs the **Debug** binaries in the `install` folder. |
+| `just package` | Generates the **Release** installers in the `package` folder. |
+| `just package-dev` | Generates the **Debug** installers in the `package` folder. |
 | `just clean` | Removes `build`, `install`, `docs`, and Rust target folders. |
 | `just test` | Runs the test suite in **Release** mode. |
 | `just test-dev` | Runs the test suite in **Debug** mode. |
