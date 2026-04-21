@@ -10,7 +10,9 @@ project_name := "Password Manager"
 
 trash_files := ""
 
-build-install: config build install
+build-install: config build install package
+
+build-install-ci: config build test install package
 
 config:
     cmake --preset release
@@ -39,6 +41,12 @@ install:
 
 install-dev:
     cmake --install --preset install-debug
+
+package:
+    cmake --package --preset package-release
+
+package-dev:
+    cmake --package --preset package-debug
 
 clean:
     @echo "Cleaning project files..."  
