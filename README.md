@@ -33,7 +33,8 @@ just build-install
 
 | Command | Description |
 | :--- | :--- |
-| `just build-install` | Full pipeline: Configures, builds, and installs the **Release** version. |
+| `just build-install` | Full pipeline without tests: Configures, builds, and installs the **Release** version. |
+| `just build-install-ci` | Full pipeline: Configures, builds, test, and installs the **Release** version. |
 | `just config` | Configures the project with the **Release** preset. |
 | `just config-dev` | Configures the project with the **Debug** preset. |
 | `just build` | Compiles the project in **Release** mode. |
