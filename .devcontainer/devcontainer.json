@@ -1,14 +1,7 @@
 {
-  "name": "C++ Dev Ubuntu",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
-  "features": {
-    "ghcr.io/devcontainers/features/rust:1": {
-      "version": "stable",
-      "components": "rustfmt,clippy"
-    }
-  },
+  "name": "Password Manager",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "postCreateCommand": "chmod +x ./.devcontainer/setup-dev-container.sh && sudo ./.devcontainer/setup-dev-container.sh",
   "customizations": {
     "vscode": {
       "settings": {
