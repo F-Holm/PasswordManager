@@ -23,6 +23,22 @@ just build-install
 ## Dev Dependencies
 
 - [Dockerfile](.devcontainer/Dockerfile)
+- `Clang`
+- `Clangd`
+- `LLDB`
+- `LLD`
+- `LLVM`
+- `Clang-Format`
+- `Clang-Tidy`
+- `CMake`
+- `Ninja-Build`
+- `Cppcheck`
+- `Ccache`
+- `Doxygen`
+- `Graphviz`
+- `Valgrind`
+- `lcov`
+- `Just`
 - `Rustup`
 - `Rustfmt`
 - `Rust Clippy`
