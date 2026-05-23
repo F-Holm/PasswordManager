@@ -22,7 +22,6 @@ just build-install
 
 ## Dev Dependencies
 
-- [Dockerfile](.devcontainer/Dockerfile)
 - `Clang`
 - `Clangd`
 - `LLDB`
