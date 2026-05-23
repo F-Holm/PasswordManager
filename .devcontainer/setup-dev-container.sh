@@ -1,9 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "--- Actualizando paquetes e instalando herramientas de C++ ---"
-
-echo "--- Actualizando paquetes e instalando herramientas de C++ ---"
+echo "--- Installing C++ tools ---"
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -29,15 +27,14 @@ sudo apt-get install -y --no-install-recommends \
     just \
     curl
 
-echo "--- Instalando Rust (Cargo, Rustfmt y Clippy) ---"
+echo "--- Installing Rust (Cargo, Rustfmt y Clippy) ---"
 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+REAL_USER=${SUDO_USER:-$(whoami)}
+REAL_HOME=$(eval echo ~$REAL_USER)
+echo "Instalando Rust para el usuario: $REAL_USER en $REAL_HOME"
 
-source "$HOME/.cargo/env"
+sudo -u "$REAL_USER" HOME="$REAL_HOME" curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sudo -u "$REAL_USER" HOME="$REAL_HOME" sh -s -- -y
 
-echo "Versiones instaladas:"
-cargo --version
-rustfmt --version
-cargo clippy --version
+echo 'source "$HOME/.cargo/env"' >> $REAL_HOME/.bashrc
 
-echo "--- ¡Instalación completada con éxito! ---"
+echo "--- Installation completed successfully! ---"
