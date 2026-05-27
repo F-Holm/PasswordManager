@@ -2,11 +2,13 @@ build_dir := "build/debug"
 
 src_dirs := "src"
 test_src_dirs := "tests"
-rust_dir := "src/crypto"
+rust_dir := "src/rust_crypto"
 
 docs_out   := "docs"
 docs_input := "README.md src"
 project_name := "Password Manager"
+
+files_to_clean := "build install package docs src/rust_*/Cargo.lock src/rust_*/target"
 
 trash_files := ""
 
@@ -51,9 +53,9 @@ package-dev:
 clean:
     @echo "Cleaning project files..."  
     {{ if os() == "windows" { \
-        "powershell -Command \"Remove-Item -Recurse -Force build, install, package, docs, src/crypto/Cargo.lock, src/crypto/target -ErrorAction SilentlyContinue\"" \
+        "powershell -Command \"Get-Item " + files_to_clean + " -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force\"" \
     } else { \
-        "rm -rf build install package docs src/crypto/Cargo.lock src/crypto/target" \
+        "rm -rf " + files_to_clean \
     } }}
 
 format: format-cpp format-rust

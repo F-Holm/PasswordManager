@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <span>
 
-#include "crypto/rust_crypto.h"
+#include "rust_crypto/rust_crypto.h"
 
 namespace Crypto {
 namespace Size {
