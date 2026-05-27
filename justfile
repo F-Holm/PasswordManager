@@ -1,16 +1,8 @@
-build_dir := "build/debug"
-
-src_dirs := "src"
-test_src_dirs := "tests"
-rust_dir := "src/rust_crypto"
+files_to_clean := "build install package docs src/rust_*/Cargo.lock src/rust_*/target"
 
 docs_out   := "docs"
 docs_input := "README.md src"
 project_name := "Password Manager"
-
-files_to_clean := "build install package docs src/rust_*/Cargo.lock src/rust_*/target"
-
-trash_files := ""
 
 build-install: config build install package
 
@@ -62,16 +54,20 @@ format: format-cpp format-rust
     @echo "All the code has been formated!"
 
 format-cpp:
-    @echo "Formating C++ in: {{src_dirs}}..."
+    @echo "Formating C++ in: src tests..."
     {{ if os() == "windows" { \
-        "powershell -Command \"foreach ($dir in '" + src_dirs + " " + test_src_dirs + "'.Split(' ')) { Get-ChildItem -Path ./$dir -Include *.c,*.cpp,*.c++,*.h,*.hpp,*.hh,*.cc -Recurse -ErrorAction SilentlyContinue | ForEach-Object { clang-format -i $_.FullName } }\"" \
+        "powershell -Command \"foreach ($dir in 'src tests'.Split(' ')) { Get-ChildItem -Path ./$dir -Include *.c,*.cpp,*.c++,*.h,*.hpp,*.hh,*.cc -Recurse -ErrorAction SilentlyContinue | ForEach-Object { clang-format -i $_.FullName } }\"" \
     } else { \
-        "find " + src_dirs + " " + test_src_dirs + " -type f -regextype posix-extended -regex '.*\\.(c|cpp|c\\+\\+|h|hpp|hh|cc)$' -exec clang-format -i {} +" \
+        "find src tests -type f -regextype posix-extended -regex '.*\\.(c|cpp|c\\+\\+|h|hpp|hh|cc)$' -exec clang-format -i {} +" \
     } }}
 
 format-rust:
-    @echo "Formating Rust in: {{rust_dir}}..."
-    @cd {{rust_dir}} && cargo fmt
+    @echo "Formating Rust projects in src/rust_*..."
+    {{ if os() == "windows" { \
+        "powershell -Command \"Get-ChildItem -Path ./src/rust_* -Directory | ForEach-Object { cd $_.FullName; cargo fmt; cd ..\\.. }\"" \
+    } else { \
+        "for dir in src/rust_*; do [ -d \"$dir\" ] && context=$(pwd) && cd \"$dir\" && cargo fmt && cd \"$context\"; done" \
+    } }}
 
 docs:
     @echo "Verifing tools..."
