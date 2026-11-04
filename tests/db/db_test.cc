@@ -537,3 +537,58 @@ TEST_F(DBTest, OpenExistingOnlyOpensExistingFile) {
   DB db;
   EXPECT_TRUE(db.Open(test_file, DB::OpenMode::kExistingOnly));
 }
+
+TEST_F(DBTest, GetAllAccountsReturnsEveryRowInOrder) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  ASSERT_EQ(db.MoveAccount(1, 0), DBStatus::kOk);
+
+  const auto accounts = db.GetAllAccounts();
+  ASSERT_TRUE(accounts.has_value());
+  ASSERT_EQ(accounts->size(), 2u);
+  EXPECT_EQ((*accounts)[0].first, 0);
+  EXPECT_EQ((*accounts)[0].second.data[0], std::byte{0x02});
+  EXPECT_EQ((*accounts)[0].second.uid[0], std::byte{0x02});
+  EXPECT_EQ((*accounts)[1].first, 1);
+  EXPECT_EQ((*accounts)[1].second.data[0], std::byte{0x01});
+}
+
+TEST_F(DBTest, RunInTransactionCommitsOnSuccess) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  EXPECT_EQ(db.RunInTransaction([&] {
+    EXPECT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+    return db.AddAccount(MakeAccount(std::byte{0x02}));
+  }),
+            DBStatus::kOk);
+  EXPECT_EQ(db.Count().value(), 2u);
+}
+
+TEST_F(DBTest, RunInTransactionRollsBackEverythingOnFailure) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+
+  EXPECT_EQ(db.RunInTransaction([&] {
+    EXPECT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+    EXPECT_EQ(db.DeleteAccount(0), DBStatus::kOk);
+    return DBStatus::kError;
+  }),
+            DBStatus::kError);
+
+  EXPECT_EQ(db.Count().value(), 1u);
+  EXPECT_EQ(db.GetAccount(0)->data[0], std::byte{0x01});
+}
+
+TEST_F(DBTest, RunInTransactionFailsWhenClosed) {
+  DB db;
+  bool ran = false;
+  EXPECT_EQ(db.RunInTransaction([&] {
+    ran = true;
+    return DBStatus::kOk;
+  }),
+            DBStatus::kClosed);
+  EXPECT_FALSE(ran);
+}

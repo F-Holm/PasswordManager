@@ -3,7 +3,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "db/db_status.h"
@@ -49,8 +51,16 @@ class DB {
   DBStatus DeleteAccount(std::int64_t position);
   DBStatus MoveAccount(std::int64_t from_position, std::int64_t to_position);
   std::expected<std::vector<AccountIndex>, DBStatus> GetAllIndex();
+  // Every account with its position, ordered by position.
+  std::expected<std::vector<std::pair<std::int64_t, AccountBinary>>, DBStatus>
+  GetAllAccounts();
   std::expected<std::size_t, DBStatus> Count();
   DBStatus Compact();
+
+  // Runs `body` inside one write transaction: either everything it does is
+  // committed, or (if it returns anything but kOk, or the commit fails)
+  // nothing is. DB methods called from `body` join the transaction.
+  DBStatus RunInTransaction(const std::function<DBStatus()>& body);
 
   // Vault metadata (a single row). GetMeta() returns kNotFound for a vault
   // that has not been initialized yet; CreateMeta() returns kAlreadyExists

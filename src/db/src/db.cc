@@ -356,6 +356,60 @@ std::expected<std::vector<AccountIndex>, DBStatus> DB::GetAllIndex() {
   return result;
 }
 
+std::expected<std::vector<std::pair<std::int64_t, AccountBinary>>, DBStatus>
+DB::GetAllAccounts() {
+  if (!IsOpen()) {
+    return std::unexpected(DBStatus::kClosed);
+  }
+
+  Statement select(db_,
+                   "SELECT position, uid, description, data, iv_description, "
+                   "iv_data, tag_description, tag_data FROM accounts "
+                   "ORDER BY position;");
+  if (!select.IsValid()) {
+    return std::unexpected(LastStatus());
+  }
+
+  std::vector<std::pair<std::int64_t, AccountBinary>> result;
+  int step = SQLITE_ROW;
+  while ((step = select.Step()) == SQLITE_ROW) {
+    auto& [position, account] = result.emplace_back();
+    position = select.ColumnInt64(0);
+    const bool ok = select.ColumnBlob(1, account.uid) &&
+                    select.ColumnBlob(2, account.description) &&
+                    select.ColumnBlob(3, account.data) &&
+                    select.ColumnBlob(4, account.iv_description) &&
+                    select.ColumnBlob(5, account.iv_data) &&
+                    select.ColumnBlob(6, account.tag_description) &&
+                    select.ColumnBlob(7, account.tag_data);
+    if (!ok) {
+      return std::unexpected(DBStatus::kError);
+    }
+  }
+  if (step != SQLITE_DONE) {
+    return std::unexpected(LastStatus());
+  }
+
+  return result;
+}
+
+DBStatus DB::RunInTransaction(const std::function<DBStatus()>& body) {
+  if (!IsOpen()) {
+    return DBStatus::kClosed;
+  }
+
+  Transaction tx(db_);
+  if (!tx.IsActive()) {
+    return DBStatusFromSqlite(tx.BeginResult());
+  }
+
+  const DBStatus status = body();
+  if (status != DBStatus::kOk) {
+    return status;
+  }
+  return tx.Commit() ? DBStatus::kOk : LastStatus();
+}
+
 std::expected<std::size_t, DBStatus> DB::Count() {
   if (!IsOpen()) {
     return std::unexpected(DBStatus::kClosed);

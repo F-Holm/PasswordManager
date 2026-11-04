@@ -11,6 +11,10 @@ struct sqlite3;
 // autocommit mode, so a later failure could no longer be rolled back.
 //
 // Unless Commit() succeeds, the destructor rolls the transaction back.
+//
+// If the connection is already inside a transaction, the guard joins it
+// instead: it is active, Commit() succeeds without committing and nothing is
+// rolled back on destruction, leaving both decisions to the outermost guard.
 class Transaction {
  public:
   explicit Transaction(sqlite3* db) noexcept;
@@ -24,6 +28,8 @@ class Transaction {
   // True while the transaction is open (began and not yet committed or
   // rolled back).
   [[nodiscard]] bool IsActive() const noexcept;
+  // True if this guard joined an enclosing transaction.
+  [[nodiscard]] bool IsNested() const noexcept;
   // SQLite result code of the `BEGIN IMMEDIATE` statement.
   [[nodiscard]] int BeginResult() const noexcept;
   // Commits the transaction. Returns false (and rolls back) if the
@@ -32,6 +38,7 @@ class Transaction {
 
  private:
   sqlite3* db_;
+  bool nested_;
   int begin_result_;
   bool active_ = false;
 };

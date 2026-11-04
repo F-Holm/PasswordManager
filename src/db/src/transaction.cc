@@ -2,16 +2,29 @@
 
 #include <sqlite3.h>
 
+namespace {
+
+int Begin(sqlite3* db, bool nested) noexcept {
+  if (db == nullptr) {
+    return SQLITE_MISUSE;
+  }
+  if (nested) {
+    return SQLITE_OK;
+  }
+  return sqlite3_exec(db, "BEGIN IMMEDIATE;", nullptr, nullptr, nullptr);
+}
+
+}  // namespace
+
 Transaction::Transaction(sqlite3* db) noexcept
     : db_(db),
-      begin_result_(db == nullptr ? SQLITE_MISUSE
-                                  : sqlite3_exec(db, "BEGIN IMMEDIATE;",
-                                                 nullptr, nullptr, nullptr)) {
+      nested_(db != nullptr && sqlite3_get_autocommit(db) == 0),
+      begin_result_(Begin(db, nested_)) {
   active_ = begin_result_ == SQLITE_OK;
 }
 
 Transaction::~Transaction() {
-  if (active_) {
+  if (active_ && !nested_) {
     sqlite3_exec(db_, "ROLLBACK;", nullptr, nullptr, nullptr);
   }
 }
@@ -24,9 +37,17 @@ int Transaction::BeginResult() const noexcept {
   return begin_result_;
 }
 
+bool Transaction::IsNested() const noexcept {
+  return nested_;
+}
+
 bool Transaction::Commit() noexcept {
   if (!active_) {
     return false;
+  }
+  if (nested_) {
+    active_ = false;
+    return true;
   }
   if (sqlite3_exec(db_, "COMMIT;", nullptr, nullptr, nullptr) == SQLITE_OK) {
     active_ = false;

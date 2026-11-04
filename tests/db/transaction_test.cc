@@ -104,3 +104,35 @@ TEST_F(TransactionTest, ReportsBusyWhenAnotherConnectionHoldsTheWriteLock) {
   const Transaction tx(db);
   EXPECT_TRUE(tx.IsActive());
 }
+
+TEST_F(TransactionTest, NestedGuardJoinsTheOuterTransaction) {
+  {
+    Transaction outer(db);
+    ASSERT_TRUE(outer.IsActive());
+    EXPECT_FALSE(outer.IsNested());
+    {
+      Transaction inner(db);
+      EXPECT_TRUE(inner.IsActive());
+      EXPECT_TRUE(inner.IsNested());
+      Insert();
+      EXPECT_TRUE(inner.Commit());
+    }
+    // The inner commit did not commit: the outer one is still open...
+    EXPECT_EQ(sqlite3_get_autocommit(db), 0);
+  }
+  // ...and rolling it back undoes the inner work too.
+  EXPECT_EQ(CountRows(db), 0);
+}
+
+TEST_F(TransactionTest, NestedGuardDoesNotRollBackTheOuterTransaction) {
+  {
+    Transaction outer(db);
+    Insert();
+    {
+      const Transaction inner(db);
+      ASSERT_TRUE(inner.IsNested());
+    }
+    EXPECT_TRUE(outer.Commit());
+  }
+  EXPECT_EQ(CountRows(db), 1);
+}
