@@ -27,6 +27,20 @@ test:
 test-dev:
     ctest --preset test-debug -j{{ num_cpus() }}
 
+# Build and test one sanitizer group in build/debug-<group>: asan (ASan+LSan+UBSan) or tsan
+sanitize group:
+    cmake --preset debug-{{ group }}
+    cmake --build --preset build-debug-{{ group }} --parallel {{ num_cpus() }}
+    ctest --preset test-debug-{{ group }} -j{{ num_cpus() }}
+
+# Runs every sanitizer group supported by the current platform.
+[unix]
+sanitize-all: (sanitize "asan") (sanitize "tsan")
+
+[windows]
+sanitize-all:
+    @echo "Sanitizers are not supported on Windows"
+
 install:
     cmake --install --preset install-release
 
