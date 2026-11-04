@@ -79,6 +79,26 @@ typedef struct CoreAccountEntry {
   char description[kCoreDescriptionSize];
 } CoreAccountEntry;
 
+// What CoreGeneratePassword may put in a password (see PasswordOptions in
+// core/password_generator.h). `length` is 1 to kCoreMaxGeneratedPasswordLength.
+typedef struct CorePasswordOptions {
+  size_t length;
+  bool numbers;
+  bool upper;
+  bool lower;
+  bool symbols;
+  bool exclude_ambiguous;
+} CorePasswordOptions;
+
+enum { kCoreMaxGeneratedPasswordLength = kCorePasswordSize - 1 };
+
+// Writes a random password plus a terminating NUL into the `out_size` bytes
+// at `out`, with at least one character of every enabled class. Needs no
+// session. kCoreInvalidArgument (with `out` zeroed when it is not NULL) if
+// the options are unusable or `out` is too small.
+CoreResult CoreGeneratePassword(const CorePasswordOptions* options, char* out,
+                                size_t out_size);
+
 // Stable, human-readable, NUL-terminated name of `result` (e.g. "busy").
 // Never returns NULL.
 const char* CoreResultName(CoreResult result);

@@ -1,6 +1,7 @@
 add_library(core STATIC
     src/core.cc
     src/core_interface.cc
+    src/password_generator.cc
 )
 
 target_include_directories(core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

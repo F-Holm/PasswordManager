@@ -10,6 +10,7 @@
 
 #include "core/core.h"
 #include "core/core_status.h"
+#include "core/password_generator.h"
 #include "crypto/crypto.h"
 #include "types/account_size.h"
 
@@ -18,6 +19,7 @@ static_assert(kCoreEmailSize == AccountSize::kEmail);
 static_assert(kCoreUsernameSize == AccountSize::kUsername);
 static_assert(kCorePasswordSize == AccountSize::kPassword);
 static_assert(kCoreExtraSize == AccountSize::kExtra);
+static_assert(kCoreMaxGeneratedPasswordLength == kMaxGeneratedPasswordLength);
 static_assert(sizeof(CoreAccount) ==
               AccountSize::kDescription + AccountSize::kEmail +
                   AccountSize::kUsername + AccountSize::kPassword +
@@ -90,6 +92,23 @@ static_assert(ToResult(CoreStatus::kCorrupted) == kCoreCorrupted);
 static_assert(ToResult(CoreStatus::kError) == kCoreError);
 
 extern "C" {
+
+CoreResult CoreGeneratePassword(const CorePasswordOptions* options, char* out,
+                                std::size_t out_size) {
+  if (options == nullptr || out == nullptr) {
+    return kCoreInvalidArgument;
+  }
+  return Guard([&] {
+    const PasswordOptions cpp_options{
+        .length = options->length,
+        .numbers = options->numbers,
+        .upper = options->upper,
+        .lower = options->lower,
+        .symbols = options->symbols,
+        .exclude_ambiguous = options->exclude_ambiguous};
+    return GeneratePassword(cpp_options, std::span(out, out_size));
+  });
+}
 
 const char* CoreResultName(CoreResult result) {
   switch (result) {
