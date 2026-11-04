@@ -73,6 +73,12 @@ class DB {
   std::expected<std::size_t, DBStatus> Count();
   DBStatus Compact();
 
+  // A number that changes whenever *another* connection (e.g. another
+  // program using the same vault) commits a change to the database; this
+  // connection's own commits leave it unchanged. Only comparisons between
+  // two values read on the same open connection are meaningful.
+  std::expected<std::int64_t, DBStatus> DataVersion();
+
   // Runs `body` inside one write transaction: either everything it does is
   // committed, or (if it returns anything but kOk, or the commit fails)
   // nothing is. DB methods called from `body` join the transaction.

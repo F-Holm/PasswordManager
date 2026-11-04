@@ -157,6 +157,14 @@ class Core {
   [[nodiscard]] std::vector<std::size_t> SearchIndex(
       std::string_view query) const;
 
+  // Whether another program committed a change to the vault since it was
+  // unlocked, since the last LoadIndex() or since the last call to this
+  // function, whichever was latest. When it did, the cached index and the
+  // loaded account are cleared (they may be stale), so the caller should
+  // LoadIndex() again. Changes made through this Core are not reported.
+  // Cheap enough to poll (e.g. when a window regains focus).
+  std::expected<bool, CoreStatus> CheckExternalChanges();
+
   // Number of accounts in the vault (without decrypting anything).
   std::expected<std::size_t, CoreStatus> Count();
   // Rebuilds the vault file to reclaim the space of deleted accounts.
@@ -177,6 +185,12 @@ class Core {
   Key master_key_{};
   bool has_key_ = false;
   std::int64_t key_epoch_ = 0;
+  // DB::DataVersion() as of the last unlock, LoadIndex or
+  // CheckExternalChanges.
+  std::int64_t data_version_ = 0;
+
+  // Records the current DB::DataVersion() in data_version_.
+  void SnapshotDataVersion();
 
   std::vector<AccountEntry> index_;
   std::optional<AccountPlain> loaded_account_;

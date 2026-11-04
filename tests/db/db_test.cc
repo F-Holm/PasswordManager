@@ -713,3 +713,24 @@ TEST_F(DBTest, UpdateMissingAccountWithRevisionReportsNotFound) {
   EXPECT_EQ(db.UpdateAccount(42, 0, MakeAccount(std::byte{0x01})),
             DBStatus::kNotFound);
 }
+
+TEST_F(DBTest, DataVersionChangesOnlyOnOtherConnectionsCommits) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  DB other;
+  ASSERT_TRUE(other.Open(test_file));
+
+  const std::int64_t initial = db.DataVersion().value();
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  EXPECT_EQ(db.DataVersion().value(), initial);
+
+  ASSERT_EQ(other.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  const std::int64_t after_other = db.DataVersion().value();
+  EXPECT_NE(after_other, initial);
+  EXPECT_EQ(db.DataVersion().value(), after_other);
+}
+
+TEST_F(DBTest, DataVersionFailsWhenClosed) {
+  DB db;
+  EXPECT_EQ(db.DataVersion().error(), DBStatus::kClosed);
+}

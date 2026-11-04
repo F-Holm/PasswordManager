@@ -444,6 +444,17 @@ DB::GetAllAccounts() {
   return result;
 }
 
+std::expected<std::int64_t, DBStatus> DB::DataVersion() {
+  if (!IsOpen()) {
+    return std::unexpected(DBStatus::kClosed);
+  }
+  Statement pragma(db_, "PRAGMA data_version;");
+  if (!pragma.IsValid() || pragma.Step() != SQLITE_ROW) {
+    return std::unexpected(LastStatus());
+  }
+  return pragma.ColumnInt64(0);
+}
+
 DBStatus DB::RunInTransaction(const std::function<DBStatus()>& body) {
   if (!IsOpen()) {
     return DBStatus::kClosed;

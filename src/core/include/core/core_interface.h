@@ -194,6 +194,12 @@ CoreResult CoreSearchIndex(const CoreSession* session, const char* query,
                            size_t query_size, size_t* out_indices,
                            size_t capacity, size_t* out_count);
 
+// Writes to *out_changed whether another program changed the vault since
+// it was unlocked, the index was last loaded or this was last called. When
+// it did, the loaded index and account are cleared: call CoreLoadIndex
+// again. Cheap enough to poll.
+CoreResult CoreCheckExternalChanges(CoreSession* session, bool* out_changed);
+
 // Writes the number of accounts in the vault to *out_count.
 CoreResult CoreCount(CoreSession* session, size_t* out_count);
 // Rebuilds the vault file to reclaim the space of deleted accounts.

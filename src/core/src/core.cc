@@ -185,6 +185,7 @@ CoreStatus Core::Create(std::string_view db_path,
   Crypto::SecureClear(key);
   has_key_ = true;
   key_epoch_ = meta.key_epoch;
+  SnapshotDataVersion();
   return CoreStatus::kOk;
 }
 
@@ -225,6 +226,7 @@ CoreStatus Core::Unlock(std::string_view db_path,
   Crypto::SecureClear(key);
   has_key_ = true;
   key_epoch_ = meta->key_epoch;
+  SnapshotDataVersion();
   return CoreStatus::kOk;
 }
 
@@ -351,6 +353,7 @@ void Core::Close() noexcept {
   Crypto::SecureClear(std::span(master_key_));
   has_key_ = false;
   key_epoch_ = 0;
+  data_version_ = 0;
   ClearIndex();
   ClearAccount();
 }
@@ -517,6 +520,9 @@ CoreStatus Core::LoadIndex() {
     return CoreStatus::kLocked;
   }
 
+  // Snapshot before reading, so a change committed while reading is
+  // reported by the next CheckExternalChanges().
+  SnapshotDataVersion();
   auto raw = db_.GetAllIndex();
   if (!raw.has_value()) {
     return FromDBStatus(raw.error());
@@ -554,6 +560,27 @@ std::vector<std::size_t> Core::SearchIndex(std::string_view query) const {
     }
   }
   return matches;
+}
+
+void Core::SnapshotDataVersion() {
+  data_version_ = db_.DataVersion().value_or(data_version_);
+}
+
+std::expected<bool, CoreStatus> Core::CheckExternalChanges() {
+  if (!IsOpen()) {
+    return std::unexpected(CoreStatus::kLocked);
+  }
+  const auto version = db_.DataVersion();
+  if (!version.has_value()) {
+    return std::unexpected(FromDBStatus(version.error()));
+  }
+  if (*version == data_version_) {
+    return false;
+  }
+  data_version_ = *version;
+  ClearIndex();
+  ClearAccount();
+  return true;
 }
 
 std::expected<std::size_t, CoreStatus> Core::Count() {

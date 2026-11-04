@@ -433,3 +433,24 @@ TEST_F(CoreInterfaceTest, EditWithStaleRevisionReportsConflict) {
   ASSERT_EQ(CoreGetIndexEntry(session, 0, &entry), kCoreOk);
   EXPECT_EQ(entry.revision, 1);
 }
+
+TEST_F(CoreInterfaceTest, CheckExternalChanges) {
+  ASSERT_EQ(Open(), kCoreOk);
+  bool changed = true;
+  ASSERT_EQ(CoreCheckExternalChanges(session, &changed), kCoreOk);
+  EXPECT_FALSE(changed);
+
+  CoreSession* other = CoreNew();
+  ASSERT_NE(other, nullptr);
+  ASSERT_EQ(CoreUnlock(other, test_file.c_str(), kPassword, kPasswordSize),
+            kCoreOk);
+  const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
+  ASSERT_EQ(CoreAddAccount(other, &account, nullptr), kCoreOk);
+  CoreFree(other);
+
+  ASSERT_EQ(CoreCheckExternalChanges(session, &changed), kCoreOk);
+  EXPECT_TRUE(changed);
+
+  EXPECT_EQ(CoreCheckExternalChanges(session, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreCheckExternalChanges(nullptr, &changed), kCoreInvalidArgument);
+}

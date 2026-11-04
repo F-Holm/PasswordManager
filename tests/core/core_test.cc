@@ -921,3 +921,55 @@ TEST_F(CoreTest, IndexReportsRevisions) {
   ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
   EXPECT_EQ(core.Index()[0].revision, 1);
 }
+
+TEST_F(CoreTest, ReportsChangesMadeByAnotherSession) {
+  Core gui;
+  ASSERT_EQ(gui.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  std::int64_t id = -1;
+  ASSERT_EQ(gui.AddAccount(MakeAccount("a", "e", "u", "p", "x"), &id),
+            CoreStatus::kOk);
+  ASSERT_EQ(gui.LoadIndex(), CoreStatus::kOk);
+  ASSERT_NE(Fetch(gui, id), nullptr);
+
+  // Nothing happened elsewhere, and the GUI's own changes do not count.
+  EXPECT_FALSE(gui.CheckExternalChanges().value());
+  ASSERT_EQ(gui.AddAccount(MakeAccount("b", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+  EXPECT_FALSE(gui.CheckExternalChanges().value());
+
+  ASSERT_EQ(gui.LoadIndex(), CoreStatus::kOk);
+  ASSERT_NE(Fetch(gui, id), nullptr);
+
+  Core cli;
+  ASSERT_EQ(cli.Unlock(test_file, kPassword), CoreStatus::kOk);
+  ASSERT_EQ(cli.AddAccount(MakeAccount("c", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+
+  // The GUI notices once, and drops its now stale caches.
+  EXPECT_TRUE(gui.CheckExternalChanges().value());
+  EXPECT_TRUE(gui.Index().empty());
+  EXPECT_EQ(gui.CurrentAccount(), nullptr);
+  EXPECT_FALSE(gui.CheckExternalChanges().value());
+
+  ASSERT_EQ(gui.LoadIndex(), CoreStatus::kOk);
+  EXPECT_EQ(gui.Index().size(), 3u);
+}
+
+TEST_F(CoreTest, LoadIndexAcknowledgesExternalChanges) {
+  Core gui;
+  ASSERT_EQ(gui.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  Core cli;
+  ASSERT_EQ(cli.Unlock(test_file, kPassword), CoreStatus::kOk);
+  ASSERT_EQ(cli.AddAccount(MakeAccount("c", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+
+  // Reloading already picks up the change, so there is nothing to report.
+  ASSERT_EQ(gui.LoadIndex(), CoreStatus::kOk);
+  EXPECT_EQ(gui.Index().size(), 1u);
+  EXPECT_FALSE(gui.CheckExternalChanges().value());
+}
+
+TEST_F(CoreTest, CheckExternalChangesRequiresAnOpenVault) {
+  Core core;
+  EXPECT_EQ(core.CheckExternalChanges().error(), CoreStatus::kLocked);
+}

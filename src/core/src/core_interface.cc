@@ -294,6 +294,20 @@ CoreResult CoreSearchIndex(const CoreSession* session, const char* query,
   });
 }
 
+CoreResult CoreCheckExternalChanges(CoreSession* session, bool* out_changed) {
+  if (session == nullptr || out_changed == nullptr) {
+    return kCoreInvalidArgument;
+  }
+  return Guard([&] {
+    const auto changed = session->core.CheckExternalChanges();
+    if (!changed.has_value()) {
+      return changed.error();
+    }
+    *out_changed = *changed;
+    return CoreStatus::kOk;
+  });
+}
+
 CoreResult CoreCount(CoreSession* session, std::size_t* out_count) {
   if (session == nullptr || out_count == nullptr) {
     return kCoreInvalidArgument;
