@@ -10,6 +10,8 @@ enum class DBStatus : std::uint8_t {
   // Another connection held the database lock for longer than the busy
   // timeout. Nothing was changed; the operation can be retried.
   kBusy,
+  // The row to insert already exists (e.g. the vault metadata).
+  kAlreadyExists,
   // The database is not open.
   kClosed,
   // Any other SQLite failure (corrupted file, I/O error, bad schema, ...).

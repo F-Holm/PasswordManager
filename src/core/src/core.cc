@@ -27,6 +27,8 @@ CoreStatus FromDBStatus(DBStatus status) noexcept {
       return CoreStatus::kNotFound;
     case DBStatus::kBusy:
       return CoreStatus::kBusy;
+    case DBStatus::kAlreadyExists:
+      return CoreStatus::kAlreadyExists;
     case DBStatus::kClosed:
       return CoreStatus::kLocked;
     case DBStatus::kError:

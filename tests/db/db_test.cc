@@ -11,6 +11,7 @@
 #include <thread>
 
 #include "types/account_binary.h"
+#include "types/vault_meta.h"
 
 namespace {
 
@@ -23,6 +24,17 @@ AccountBinary MakeAccount(std::byte marker) {
   account.tag_description.fill(marker);
   account.tag_data.fill(marker);
   return account;
+}
+
+VaultMeta MakeMeta(std::byte marker) {
+  VaultMeta meta;
+  meta.kdf_salt.fill(marker);
+  meta.kdf_params = {.memory_kib = 1024, .iterations = 2, .parallelism = 3};
+  meta.verifier.fill(marker);
+  meta.verifier_iv.fill(marker);
+  meta.verifier_tag.fill(marker);
+  meta.key_epoch = 7;
+  return meta;
 }
 
 }  // namespace
@@ -393,4 +405,80 @@ TEST(DBStatusTest, MapsSqliteResultCodes) {
   EXPECT_EQ(DBStatusFromSqlite(SQLITE_LOCKED), DBStatus::kBusy);
   EXPECT_EQ(DBStatusFromSqlite(SQLITE_CORRUPT), DBStatus::kError);
   EXPECT_EQ(DBStatusFromSqlite(SQLITE_IOERR_READ), DBStatus::kError);
+}
+
+TEST_F(DBTest, NewVaultHasNoMeta) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  EXPECT_EQ(db.GetMeta().error(), DBStatus::kNotFound);
+}
+
+TEST_F(DBTest, CreateAndGetMetaRoundTrip) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  const VaultMeta meta = MakeMeta(std::byte{0x11});
+  ASSERT_EQ(db.CreateMeta(meta), DBStatus::kOk);
+
+  const auto fetched = db.GetMeta();
+  ASSERT_TRUE(fetched.has_value());
+  EXPECT_EQ(*fetched, meta);
+}
+
+TEST_F(DBTest, CreateMetaTwiceFails) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  ASSERT_EQ(db.CreateMeta(MakeMeta(std::byte{0x11})), DBStatus::kOk);
+  EXPECT_EQ(db.CreateMeta(MakeMeta(std::byte{0x22})), DBStatus::kAlreadyExists);
+  EXPECT_EQ(db.GetMeta()->kdf_salt[0], std::byte{0x11});
+}
+
+TEST_F(DBTest, UpdateMetaOverwritesIt) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  ASSERT_EQ(db.CreateMeta(MakeMeta(std::byte{0x11})), DBStatus::kOk);
+
+  VaultMeta updated = MakeMeta(std::byte{0x22});
+  updated.key_epoch = 8;
+  ASSERT_EQ(db.UpdateMeta(updated), DBStatus::kOk);
+  EXPECT_EQ(*db.GetMeta(), updated);
+}
+
+TEST_F(DBTest, UpdateMetaWithoutMetaFails) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  EXPECT_EQ(db.UpdateMeta(MakeMeta(std::byte{0x22})), DBStatus::kNotFound);
+}
+
+TEST_F(DBTest, MetaPersistsBetweenSessions) {
+  const VaultMeta meta = MakeMeta(std::byte{0x33});
+  {
+    DB db;
+    ASSERT_TRUE(db.Open(test_file));
+    ASSERT_EQ(db.CreateMeta(meta), DBStatus::kOk);
+  }
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  EXPECT_EQ(*db.GetMeta(), meta);
+}
+
+TEST_F(DBTest, MetaOperationsFailWhenClosed) {
+  DB db;
+  EXPECT_EQ(db.GetMeta().error(), DBStatus::kClosed);
+  EXPECT_EQ(db.CreateMeta(MakeMeta(std::byte{0x01})), DBStatus::kClosed);
+  EXPECT_EQ(db.UpdateMeta(MakeMeta(std::byte{0x01})), DBStatus::kClosed);
+}
+
+TEST_F(DBTest, GetMetaRejectsOutOfRangeKdfParams) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  ASSERT_EQ(db.CreateMeta(MakeMeta(std::byte{0x11})), DBStatus::kOk);
+
+  sqlite3* raw = nullptr;
+  ASSERT_EQ(sqlite3_open(test_file.c_str(), &raw), SQLITE_OK);
+  ASSERT_EQ(sqlite3_exec(raw, "UPDATE vault_meta SET kdf_iterations = -1;",
+                         nullptr, nullptr, nullptr),
+            SQLITE_OK);
+  sqlite3_close(raw);
+
+  EXPECT_EQ(db.GetMeta().error(), DBStatus::kError);
 }

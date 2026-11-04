@@ -9,6 +9,7 @@
 #include "db/db_status.h"
 #include "types/account_binary.h"
 #include "types/account_index.h"
+#include "types/vault_meta.h"
 
 struct sqlite3;
 
@@ -42,10 +43,18 @@ class DB {
   std::expected<std::size_t, DBStatus> Count();
   DBStatus Compact();
 
+  // Vault metadata (a single row). GetMeta() returns kNotFound for a vault
+  // that has not been initialized yet; CreateMeta() returns kAlreadyExists
+  // if it has; UpdateMeta() returns kNotFound if it has not.
+  std::expected<VaultMeta, DBStatus> GetMeta();
+  DBStatus CreateMeta(const VaultMeta& meta);
+  DBStatus UpdateMeta(const VaultMeta& meta);
+
  private:
   sqlite3* db_ = nullptr;
 
   bool CreateSchema();
+  DBStatus WriteMeta(std::string_view sql, const VaultMeta& meta);
   bool Execute(std::string_view sql);
   // Returns the DBStatus matching the connection's last error.
   [[nodiscard]] DBStatus LastStatus() const noexcept;

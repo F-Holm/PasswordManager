@@ -2,6 +2,7 @@
 
 #include <sqlite3.h>
 
+#include <cstdint>
 #include <string>
 
 #include "db/statement.h"
@@ -81,7 +82,19 @@ bool DB::CreateSchema() {
       "  tag_data BLOB NOT NULL"
       ");"
       "CREATE INDEX IF NOT EXISTS idx_accounts_position "
-      "  ON accounts(position);");
+      "  ON accounts(position);"
+      "CREATE TABLE IF NOT EXISTS vault_meta ("
+      "  singleton INTEGER PRIMARY KEY CHECK (singleton = 0),"
+      "  version INTEGER NOT NULL,"
+      "  kdf_salt BLOB NOT NULL,"
+      "  kdf_memory_kib INTEGER NOT NULL,"
+      "  kdf_iterations INTEGER NOT NULL,"
+      "  kdf_parallelism INTEGER NOT NULL,"
+      "  verifier BLOB NOT NULL,"
+      "  verifier_iv BLOB NOT NULL,"
+      "  verifier_tag BLOB NOT NULL,"
+      "  key_epoch INTEGER NOT NULL"
+      ");");
 }
 
 DBStatus DB::AddAccount(const AccountBinary& account) {
@@ -352,4 +365,96 @@ DBStatus DB::Compact() {
     return DBStatus::kClosed;
   }
   return Execute("VACUUM;") ? DBStatus::kOk : LastStatus();
+}
+
+std::expected<VaultMeta, DBStatus> DB::GetMeta() {
+  if (!IsOpen()) {
+    return std::unexpected(DBStatus::kClosed);
+  }
+
+  Statement select(db_,
+                   "SELECT version, kdf_salt, kdf_memory_kib, kdf_iterations, "
+                   "kdf_parallelism, verifier, verifier_iv, verifier_tag, "
+                   "key_epoch FROM vault_meta WHERE singleton = 0;");
+  if (!select.IsValid()) {
+    return std::unexpected(LastStatus());
+  }
+
+  const int step = select.Step();
+  if (step == SQLITE_DONE) {
+    return std::unexpected(DBStatus::kNotFound);
+  }
+  if (step != SQLITE_ROW) {
+    return std::unexpected(LastStatus());
+  }
+
+  const auto to_u32 = [](std::int64_t value, std::uint32_t& out) {
+    if (value < 0 || value > UINT32_MAX) {
+      return false;
+    }
+    out = static_cast<std::uint32_t>(value);
+    return true;
+  };
+
+  VaultMeta meta;
+  meta.version = select.ColumnInt64(0);
+  meta.key_epoch = select.ColumnInt64(8);
+  const bool ok = select.ColumnBlob(1, meta.kdf_salt) &&
+                  to_u32(select.ColumnInt64(2), meta.kdf_params.memory_kib) &&
+                  to_u32(select.ColumnInt64(3), meta.kdf_params.iterations) &&
+                  to_u32(select.ColumnInt64(4), meta.kdf_params.parallelism) &&
+                  select.ColumnBlob(5, meta.verifier) &&
+                  select.ColumnBlob(6, meta.verifier_iv) &&
+                  select.ColumnBlob(7, meta.verifier_tag);
+  if (!ok) {
+    return std::unexpected(DBStatus::kError);
+  }
+  return meta;
+}
+
+DBStatus DB::CreateMeta(const VaultMeta& meta) {
+  return WriteMeta(
+      "INSERT INTO vault_meta (version, kdf_salt, kdf_memory_kib, "
+      "kdf_iterations, kdf_parallelism, verifier, verifier_iv, verifier_tag, "
+      "key_epoch, singleton) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0);",
+      meta);
+}
+
+DBStatus DB::UpdateMeta(const VaultMeta& meta) {
+  const DBStatus status = WriteMeta(
+      "UPDATE vault_meta SET version = ?, kdf_salt = ?, kdf_memory_kib = ?, "
+      "kdf_iterations = ?, kdf_parallelism = ?, verifier = ?, "
+      "verifier_iv = ?, verifier_tag = ?, key_epoch = ? "
+      "WHERE singleton = 0;",
+      meta);
+  if (status != DBStatus::kOk) {
+    return status;
+  }
+  return sqlite3_changes(db_) > 0 ? DBStatus::kOk : DBStatus::kNotFound;
+}
+
+DBStatus DB::WriteMeta(std::string_view sql, const VaultMeta& meta) {
+  if (!IsOpen()) {
+    return DBStatus::kClosed;
+  }
+
+  Statement write(db_, sql);
+  if (!write.IsValid()) {
+    return LastStatus();
+  }
+
+  write.BindInt64(1, meta.version);
+  write.BindBlob(2, meta.kdf_salt);
+  write.BindInt64(3, meta.kdf_params.memory_kib);
+  write.BindInt64(4, meta.kdf_params.iterations);
+  write.BindInt64(5, meta.kdf_params.parallelism);
+  write.BindBlob(6, meta.verifier);
+  write.BindBlob(7, meta.verifier_iv);
+  write.BindBlob(8, meta.verifier_tag);
+  write.BindInt64(9, meta.key_epoch);
+
+  if (write.Step() != SQLITE_DONE) {
+    return LastStatus();
+  }
+  return DBStatus::kOk;
 }

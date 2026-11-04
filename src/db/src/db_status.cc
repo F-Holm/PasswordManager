@@ -11,6 +11,8 @@ DBStatus DBStatusFromSqlite(int result_code) noexcept {
     case SQLITE_BUSY:
     case SQLITE_LOCKED:
       return DBStatus::kBusy;
+    case SQLITE_CONSTRAINT:
+      return DBStatus::kAlreadyExists;
     case SQLITE_NOTFOUND:
       return DBStatus::kNotFound;
     default:
