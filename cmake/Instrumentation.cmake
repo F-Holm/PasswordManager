@@ -1,11 +1,10 @@
 include_guard(GLOBAL)
 
-include(ASan)
+include(Sanitizers)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if(ENABLE_ASAN)
-        AddASanInstrumentation()
-    else()
+    AddSanitizers()
+    if(NOT SANITIZER_TEST_ENV)
         message(STATUS "No dynamic instrumentation enabled")
     endif()
 endif()

@@ -19,5 +19,10 @@ include(GoogleTest)
 
 macro(AddTests target)
     target_link_libraries("${target}" PRIVATE gtest_main gmock)
-    gtest_discover_tests("${target}")
+    # gtest_discover_tests() flattens PROPERTIES into a single list, so the
+    # separators of the ENVIRONMENT list must be escaped to survive.
+    string(REPLACE ";" "\\;" _test_env "${SANITIZER_TEST_ENV}")
+    gtest_discover_tests("${target}"
+        DISCOVERY_MODE PRE_TEST
+        PROPERTIES ENVIRONMENT "${_test_env}")
 endmacro()
