@@ -120,6 +120,8 @@ That is why there are two sanitizer builds, each in its own directory:
 > - UBSan also enables Clang's `integer` and `nullability` checks; well-defined but
 >   suspicious patterns in third-party code and system headers are silenced in
 >   `cmake/ubsan_ignorelist.txt`.
+> - SQLite's lock-free WAL index protocol looks like a data race to TSan; those
+>   functions (and only those) are listed in `cmake/tsan_suppressions.txt`.
 > - `rust_crypto` is built by Cargo and is not instrumented.
 > - MemorySanitizer (MSan) is not supported yet: it needs every library, including
 >   the C++ standard library, to be instrumented.

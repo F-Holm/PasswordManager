@@ -1,0 +1,14 @@
+# ThreadSanitizer suppressions (passed through TSAN_OPTIONS when ENABLE_TSAN
+# is ON).
+#
+# SQLite's WAL mode coordinates connections through a shared-memory index
+# whose header is read without a lock: the reader copies it twice and retries
+# if the copies differ, with explicit memory barriers (see "WAL-index format"
+# in https://www.sqlite.org/walformat.html). TSan cannot see that protocol and
+# reports it as a data race. Only the functions implementing it are listed,
+# so races anywhere else (including our own misuse of SQLite) still fail.
+race:walIndexTryHdr
+race:walIndexWriteHdr
+race:walIndexReadHdr
+race:walTryBeginRead
+race:walIndexRecover

@@ -72,7 +72,8 @@ macro(AddSanitizers)
 
         if(ENABLE_TSAN)
             list(APPEND _sanitizers thread)
-            list(APPEND _test_env "TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1")
+            list(APPEND _test_env
+                "TSAN_OPTIONS=halt_on_error=1:second_deadlock_stack=1:suppressions=${CMAKE_SOURCE_DIR}/cmake/tsan_suppressions.txt")
         endif()
 
         if(_sanitizers)
