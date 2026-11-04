@@ -973,3 +973,99 @@ TEST_F(CoreTest, CheckExternalChangesRequiresAnOpenVault) {
   Core core;
   EXPECT_EQ(core.CheckExternalChanges().error(), CoreStatus::kLocked);
 }
+
+class CoreKeyEpochTest : public CoreTest {
+ protected:
+  static constexpr std::string_view kNewPassword = "changed elsewhere";
+
+  // Creates the vault with one account, unlocks it in `gui`, then changes
+  // the password from another session. Returns the account's id.
+  std::int64_t ChangePasswordBehindTheGuisBack(Core& gui) const {
+    std::int64_t id = -1;
+    {
+      Core setup;
+      EXPECT_EQ(setup.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+      EXPECT_EQ(setup.AddAccount(MakeAccount("a", "e", "u", "p", "x"), &id),
+                CoreStatus::kOk);
+    }
+    EXPECT_EQ(gui.Unlock(test_file, kPassword), CoreStatus::kOk);
+
+    Core cli;
+    EXPECT_EQ(cli.Unlock(test_file, kPassword), CoreStatus::kOk);
+    EXPECT_EQ(cli.ChangeMasterPassword(kPassword, kNewPassword),
+              CoreStatus::kOk);
+    return id;
+  }
+
+  std::size_t StoredCount() const {
+    DB db;
+    EXPECT_TRUE(db.Open(test_file));
+    return db.Count().value();
+  }
+};
+
+TEST_F(CoreKeyEpochTest, WritesWithAStaleKeyAreRefusedAndLockTheSession) {
+  Core gui;
+  ChangePasswordBehindTheGuisBack(gui);
+  ASSERT_TRUE(gui.IsOpen());
+
+  EXPECT_EQ(gui.AddAccount(MakeAccount("b", "e", "u", "p", "x")),
+            CoreStatus::kLocked);
+  EXPECT_FALSE(gui.IsOpen());
+  EXPECT_EQ(StoredCount(), 1u);  // Nothing written under the old key.
+
+  // Unlocking with the new password makes the session usable again.
+  EXPECT_EQ(gui.Unlock(test_file, kPassword), CoreStatus::kWrongPassword);
+  ASSERT_EQ(gui.Unlock(test_file, kNewPassword), CoreStatus::kOk);
+  EXPECT_EQ(gui.AddAccount(MakeAccount("b", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+}
+
+TEST_F(CoreKeyEpochTest, EveryWriteChecksTheEpoch) {
+  for (int op = 0; op < 3; ++op) {
+    std::remove(test_file.c_str());
+    Core gui;
+    const std::int64_t id = ChangePasswordBehindTheGuisBack(gui);
+    CoreStatus status = CoreStatus::kOk;
+    switch (op) {
+      case 0:
+        status = gui.EditAccount(id, Core::kAnyRevision,
+                                 MakeAccount("z", "e", "u", "p", "x"));
+        break;
+      case 1:
+        status = gui.RemoveAccount(id);
+        break;
+      default:
+        status = gui.ReorderAccount(id, 0);
+        break;
+    }
+    EXPECT_EQ(status, CoreStatus::kLocked) << op;
+    EXPECT_FALSE(gui.IsOpen()) << op;
+    EXPECT_EQ(StoredCount(), 1u) << op;
+  }
+}
+
+TEST_F(CoreKeyEpochTest, ReadsWithAStaleKeyReportLockedNotCorrupted) {
+  Core gui;
+  const std::int64_t id = ChangePasswordBehindTheGuisBack(gui);
+  EXPECT_EQ(gui.GetAccount(id).error(), CoreStatus::kLocked);
+  EXPECT_FALSE(gui.IsOpen());
+}
+
+TEST_F(CoreKeyEpochTest, LoadIndexWithAStaleKeyReportsLocked) {
+  Core gui;
+  ChangePasswordBehindTheGuisBack(gui);
+  EXPECT_EQ(gui.LoadIndex(), CoreStatus::kLocked);
+  EXPECT_TRUE(gui.Index().empty());
+  EXPECT_FALSE(gui.IsOpen());
+}
+
+TEST_F(CoreKeyEpochTest, OwnPasswordChangeKeepsTheSessionUsable) {
+  Core core;
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  ASSERT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
+            CoreStatus::kOk);
+  EXPECT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+  EXPECT_TRUE(core.IsOpen());
+}

@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <optional>
 #include <span>
 #include <string_view>
@@ -113,7 +114,10 @@ class Core {
   void Close() noexcept;
   [[nodiscard]] bool IsOpen() const noexcept;
 
-  // Every operation below returns kLocked if no vault is open.
+  // Every operation below returns kLocked if no vault is open. They also
+  // return kLocked, and close the session, if another program changed the
+  // master password since this session unlocked the vault: unlock it again
+  // with the new password. Writes check this before writing anything.
   //
   // Accounts are addressed by their id (AccountEntry::id), which never
   // changes and is never reused, so an id read from the index keeps naming
@@ -191,6 +195,14 @@ class Core {
 
   // Records the current DB::DataVersion() in data_version_.
   void SnapshotDataVersion();
+  // Runs `write` in one transaction after checking that the vault's key
+  // epoch is still the one this session unlocked with. If another program
+  // changed the master password meanwhile, nothing is written, the session
+  // is closed and kLocked is returned.
+  CoreStatus WriteWithCurrentKey(const std::function<CoreStatus()>& write);
+  // Closes the session and returns true if the vault's key epoch changed
+  // since it was unlocked (i.e. our key no longer opens it).
+  bool KeyIsStale();
 
   std::vector<AccountEntry> index_;
   std::optional<AccountPlain> loaded_account_;

@@ -19,6 +19,11 @@
 //
 // Every fallible function returns a CoreResult (kCoreOk on success); outputs
 // are written through pointer arguments and left untouched on failure.
+//
+// Several programs may use the same vault at once, each with its own
+// session. If another program changes the master password, this session's
+// next read or write returns kCoreLocked (writing nothing) and the session
+// is closed: unlock it again with the new password.
 #ifdef __cplusplus
 extern "C" {
 #endif
