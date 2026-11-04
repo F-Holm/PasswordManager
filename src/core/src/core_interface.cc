@@ -17,7 +17,6 @@ static_assert(kCoreEmailSize == AccountSize::kEmail);
 static_assert(kCoreUsernameSize == AccountSize::kUsername);
 static_assert(kCorePasswordSize == AccountSize::kPassword);
 static_assert(kCoreExtraSize == AccountSize::kExtra);
-static_assert(kCoreMasterKeySize == Crypto::Size::kKey);
 static_assert(sizeof(CoreAccount) ==
               AccountSize::kDescription + AccountSize::kEmail +
                   AccountSize::kUsername + AccountSize::kPassword +
@@ -108,19 +107,38 @@ void CoreFree(CoreSession* session) {
   delete session;
 }
 
-CoreResult CoreOpenWithKey(CoreSession* session, const char* db_path,
-                           const std::uint8_t* master_key,
-                           std::size_t master_key_size) {
-  if (session == nullptr || db_path == nullptr || master_key == nullptr ||
-      master_key_size != kCoreMasterKeySize) {
+CoreKdfParams CoreDefaultKdfParams(void) {
+  return {.memory_kib = Crypto::kDefaultKdfParams.memory_kib,
+          .iterations = Crypto::kDefaultKdfParams.iterations,
+          .parallelism = Crypto::kDefaultKdfParams.parallelism};
+}
+
+CoreResult CoreCreate(CoreSession* session, const char* db_path,
+                      const char* password, std::size_t password_size,
+                      const CoreKdfParams* kdf_params) {
+  if (session == nullptr || db_path == nullptr || password == nullptr) {
     return kCoreInvalidArgument;
   }
   return Guard([&] {
-    std::array<std::byte, Crypto::Size::kKey> key{};
-    std::memcpy(key.data(), master_key, key.size());
-    const CoreStatus status = session->core.Open(db_path, key);
-    Crypto::SecureClear(std::span(key));
-    return status;
+    const Crypto::KdfParams params =
+        kdf_params == nullptr
+            ? Crypto::kDefaultKdfParams
+            : Crypto::KdfParams{.memory_kib = kdf_params->memory_kib,
+                                .iterations = kdf_params->iterations,
+                                .parallelism = kdf_params->parallelism};
+    return session->core.Create(
+        db_path, std::string_view(password, password_size), params);
+  });
+}
+
+CoreResult CoreUnlock(CoreSession* session, const char* db_path,
+                      const char* password, std::size_t password_size) {
+  if (session == nullptr || db_path == nullptr || password == nullptr) {
+    return kCoreInvalidArgument;
+  }
+  return Guard([&] {
+    return session->core.Unlock(db_path,
+                                std::string_view(password, password_size));
   });
 }
 

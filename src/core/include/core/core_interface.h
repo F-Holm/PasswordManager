@@ -25,14 +25,13 @@ extern "C" {
 
 // Field capacities, in bytes, so bindings can size their own buffers without
 // depending on the C++ headers. core_interface.cc checks that they match
-// AccountSize and Crypto::Size.
+// AccountSize.
 enum {
   kCoreDescriptionSize = 128,
   kCoreEmailSize = 256,
   kCoreUsernameSize = 128,
   kCorePasswordSize = 256,
-  kCoreExtraSize = 1024,
-  kCoreMasterKeySize = 32
+  kCoreExtraSize = 1024
 };
 
 // Result codes. Same values as CoreStatus in core/core_status.h.
@@ -51,6 +50,17 @@ enum {
 };
 
 typedef struct CoreSession CoreSession;
+
+// Argon2id cost parameters used to derive a new vault's master key:
+// memory in KiB (at least 8 per lane), passes and lanes (at least 1 each).
+typedef struct CoreKdfParams {
+  uint32_t memory_kib;
+  uint32_t iterations;
+  uint32_t parallelism;
+} CoreKdfParams;
+
+// The parameters CoreCreate uses when given NULL (64 MiB, 3 passes, 4 lanes).
+CoreKdfParams CoreDefaultKdfParams(void);
 
 // Flat, fixed-size plaintext account record used at the C boundary. Every
 // array is NUL-padded; unused trailing bytes are zero.
@@ -80,11 +90,23 @@ CoreSession* CoreNew(void);
 // `session` may be NULL.
 void CoreFree(CoreSession* session);
 
-// Opens the vault database at `db_path` (a NUL-terminated path) using an
-// already-derived master key of exactly kCoreMasterKeySize bytes. Replaces
+// Creates a new vault at `db_path` (a NUL-terminated path) protected by the
+// `password_size` bytes at `password` (not necessarily NUL-terminated) and
+// leaves it open in `session`. `kdf_params` may be NULL to use
+// CoreDefaultKdfParams(). Replaces any vault already open in `session`.
+//
+// kCoreAlreadyExists if `db_path` already holds a vault; kCoreInvalidArgument
+// if the password is empty or the parameters are invalid.
+CoreResult CoreCreate(CoreSession* session, const char* db_path,
+                      const char* password, size_t password_size,
+                      const CoreKdfParams* kdf_params);
+// Opens the existing vault at `db_path` with the master password. Replaces
 // any vault already open in `session`.
-CoreResult CoreOpenWithKey(CoreSession* session, const char* db_path,
-                           const uint8_t* master_key, size_t master_key_size);
+//
+// kCoreNotFound if there is no vault at `db_path`; kCoreWrongPassword if the
+// password does not open it.
+CoreResult CoreUnlock(CoreSession* session, const char* db_path,
+                      const char* password, size_t password_size);
 // Closes the vault and wipes the master key and every cached plaintext; the
 // session can be reused. `session` may be NULL.
 void CoreClose(CoreSession* session);

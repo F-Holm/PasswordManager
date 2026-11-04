@@ -15,6 +15,7 @@
 #include "types/account_binary.h"
 #include "types/account_index.h"
 #include "types/account_size.h"
+#include "types/vault_meta.h"
 
 // Plaintext view of an account, as exchanged with callers of Core. Every
 // field is a fixed-capacity, NUL-padded buffer sized to match AccountSize,
@@ -71,10 +72,22 @@ class Core {
   Core(Core&&) = delete;
   Core& operator=(Core&&) = delete;
 
-  // Opens the vault database at `db_path` using an already-derived
-  // `master_key` (e.g. via Crypto::Kdf). Replaces any previously open vault.
-  CoreStatus Open(std::string_view db_path,
-                  const std::array<std::byte, Crypto::Size::kKey>& master_key);
+  // Creates a new vault at `db_path` protected by `master_password` and
+  // leaves it unlocked. A random salt is generated and the master key is
+  // derived from the password with Argon2id using `kdf_params`, which are
+  // stored in the vault. Replaces any previously open vault.
+  //
+  // kAlreadyExists if `db_path` already holds a vault (or accounts);
+  // kInvalidArgument if the password is empty or `kdf_params` are invalid.
+  CoreStatus Create(
+      std::string_view db_path, std::string_view master_password,
+      const Crypto::KdfParams& kdf_params = Crypto::kDefaultKdfParams);
+  // Unlocks the existing vault at `db_path` with `master_password`.
+  // Replaces any previously open vault.
+  //
+  // kNotFound if there is no vault at `db_path`; kWrongPassword if the
+  // password does not open it; kCorrupted if its metadata is unusable.
+  CoreStatus Unlock(std::string_view db_path, std::string_view master_password);
   // Closes the vault, wipes the master key and every cached plaintext.
   void Close() noexcept;
   [[nodiscard]] bool IsOpen() const noexcept;
@@ -116,13 +129,24 @@ class Core {
   void ClearAccount() noexcept;
 
  private:
+  using Key = std::array<std::byte, Crypto::Size::kKey>;
+
   DB db_;
-  std::array<std::byte, Crypto::Size::kKey> master_key_{};
+  Key master_key_{};
   bool has_key_ = false;
+  std::int64_t key_epoch_ = 0;
 
   std::vector<AccountEntry> index_;
   std::optional<AccountPlain> loaded_account_;
   std::int64_t loaded_position_ = -1;
+
+  // Derives the key for `meta` from `password` into `key`.
+  static bool DeriveKey(std::string_view password, const VaultMeta& meta,
+                        Key& key);
+  // Fills meta.verifier* by encrypting the known verifier block with `key`.
+  static bool SealVerifier(const Key& key, VaultMeta& meta);
+  // True if `key` decrypts and authenticates meta.verifier.
+  static bool CheckVerifier(const Key& key, const VaultMeta& meta);
 
   bool Encode(const AccountPlain& account, AccountBinary& out) const;
   bool Decode(AccountBinary& binary, AccountPlain& out) const;

@@ -6,15 +6,15 @@
 #include <array>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <string_view>
 
 namespace {
 
-std::array<std::byte, Crypto::Size::kKey> MakeKey(std::byte marker) {
-  std::array<std::byte, Crypto::Size::kKey> key{};
-  key.fill(marker);
-  return key;
-}
+constexpr std::string_view kPassword = "correct horse battery staple";
+// Argon2id's minimum costs, so the tests do not spend seconds per vault.
+constexpr Crypto::KdfParams kTestKdf{
+    .memory_kib = 8, .iterations = 1, .parallelism = 1};
 
 AccountPlain MakeAccount(std::string_view description, std::string_view email,
                          std::string_view username, std::string_view password,
@@ -51,8 +51,6 @@ class CoreTest : public ::testing::Test {
       std::string("core_test_") +
       ::testing::UnitTest::GetInstance()->current_test_info()->name() +
       ".sqlite3";
-  const std::array<std::byte, Crypto::Size::kKey> key =
-      MakeKey(std::byte{0x42});
 
   void SetUp() override {
     std::remove(test_file.c_str());
@@ -63,16 +61,17 @@ class CoreTest : public ::testing::Test {
   }
 };
 
-TEST_F(CoreTest, OpenCreatesEmptyVault) {
+TEST_F(CoreTest, CreateMakesEmptyUnlockedVault) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   EXPECT_TRUE(core.IsOpen());
   EXPECT_TRUE(LoadedIndex(core).empty());
 }
 
-TEST_F(CoreTest, OpenFailsForUnreachablePath) {
+TEST_F(CoreTest, CreateFailsForUnreachablePath) {
   Core core;
-  EXPECT_EQ(core.Open("/nonexistent_dir_xyz/unreachable.sqlite3", key),
+  EXPECT_EQ(core.Create("/nonexistent_dir_xyz/unreachable.sqlite3", kPassword,
+                        kTestKdf),
             CoreStatus::kError);
   EXPECT_FALSE(core.IsOpen());
 }
@@ -95,7 +94,7 @@ TEST_F(CoreTest, OperationsReportLockedWhenVaultNotOpen) {
 
 TEST_F(CoreTest, CloseWipesSessionState) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(
       core.AddAccount(MakeAccount("desc", "email", "user", "pass", "extra")),
       CoreStatus::kOk);
@@ -112,7 +111,7 @@ TEST_F(CoreTest, CloseWipesSessionState) {
 
 TEST_F(CoreTest, AddAndGetAccountRoundTrip) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
 
   const AccountPlain original = MakeAccount("My Bank", "me@example.com", "me",
                                             "s3cr3t!", "some extra notes");
@@ -129,7 +128,7 @@ TEST_F(CoreTest, AddAndGetAccountRoundTrip) {
 
 TEST_F(CoreTest, GetAccountReportsNotFoundForMissingPosition) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   EXPECT_EQ(core.GetAccount(0).error(), CoreStatus::kNotFound);
   EXPECT_EQ(core.GetAccount(-1).error(), CoreStatus::kNotFound);
   EXPECT_EQ(core.CurrentAccount(), nullptr);
@@ -137,7 +136,7 @@ TEST_F(CoreTest, GetAccountReportsNotFoundForMissingPosition) {
 
 TEST_F(CoreTest, OnlyOneAccountIsLoadedAtOnce) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("first", "e1", "u1", "p1", "x1")),
             CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("second", "e2", "u2", "p2", "x2")),
@@ -158,7 +157,7 @@ TEST_F(CoreTest, OnlyOneAccountIsLoadedAtOnce) {
 
 TEST_F(CoreTest, ClearAccountWipesLoadedAccount) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "p", "x")),
             CoreStatus::kOk);
   ASSERT_NE(Fetch(core, 0), nullptr);
@@ -170,7 +169,7 @@ TEST_F(CoreTest, ClearAccountWipesLoadedAccount) {
 
 TEST_F(CoreTest, EditAccountOverwritesContent) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(
       core.AddAccount(MakeAccount("old", "old@e", "old_u", "old_p", "old_x")),
       CoreStatus::kOk);
@@ -187,14 +186,14 @@ TEST_F(CoreTest, EditAccountOverwritesContent) {
 
 TEST_F(CoreTest, EditMissingAccountFails) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   EXPECT_EQ(core.EditAccount(0, MakeAccount("desc", "e", "u", "p", "x")),
             CoreStatus::kNotFound);
 }
 
 TEST_F(CoreTest, EditingLoadedAccountClearsIt) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "p", "x")),
             CoreStatus::kOk);
   ASSERT_NE(Fetch(core, 0), nullptr);
@@ -207,7 +206,7 @@ TEST_F(CoreTest, EditingLoadedAccountClearsIt) {
 
 TEST_F(CoreTest, EditingOtherAccountKeepsLoadedAccountIntact) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("first", "e1", "u1", "p1", "x1")),
             CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("second", "e2", "u2", "p2", "x2")),
@@ -223,7 +222,7 @@ TEST_F(CoreTest, EditingOtherAccountKeepsLoadedAccountIntact) {
 
 TEST_F(CoreTest, RemoveAccountShiftsPositionsAndClearsCaches) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("first", "e1", "u1", "p1", "x1")),
             CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("second", "e2", "u2", "p2", "x2")),
@@ -240,13 +239,13 @@ TEST_F(CoreTest, RemoveAccountShiftsPositionsAndClearsCaches) {
 
 TEST_F(CoreTest, RemoveMissingAccountFails) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   EXPECT_EQ(core.RemoveAccount(0), CoreStatus::kNotFound);
 }
 
 TEST_F(CoreTest, ReorderAccountMovesEntries) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x")),
             CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("b", "e", "u", "p", "x")),
@@ -265,7 +264,7 @@ TEST_F(CoreTest, ReorderAccountMovesEntries) {
 
 TEST_F(CoreTest, ReorderOutOfRangeFails) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x")),
             CoreStatus::kOk);
   EXPECT_EQ(core.ReorderAccount(0, 5), CoreStatus::kNotFound);
@@ -273,7 +272,7 @@ TEST_F(CoreTest, ReorderOutOfRangeFails) {
 
 TEST_F(CoreTest, GetAllIndexReturnsOrderedDecryptedDescriptions) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("alpha", "e", "u", "p", "x")),
             CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("beta", "e", "u", "p", "x")),
@@ -290,7 +289,7 @@ TEST_F(CoreTest, GetAllIndexReturnsOrderedDecryptedDescriptions) {
 
 TEST_F(CoreTest, IndexReflectsLastLoadIndexCall) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("alpha", "e", "u", "p", "x")),
             CoreStatus::kOk);
 
@@ -304,7 +303,7 @@ TEST_F(CoreTest, IndexReflectsLastLoadIndexCall) {
 
 TEST_F(CoreTest, AddAccountInvalidatesIndexCache) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("alpha", "e", "u", "p", "x")),
             CoreStatus::kOk);
   ASSERT_EQ(LoadedIndex(core).size(), 1u);
@@ -314,32 +313,6 @@ TEST_F(CoreTest, AddAccountInvalidatesIndexCache) {
 
   EXPECT_TRUE(core.Index().empty());
   EXPECT_EQ(LoadedIndex(core).size(), 2u);
-}
-
-TEST_F(CoreTest, WrongMasterKeyFailsToDecryptAccount) {
-  {
-    Core core;
-    ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
-    ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "p", "x")),
-              CoreStatus::kOk);
-  }
-
-  Core core;
-  ASSERT_EQ(core.Open(test_file, MakeKey(std::byte{0x99})), CoreStatus::kOk);
-  EXPECT_EQ(core.GetAccount(0).error(), CoreStatus::kCorrupted);
-}
-
-TEST_F(CoreTest, WrongMasterKeyOmitsUndecryptableIndexEntries) {
-  {
-    Core core;
-    ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
-    ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "p", "x")),
-              CoreStatus::kOk);
-  }
-
-  Core core;
-  ASSERT_EQ(core.Open(test_file, MakeKey(std::byte{0x99})), CoreStatus::kOk);
-  EXPECT_TRUE(LoadedIndex(core).empty());
 }
 
 TEST_F(CoreTest, SetAccountFieldRejectsOversizedValue) {
@@ -378,7 +351,7 @@ TEST_F(CoreTest, AccountPlainDestructorClearsPassword) {
 
 TEST_F(CoreTest, EditingDrawsFreshIvs) {
   Core core;
-  ASSERT_EQ(core.Open(test_file, key), CoreStatus::kOk);
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   const AccountPlain account = MakeAccount("desc", "e", "u", "p", "x");
   ASSERT_EQ(core.AddAccount(account), CoreStatus::kOk);
 
@@ -401,4 +374,154 @@ TEST(CoreStatusTest, EveryStatusHasAName) {
   EXPECT_EQ(ToString(CoreStatus::kBusy), "busy");
   EXPECT_EQ(ToString(CoreStatus::kWrongPassword), "wrong password");
   EXPECT_EQ(ToString(CoreStatus::kError), "error");
+}
+
+TEST_F(CoreTest, CreateRejectsEmptyPassword) {
+  Core core;
+  EXPECT_EQ(core.Create(test_file, "", kTestKdf), CoreStatus::kInvalidArgument);
+  EXPECT_FALSE(core.IsOpen());
+}
+
+TEST_F(CoreTest, CreateRejectsInvalidKdfParams) {
+  Core core;
+  EXPECT_EQ(core.Create(test_file, kPassword,
+                        {.memory_kib = 1, .iterations = 1, .parallelism = 1}),
+            CoreStatus::kInvalidArgument);
+  EXPECT_FALSE(core.IsOpen());
+}
+
+TEST_F(CoreTest, CreateFailsIfVaultAlreadyExists) {
+  {
+    Core core;
+    ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+    ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "p", "x")),
+              CoreStatus::kOk);
+  }
+
+  Core core;
+  EXPECT_EQ(core.Create(test_file, "another password", kTestKdf),
+            CoreStatus::kAlreadyExists);
+  EXPECT_FALSE(core.IsOpen());
+
+  // The original vault is untouched.
+  ASSERT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kOk);
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+  EXPECT_EQ(core.Index().size(), 1u);
+}
+
+TEST_F(CoreTest, CreateRefusesFileWithAccountsButNoMeta) {
+  {
+    DB db;
+    ASSERT_TRUE(db.Open(test_file));
+    ASSERT_EQ(db.AddAccount(AccountBinary{}), DBStatus::kOk);
+  }
+  Core core;
+  EXPECT_EQ(core.Create(test_file, kPassword, kTestKdf),
+            CoreStatus::kAlreadyExists);
+}
+
+TEST_F(CoreTest, CreateStoresKdfParamsAndRandomSalt) {
+  {
+    Core core;
+    ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  }
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  const auto meta = db.GetMeta();
+  ASSERT_TRUE(meta.has_value());
+  EXPECT_EQ(meta->version, VaultMeta::kCurrentVersion);
+  EXPECT_EQ(meta->kdf_params, kTestKdf);
+  EXPECT_NE(meta->kdf_salt, decltype(meta->kdf_salt){});
+  EXPECT_EQ(meta->key_epoch, 0);
+}
+
+TEST_F(CoreTest, UnlockWithCorrectPasswordReadsAccounts) {
+  {
+    Core core;
+    ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+    ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "secret", "x")),
+              CoreStatus::kOk);
+  }
+
+  Core core;
+  ASSERT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kOk);
+  EXPECT_TRUE(core.IsOpen());
+  const AccountPlain* account = Fetch(core, 0);
+  ASSERT_NE(account, nullptr);
+  EXPECT_EQ(GetAccountField(account->password), "secret");
+}
+
+TEST_F(CoreTest, UnlockWithWrongPasswordFailsAndStaysLocked) {
+  {
+    Core core;
+    ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+    ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "p", "x")),
+              CoreStatus::kOk);
+  }
+
+  Core core;
+  EXPECT_EQ(core.Unlock(test_file, "wrong password"),
+            CoreStatus::kWrongPassword);
+  EXPECT_FALSE(core.IsOpen());
+  // Nothing can be written with the wrong key.
+  EXPECT_EQ(core.AddAccount(MakeAccount("d", "e", "u", "p", "x")),
+            CoreStatus::kLocked);
+  EXPECT_EQ(core.Unlock(test_file, ""), CoreStatus::kWrongPassword);
+}
+
+TEST_F(CoreTest, UnlockMissingVaultReportsNotFoundWithoutCreatingIt) {
+  Core core;
+  EXPECT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kNotFound);
+  EXPECT_FALSE(std::filesystem::exists(test_file));
+}
+
+TEST_F(CoreTest, UnlockDatabaseWithoutMetaReportsNotFound) {
+  {
+    DB db;
+    ASSERT_TRUE(db.Open(test_file));
+  }
+  Core core;
+  EXPECT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kNotFound);
+}
+
+TEST_F(CoreTest, UnlockReportsCorruptedForUnknownVersion) {
+  {
+    Core core;
+    ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  }
+  {
+    DB db;
+    ASSERT_TRUE(db.Open(test_file));
+    VaultMeta meta = db.GetMeta().value();
+    meta.version = VaultMeta::kCurrentVersion + 1;
+    ASSERT_EQ(db.UpdateMeta(meta), DBStatus::kOk);
+  }
+  Core core;
+  EXPECT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kCorrupted);
+}
+
+TEST_F(CoreTest, TamperedVerifierIsRejected) {
+  {
+    Core core;
+    ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  }
+  {
+    DB db;
+    ASSERT_TRUE(db.Open(test_file));
+    VaultMeta meta = db.GetMeta().value();
+    meta.verifier[0] ^= std::byte{0x01};
+    ASSERT_EQ(db.UpdateMeta(meta), DBStatus::kOk);
+  }
+  Core core;
+  EXPECT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kWrongPassword);
+}
+
+TEST_F(CoreTest, DefaultKdfParamsAreUsedWhenNotGiven) {
+  {
+    Core core;
+    ASSERT_EQ(core.Create(test_file, kPassword), CoreStatus::kOk);
+  }
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  EXPECT_EQ(db.GetMeta()->kdf_params, Crypto::kDefaultKdfParams);
 }

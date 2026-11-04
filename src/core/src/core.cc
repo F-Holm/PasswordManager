@@ -1,6 +1,8 @@
 #include "core/core.h"
 
+#include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <optional>
 #include <span>
 #include <string_view>
@@ -14,6 +16,7 @@ namespace {
 // another.
 constexpr std::string_view kDescriptionAad = "account.description";
 constexpr std::string_view kDataAad = "account.data";
+constexpr std::string_view kVerifierAad = "vault.verifier";
 
 std::span<const std::byte> AsBytes(std::string_view value) noexcept {
   return {reinterpret_cast<const std::byte*>(value.data()), value.size()};
@@ -110,24 +113,130 @@ Core::~Core() {
   Close();
 }
 
-CoreStatus Core::Open(
-    std::string_view db_path,
-    const std::array<std::byte, Crypto::Size::kKey>& master_key) {
+CoreStatus Core::Create(std::string_view db_path,
+                        std::string_view master_password,
+                        const Crypto::KdfParams& kdf_params) {
   Close();
+  if (master_password.empty()) {
+    return CoreStatus::kInvalidArgument;
+  }
 
-  if (!db_.Open(db_path)) {
+  VaultMeta meta;
+  meta.kdf_params = kdf_params;
+  if (!Crypto::RandomBytes(meta.kdf_salt)) {
     return CoreStatus::kError;
   }
 
-  master_key_ = master_key;
+  Key key{};
+  if (!DeriveKey(master_password, meta, key)) {
+    return CoreStatus::kInvalidArgument;
+  }
+  if (!SealVerifier(key, meta)) {
+    Crypto::SecureClear(key);
+    return CoreStatus::kError;
+  }
+
+  if (!db_.Open(db_path)) {
+    Crypto::SecureClear(key);
+    return CoreStatus::kError;
+  }
+
+  // Refuse to adopt a file that already holds accounts: they were encrypted
+  // with some other key.
+  const auto count = db_.Count();
+  CoreStatus status = CoreStatus::kOk;
+  if (!count.has_value()) {
+    status = FromDBStatus(count.error());
+  } else if (*count > 0) {
+    status = CoreStatus::kAlreadyExists;
+  } else {
+    status = FromDBStatus(db_.CreateMeta(meta));
+  }
+
+  if (status != CoreStatus::kOk) {
+    Crypto::SecureClear(key);
+    db_.Close();
+    return status;
+  }
+
+  master_key_ = key;
+  Crypto::SecureClear(key);
   has_key_ = true;
+  key_epoch_ = meta.key_epoch;
   return CoreStatus::kOk;
+}
+
+CoreStatus Core::Unlock(std::string_view db_path,
+                        std::string_view master_password) {
+  Close();
+
+  if (!db_.Open(db_path, DB::OpenMode::kExistingOnly)) {
+    return std::filesystem::exists(std::filesystem::path(db_path))
+               ? CoreStatus::kError
+               : CoreStatus::kNotFound;
+  }
+
+  const auto meta = db_.GetMeta();
+  if (!meta.has_value()) {
+    db_.Close();
+    return meta.error() == DBStatus::kError ? CoreStatus::kCorrupted
+                                            : FromDBStatus(meta.error());
+  }
+  if (meta->version != VaultMeta::kCurrentVersion) {
+    db_.Close();
+    return CoreStatus::kCorrupted;
+  }
+
+  Key key{};
+  if (!DeriveKey(master_password, *meta, key)) {
+    db_.Close();
+    return CoreStatus::kCorrupted;
+  }
+  if (!CheckVerifier(key, *meta)) {
+    Crypto::SecureClear(key);
+    db_.Close();
+    return CoreStatus::kWrongPassword;
+  }
+
+  master_key_ = key;
+  Crypto::SecureClear(key);
+  has_key_ = true;
+  key_epoch_ = meta->key_epoch;
+  return CoreStatus::kOk;
+}
+
+bool Core::DeriveKey(std::string_view password, const VaultMeta& meta,
+                     Key& key) {
+  return Crypto::Kdf(AsBytes(password), meta.kdf_salt, meta.kdf_params, key);
+}
+
+bool Core::SealVerifier(const Key& key, VaultMeta& meta) {
+  // The verifier plaintext is a fixed all-zero block: AES-GCM's tag is what
+  // proves the key right, and the zero check in CheckVerifier is a second,
+  // independent guard.
+  meta.verifier.fill(std::byte{0});
+  if (!Crypto::RandomBytes(meta.verifier_iv)) {
+    return false;
+  }
+  return Crypto::Encrypt(key.data(), meta.verifier_iv.data(),
+                         AsBytes(kVerifierAad), meta.verifier,
+                         meta.verifier_tag.data());
+}
+
+bool Core::CheckVerifier(const Key& key, const VaultMeta& meta) {
+  std::array<std::byte, VaultMeta::kVerifierSize> block = meta.verifier;
+  const bool ok =
+      Crypto::Decrypt(key.data(), meta.verifier_iv.data(),
+                      AsBytes(kVerifierAad), block, meta.verifier_tag.data());
+  return ok && std::ranges::all_of(
+                   block, [](std::byte b) { return b == std::byte{0}; });
 }
 
 void Core::Close() noexcept {
   db_.Close();
   Crypto::SecureClear(std::span(master_key_));
   has_key_ = false;
+  key_epoch_ = 0;
   ClearIndex();
   ClearAccount();
 }

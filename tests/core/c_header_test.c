@@ -13,20 +13,22 @@ int CoreCHeaderSmokeTest(void) {
   char description[kCoreDescriptionSize];
   CoreAccount account;
   CoreAccountEntry entry;
-  uint8_t key[kCoreMasterKeySize];
+  CoreKdfParams params;
 
   memset(description, 0, sizeof description);
   memset(&account, 0, sizeof account);
   memset(&entry, 0, sizeof entry);
-  memset(key, 0, sizeof key);
+  params = CoreDefaultKdfParams();
 
   if (sizeof account.description != sizeof description) {
     return 1;
   }
   /* Null arguments must fail safely from C as well. */
-  if (CoreOpenWithKey(NULL, "vault", key, sizeof key) !=
-      kCoreInvalidArgument) {
+  if (CoreCreate(NULL, "vault", "pw", 2, &params) != kCoreInvalidArgument) {
     return 2;
+  }
+  if (CoreUnlock(NULL, "vault", "pw", 2) != kCoreInvalidArgument) {
+    return 6;
   }
   if (CoreIsOpen(NULL)) {
     return 3;

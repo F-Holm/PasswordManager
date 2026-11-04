@@ -14,11 +14,10 @@ extern "C" int CoreCHeaderSmokeTest(void);
 
 namespace {
 
-std::array<std::uint8_t, 32> MakeKey(std::uint8_t marker) {
-  std::array<std::uint8_t, 32> key{};
-  key.fill(marker);
-  return key;
-}
+constexpr char kPassword[] = "correct horse battery staple";
+constexpr std::size_t kPasswordSize = sizeof(kPassword) - 1;
+constexpr CoreKdfParams kTestKdf{
+    .memory_kib = 8, .iterations = 1, .parallelism = 1};
 
 CoreAccount MakeAccount(const char* description, const char* email,
                         const char* username, const char* password,
@@ -41,7 +40,6 @@ class CoreInterfaceTest : public ::testing::Test {
       std::string("core_interface_test_") +
       ::testing::UnitTest::GetInstance()->current_test_info()->name() +
       ".sqlite3";
-  const std::array<std::uint8_t, 32> key = MakeKey(0x42);
   CoreSession* session = nullptr;
 
   void SetUp() override {
@@ -56,7 +54,8 @@ class CoreInterfaceTest : public ::testing::Test {
   }
 
   CoreResult Open() const {
-    return CoreOpenWithKey(session, test_file.c_str(), key.data(), key.size());
+    return CoreCreate(session, test_file.c_str(), kPassword, kPasswordSize,
+                      &kTestKdf);
   }
 };
 
@@ -66,7 +65,6 @@ TEST_F(CoreInterfaceTest, FieldSizesMatchAccountLayout) {
   EXPECT_EQ(sizeof(CoreAccount::username), AccountSize::kUsername);
   EXPECT_EQ(sizeof(CoreAccount::password), AccountSize::kPassword);
   EXPECT_EQ(sizeof(CoreAccount::extra), AccountSize::kExtra);
-  EXPECT_EQ(static_cast<std::size_t>(kCoreMasterKeySize), Crypto::Size::kKey);
 }
 
 TEST_F(CoreInterfaceTest, HeaderCompilesAndWorksFromC) {
@@ -84,27 +82,72 @@ TEST_F(CoreInterfaceTest, NewSessionIsNotOpen) {
   EXPECT_FALSE(CoreIsOpen(session));
 }
 
-TEST_F(CoreInterfaceTest, OpenRejectsWrongKeySize) {
-  const std::array<std::uint8_t, 4> short_key{1, 2, 3, 4};
-  EXPECT_EQ(CoreOpenWithKey(session, test_file.c_str(), short_key.data(),
-                            short_key.size()),
-            kCoreInvalidArgument);
-  EXPECT_FALSE(CoreIsOpen(session));
+TEST_F(CoreInterfaceTest, DefaultKdfParamsMatchCore) {
+  const CoreKdfParams params = CoreDefaultKdfParams();
+  EXPECT_EQ(params.memory_kib, Crypto::kDefaultKdfParams.memory_kib);
+  EXPECT_EQ(params.iterations, Crypto::kDefaultKdfParams.iterations);
+  EXPECT_EQ(params.parallelism, Crypto::kDefaultKdfParams.parallelism);
 }
 
-TEST_F(CoreInterfaceTest, OpenRejectsNullArguments) {
-  EXPECT_EQ(CoreOpenWithKey(nullptr, test_file.c_str(), key.data(), key.size()),
+TEST_F(CoreInterfaceTest, CreateAndUnlockRejectNullArguments) {
+  const char* path = test_file.c_str();
+  EXPECT_EQ(CoreCreate(nullptr, path, kPassword, kPasswordSize, &kTestKdf),
             kCoreInvalidArgument);
-  EXPECT_EQ(CoreOpenWithKey(session, nullptr, key.data(), key.size()),
+  EXPECT_EQ(CoreCreate(session, nullptr, kPassword, kPasswordSize, &kTestKdf),
             kCoreInvalidArgument);
-  EXPECT_EQ(CoreOpenWithKey(session, test_file.c_str(), nullptr, key.size()),
+  EXPECT_EQ(CoreCreate(session, path, nullptr, kPasswordSize, &kTestKdf),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreUnlock(nullptr, path, kPassword, kPasswordSize),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreUnlock(session, nullptr, kPassword, kPasswordSize),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreUnlock(session, path, nullptr, kPasswordSize),
             kCoreInvalidArgument);
 }
 
-TEST_F(CoreInterfaceTest, OpenFailsForUnreachablePath) {
-  EXPECT_EQ(CoreOpenWithKey(session, "/nonexistent_dir_xyz/vault.sqlite3",
-                            key.data(), key.size()),
+TEST_F(CoreInterfaceTest, CreateRejectsEmptyPasswordAndBadParams) {
+  EXPECT_EQ(CoreCreate(session, test_file.c_str(), kPassword, 0, &kTestKdf),
+            kCoreInvalidArgument);
+  const CoreKdfParams bad{.memory_kib = 1, .iterations = 1, .parallelism = 1};
+  EXPECT_EQ(
+      CoreCreate(session, test_file.c_str(), kPassword, kPasswordSize, &bad),
+      kCoreInvalidArgument);
+}
+
+TEST_F(CoreInterfaceTest, CreateFailsForUnreachablePath) {
+  EXPECT_EQ(CoreCreate(session, "/nonexistent_dir_xyz/vault.sqlite3", kPassword,
+                       kPasswordSize, &kTestKdf),
             kCoreError);
+}
+
+TEST_F(CoreInterfaceTest, CreateTwiceReportsAlreadyExists) {
+  ASSERT_EQ(Open(), kCoreOk);
+  EXPECT_EQ(Open(), kCoreAlreadyExists);
+}
+
+TEST_F(CoreInterfaceTest, UnlockChecksThePassword) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount account = MakeAccount("d", "e", "u", "s3cr3t", "x");
+  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
+  CoreClose(session);
+
+  EXPECT_EQ(CoreUnlock(session, test_file.c_str(), "nope", 4),
+            kCoreWrongPassword);
+  EXPECT_FALSE(CoreIsOpen(session));
+
+  // The password does not need to be NUL-terminated.
+  const std::string padded = std::string(kPassword) + "trailing garbage";
+  ASSERT_EQ(
+      CoreUnlock(session, test_file.c_str(), padded.data(), kPasswordSize),
+      kCoreOk);
+  CoreAccount fetched{};
+  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  EXPECT_STREQ(fetched.password, "s3cr3t");
+}
+
+TEST_F(CoreInterfaceTest, UnlockMissingVaultReportsNotFound) {
+  EXPECT_EQ(CoreUnlock(session, test_file.c_str(), kPassword, kPasswordSize),
+            kCoreNotFound);
 }
 
 TEST_F(CoreInterfaceTest, OpenAndCloseRoundTrip) {
@@ -115,7 +158,8 @@ TEST_F(CoreInterfaceTest, OpenAndCloseRoundTrip) {
   EXPECT_FALSE(CoreIsOpen(session));
 
   // The session can be reused after closing.
-  ASSERT_EQ(Open(), kCoreOk);
+  ASSERT_EQ(CoreUnlock(session, test_file.c_str(), kPassword, kPasswordSize),
+            kCoreOk);
   EXPECT_TRUE(CoreIsOpen(session));
 }
 
