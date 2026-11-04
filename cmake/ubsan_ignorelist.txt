@@ -1,0 +1,13 @@
+# UBSan ignorelist (passed with -fsanitize-ignorelist when ENABLE_UBSAN is ON).
+#
+# The `integer` and `nullability` groups also flag behaviour that is well
+# defined (unsigned wrap-around, implicit narrowing conversions) and that
+# third-party code and system headers use on purpose, e.g. in hash functions.
+# Real undefined behaviour (`undefined` group) stays enabled everywhere.
+[{unsigned-integer-overflow,unsigned-shift-base,implicit-unsigned-integer-truncation,implicit-signed-integer-truncation,implicit-integer-sign-change,implicit-bitfield-conversion,nullability-arg,nullability-assign,nullability-return}]
+src:*/_deps/*
+src:/usr/include/*
+src:/usr/lib/*
+src:/opt/homebrew/*
+src:/Library/Developer/*
+src:/Applications/Xcode*

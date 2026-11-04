@@ -106,6 +106,32 @@
                 "debug_conf",
                 "verbose"
             ]
+        },
+        {
+            "name": "debug-asan",
+            "displayName": "Debug + ASan + LSan + UBSan",
+            "inherits": [
+                "debug"
+            ],
+            "cacheVariables": {
+                "ENABLE_ASAN": "ON",
+                "ENABLE_LSAN": "ON",
+                "ENABLE_UBSAN": "ON",
+                "ENABLE_TSAN": "OFF"
+            }
+        },
+        {
+            "name": "debug-tsan",
+            "displayName": "Debug + TSan",
+            "inherits": [
+                "debug"
+            ],
+            "cacheVariables": {
+                "ENABLE_ASAN": "OFF",
+                "ENABLE_LSAN": "OFF",
+                "ENABLE_UBSAN": "OFF",
+                "ENABLE_TSAN": "ON"
+            }
         }
     ],
     "buildPresets": [
@@ -116,12 +142,23 @@
         {
             "name": "build-debug",
             "configurePreset": "debug"
+        },
+        {
+            "name": "build-debug-asan",
+            "configurePreset": "debug-asan"
+        },
+        {
+            "name": "build-debug-tsan",
+            "configurePreset": "debug-tsan"
         }
     ],
     "testPresets": [
         {
             "name": "base-test",
             "hidden": true,
+            "output": {
+                "outputOnFailure": true
+            },
             "execution": {
                 "noTestsAction": "error",
                 "stopOnFailure": false
@@ -142,6 +179,25 @@
             "inherits": [
                 "base-test"
             ]
+        },
+        {
+            "name": "test-debug-asan",
+            "configurePreset": "debug-asan",
+            "configuration": "Debug",
+            "inherits": [
+                "base-test"
+            ]
+        },
+        {
+            "name": "test-debug-tsan",
+            "configurePreset": "debug-tsan",
+            "configuration": "Debug",
+            "inherits": [
+                "base-test"
+            ],
+            "execution": {
+                "timeout": 3600
+            }
         }
     ],
     "workflowPresets": [
@@ -159,6 +215,22 @@
                 { "type": "configure", "name": "debug" },
                 { "type": "build", "name": "build-debug" },
                 { "type": "test", "name": "test-debug" }
+            ]
+        },
+        {
+            "name": "wf-asan",
+            "steps": [
+                { "type": "configure", "name": "debug-asan" },
+                { "type": "build", "name": "build-debug-asan" },
+                { "type": "test", "name": "test-debug-asan" }
+            ]
+        },
+        {
+            "name": "wf-tsan",
+            "steps": [
+                { "type": "configure", "name": "debug-tsan" },
+                { "type": "build", "name": "build-debug-tsan" },
+                { "type": "test", "name": "test-debug-tsan" }
             ]
         }
     ]

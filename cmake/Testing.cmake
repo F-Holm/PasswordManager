@@ -19,5 +19,9 @@ include(GoogleTest)
 
 macro(AddTests target)
     target_link_libraries("${target}" PRIVATE gtest_main gmock)
-    gtest_discover_tests("${target}")
+    # Sanitizer runtime options (see cmake/Sanitizers.cmake).
+    if(SANITIZER_DEFAULT_OPTIONS_SOURCE)
+        target_sources("${target}" PRIVATE "${SANITIZER_DEFAULT_OPTIONS_SOURCE}")
+    endif()
+    gtest_discover_tests("${target}" DISCOVERY_MODE PRE_TEST)
 endmacro()
