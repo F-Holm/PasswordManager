@@ -35,7 +35,6 @@ just build-install
 - `Ccache`
 - `Doxygen`
 - `Graphviz`
-- `Valgrind`
 - `lcov`
 - `Just`
 - `Rustup`
@@ -85,12 +84,9 @@ just config-dev [FLAGS...]
 | :--- | :--- |
 | Instrumentation | `LINT`, `COVERAGE` |
 | Sanitizer | `ASAN` (AddressSanitizer) |
-| Valgrind Tools | `MEMCHECK`, `HELGRIND`, `DRD`, `MASSIF`, `CACHEGRIND`, `CALLGRIND`, `DHAT`, `LACKEY`, `NULGRIND` |
 
 > ⚠️ **Important:**
-> - If any Valgrind tool is enabled, individual CTest targets are registered automatically for each tool under the same test executable.
 > - Passing an invalid or misspelled flag name will trigger a Warning during the CMake configuration step.
-> - Valgrand tools are incompatible with ASan.
 > - Flags aren't reset by omission on an existing build directory: once enabled, a flag stays `ON` in the CMake cache until you explicitly reconfigure with a fresh build directory or pass it again some other way.
 
 ### Examples
@@ -103,9 +99,4 @@ just config-dev
 **2. Enable Linting and AddressSanitizer:**
 ```bash
 just config-dev LINT ASAN
-```
-
-**3. Run a comprehensive Valgrind Suite (Memcheck + Helgrind) with Coverage enabled:**
-```bash
-just config-dev COVERAGE MEMCHECK HELGRIND
 ```
