@@ -3,6 +3,7 @@
 #include <array>
 #include <cstring>
 #include <new>
+#include <optional>
 #include <span>
 #include <utility>
 #include <vector>
@@ -65,6 +66,16 @@ CoreResult Guard(Body&& body) noexcept {
   }
 }
 
+std::optional<Crypto::KdfParams> ToKdfParams(
+    const CoreKdfParams* params) noexcept {
+  if (params == nullptr) {
+    return std::nullopt;
+  }
+  return Crypto::KdfParams{.memory_kib = params->memory_kib,
+                           .iterations = params->iterations,
+                           .parallelism = params->parallelism};
+}
+
 }  // namespace
 
 static_assert(ToResult(CoreStatus::kOk) == kCoreOk);
@@ -120,14 +131,9 @@ CoreResult CoreCreate(CoreSession* session, const char* db_path,
     return kCoreInvalidArgument;
   }
   return Guard([&] {
-    const Crypto::KdfParams params =
-        kdf_params == nullptr
-            ? Crypto::kDefaultKdfParams
-            : Crypto::KdfParams{.memory_kib = kdf_params->memory_kib,
-                                .iterations = kdf_params->iterations,
-                                .parallelism = kdf_params->parallelism};
     return session->core.Create(
-        db_path, std::string_view(password, password_size), params);
+        db_path, std::string_view(password, password_size),
+        ToKdfParams(kdf_params).value_or(Crypto::kDefaultKdfParams));
   });
 }
 
@@ -139,6 +145,24 @@ CoreResult CoreUnlock(CoreSession* session, const char* db_path,
   return Guard([&] {
     return session->core.Unlock(db_path,
                                 std::string_view(password, password_size));
+  });
+}
+
+CoreResult CoreChangeMasterPassword(CoreSession* session,
+                                    const char* current_password,
+                                    std::size_t current_password_size,
+                                    const char* new_password,
+                                    std::size_t new_password_size,
+                                    const CoreKdfParams* kdf_params) {
+  if (session == nullptr || current_password == nullptr ||
+      new_password == nullptr) {
+    return kCoreInvalidArgument;
+  }
+  return Guard([&] {
+    return session->core.ChangeMasterPassword(
+        std::string_view(current_password, current_password_size),
+        std::string_view(new_password, new_password_size),
+        ToKdfParams(kdf_params));
   });
 }
 

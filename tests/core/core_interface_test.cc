@@ -295,3 +295,36 @@ TEST_F(CoreInterfaceTest, ClearAccountDropsLoadedAccount) {
 
   CoreClearAccount(session);
 }
+
+TEST_F(CoreInterfaceTest, ChangeMasterPassword) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount account = MakeAccount("d", "e", "u", "s3cr3t", "x");
+  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
+
+  EXPECT_EQ(CoreChangeMasterPassword(session, "nope", 4, "new", 3, nullptr),
+            kCoreWrongPassword);
+  EXPECT_EQ(CoreChangeMasterPassword(session, kPassword, kPasswordSize, "new",
+                                     0, nullptr),
+            kCoreInvalidArgument);
+  ASSERT_EQ(CoreChangeMasterPassword(session, kPassword, kPasswordSize, "new",
+                                     3, &kTestKdf),
+            kCoreOk);
+
+  CoreClose(session);
+  EXPECT_EQ(CoreUnlock(session, test_file.c_str(), kPassword, kPasswordSize),
+            kCoreWrongPassword);
+  ASSERT_EQ(CoreUnlock(session, test_file.c_str(), "new", 3), kCoreOk);
+  CoreAccount fetched{};
+  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  EXPECT_STREQ(fetched.password, "s3cr3t");
+}
+
+TEST_F(CoreInterfaceTest, ChangeMasterPasswordRejectsNullArguments) {
+  ASSERT_EQ(Open(), kCoreOk);
+  EXPECT_EQ(CoreChangeMasterPassword(nullptr, "a", 1, "b", 1, nullptr),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreChangeMasterPassword(session, nullptr, 1, "b", 1, nullptr),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreChangeMasterPassword(session, "a", 1, nullptr, 1, nullptr),
+            kCoreInvalidArgument);
+}

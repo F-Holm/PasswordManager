@@ -107,6 +107,18 @@ CoreResult CoreCreate(CoreSession* session, const char* db_path,
 // password does not open it.
 CoreResult CoreUnlock(CoreSession* session, const char* db_path,
                       const char* password, size_t password_size);
+// Replaces the master password of the vault open in `session` (see
+// Core::ChangeMasterPassword). `kdf_params` may be NULL to keep the vault's
+// current parameters. On failure the vault is left exactly as it was.
+//
+// kCoreWrongPassword if `current_password` is wrong; kCoreInvalidArgument if
+// the new password is empty or the parameters are invalid.
+CoreResult CoreChangeMasterPassword(CoreSession* session,
+                                    const char* current_password,
+                                    size_t current_password_size,
+                                    const char* new_password,
+                                    size_t new_password_size,
+                                    const CoreKdfParams* kdf_params);
 // Closes the vault and wipes the master key and every cached plaintext; the
 // session can be reused. `session` may be NULL.
 void CoreClose(CoreSession* session);

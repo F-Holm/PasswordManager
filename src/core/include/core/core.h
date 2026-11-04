@@ -88,6 +88,19 @@ class Core {
   // kNotFound if there is no vault at `db_path`; kWrongPassword if the
   // password does not open it; kCorrupted if its metadata is unusable.
   CoreStatus Unlock(std::string_view db_path, std::string_view master_password);
+  // Replaces the master password of the open vault. `current_password` must
+  // open the vault. Every account is re-encrypted under a key derived from
+  // `new_password` with a fresh salt, using `kdf_params` (or the vault's
+  // current parameters if not given), and the key epoch is bumped; all of it
+  // in one transaction, so on any failure the vault is left exactly as it
+  // was and the session keeps the old key.
+  //
+  // kWrongPassword if `current_password` is wrong; kInvalidArgument if
+  // `new_password` is empty or `kdf_params` are invalid; kCorrupted if some
+  // account cannot be decrypted (nothing is changed then either).
+  CoreStatus ChangeMasterPassword(
+      std::string_view current_password, std::string_view new_password,
+      const std::optional<Crypto::KdfParams>& kdf_params = std::nullopt);
   // Closes the vault, wipes the master key and every cached plaintext.
   void Close() noexcept;
   [[nodiscard]] bool IsOpen() const noexcept;
@@ -148,11 +161,12 @@ class Core {
   // True if `key` decrypts and authenticates meta.verifier.
   static bool CheckVerifier(const Key& key, const VaultMeta& meta);
 
-  // Encrypts `account` into `out` under `uid` (the account's stable random
-  // identifier, generated once by AddAccount).
-  bool Encode(const AccountPlain& account,
-              const std::array<std::byte, AccountSize::kUid>& uid,
-              AccountBinary& out) const;
-  bool Decode(AccountBinary& binary, AccountPlain& out) const;
+  // Encrypts `account` with `key` into `out` under `uid` (the account's
+  // stable random identifier, generated once by AddAccount).
+  static bool Encode(const Key& key, const AccountPlain& account,
+                     const std::array<std::byte, AccountSize::kUid>& uid,
+                     AccountBinary& out);
+  // Decrypts `binary` in place with `key` and copies it into `out`.
+  static bool Decode(const Key& key, AccountBinary& binary, AccountPlain& out);
   bool DecodeDescription(AccountIndex& index, AccountEntry& out) const;
 };

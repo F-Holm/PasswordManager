@@ -220,6 +220,94 @@ CoreStatus Core::Unlock(std::string_view db_path,
   return CoreStatus::kOk;
 }
 
+CoreStatus Core::ChangeMasterPassword(
+    std::string_view current_password, std::string_view new_password,
+    const std::optional<Crypto::KdfParams>& kdf_params) {
+  if (!IsOpen()) {
+    return CoreStatus::kLocked;
+  }
+  if (new_password.empty()) {
+    return CoreStatus::kInvalidArgument;
+  }
+
+  // The body runs inside one write transaction, so no other program can add
+  // or edit an account (under the old key) between reading every account
+  // and committing the re-encrypted ones. `result` carries the precise
+  // reason when the body aborts.
+  CoreStatus result = CoreStatus::kOk;
+  Key old_key{};
+  Key new_key{};
+  VaultMeta new_meta;
+
+  const auto fail = [&result](CoreStatus status) {
+    result = status;
+    return DBStatus::kError;  // Any non-kOk value rolls back.
+  };
+
+  const DBStatus db_status = db_.RunInTransaction([&]() -> DBStatus {
+    const auto meta = db_.GetMeta();
+    if (!meta.has_value()) {
+      return fail(FromDBStatus(meta.error()));
+    }
+
+    if (!DeriveKey(current_password, *meta, old_key) ||
+        !CheckVerifier(old_key, *meta)) {
+      return fail(CoreStatus::kWrongPassword);
+    }
+
+    new_meta = *meta;
+    new_meta.kdf_params = kdf_params.value_or(meta->kdf_params);
+    new_meta.key_epoch = meta->key_epoch + 1;
+    if (!Crypto::RandomBytes(new_meta.kdf_salt)) {
+      return fail(CoreStatus::kError);
+    }
+    if (!DeriveKey(new_password, new_meta, new_key)) {
+      return fail(CoreStatus::kInvalidArgument);
+    }
+    if (!SealVerifier(new_key, new_meta)) {
+      return fail(CoreStatus::kError);
+    }
+
+    auto accounts = db_.GetAllAccounts();
+    if (!accounts.has_value()) {
+      return fail(FromDBStatus(accounts.error()));
+    }
+    for (auto& [position, binary] : *accounts) {
+      AccountPlain plain;
+      if (!Decode(old_key, binary, plain)) {
+        return fail(CoreStatus::kCorrupted);
+      }
+      const auto uid = binary.uid;
+      if (!Encode(new_key, plain, uid, binary)) {
+        return fail(CoreStatus::kError);
+      }
+      const DBStatus update = db_.UpdateAccount(position, binary);
+      if (update != DBStatus::kOk) {
+        return fail(FromDBStatus(update));
+      }
+    }
+
+    const DBStatus update_meta = db_.UpdateMeta(new_meta);
+    if (update_meta != DBStatus::kOk) {
+      return fail(FromDBStatus(update_meta));
+    }
+    return DBStatus::kOk;
+  });
+
+  Crypto::SecureClear(old_key);
+  if (db_status != DBStatus::kOk) {
+    Crypto::SecureClear(new_key);
+    return result != CoreStatus::kOk ? result : FromDBStatus(db_status);
+  }
+
+  master_key_ = new_key;
+  Crypto::SecureClear(new_key);
+  key_epoch_ = new_meta.key_epoch;
+  ClearIndex();
+  ClearAccount();
+  return CoreStatus::kOk;
+}
+
 bool Core::DeriveKey(std::string_view password, const VaultMeta& meta,
                      Key& key) {
   return Crypto::Kdf(AsBytes(password), meta.kdf_salt, meta.kdf_params, key);
@@ -260,9 +348,9 @@ bool Core::IsOpen() const noexcept {
   return has_key_ && db_.IsOpen();
 }
 
-bool Core::Encode(const AccountPlain& account,
+bool Core::Encode(const Key& key, const AccountPlain& account,
                   const std::array<std::byte, AccountSize::kUid>& uid,
-                  AccountBinary& out) const {
+                  AccountBinary& out) {
   out.SetZero();
   out.uid = uid;
 
@@ -287,24 +375,23 @@ bool Core::Encode(const AccountPlain& account,
   }
 
   const bool description_ok =
-      Crypto::Encrypt(master_key_.data(), out.iv_description.data(),
+      Crypto::Encrypt(key.data(), out.iv_description.data(),
                       AccountAad(kDescriptionAad, out.uid),
                       std::span(out.description), out.tag_description.data());
   const bool data_ok = Crypto::Encrypt(
-      master_key_.data(), out.iv_data.data(), AccountAad(kDataAad, out.uid),
+      key.data(), out.iv_data.data(), AccountAad(kDataAad, out.uid),
       std::span(out.data), out.tag_data.data());
   return description_ok && data_ok;
 }
 
-bool Core::Decode(AccountBinary& binary, AccountPlain& out) const {
+bool Core::Decode(const Key& key, AccountBinary& binary, AccountPlain& out) {
   const bool description_ok = Crypto::Decrypt(
-      master_key_.data(), binary.iv_description.data(),
+      key.data(), binary.iv_description.data(),
       AccountAad(kDescriptionAad, binary.uid), std::span(binary.description),
       binary.tag_description.data());
-  const bool data_ok =
-      Crypto::Decrypt(master_key_.data(), binary.iv_data.data(),
-                      AccountAad(kDataAad, binary.uid), std::span(binary.data),
-                      binary.tag_data.data());
+  const bool data_ok = Crypto::Decrypt(
+      key.data(), binary.iv_data.data(), AccountAad(kDataAad, binary.uid),
+      std::span(binary.data), binary.tag_data.data());
   if (!description_ok || !data_ok) {
     return false;
   }
@@ -346,7 +433,7 @@ CoreStatus Core::AddAccount(const AccountPlain& account) {
   }
 
   AccountBinary binary;
-  if (!Encode(account, uid, binary)) {
+  if (!Encode(master_key_, account, uid, binary)) {
     return CoreStatus::kError;
   }
 
@@ -373,7 +460,7 @@ CoreStatus Core::EditAccount(std::int64_t position,
   }
 
   AccountBinary binary;
-  if (!Encode(account, current->uid, binary)) {
+  if (!Encode(master_key_, account, current->uid, binary)) {
     return CoreStatus::kError;
   }
 
@@ -462,7 +549,7 @@ std::expected<const AccountPlain*, CoreStatus> Core::GetAccount(
   }
 
   loaded_account_.emplace();
-  if (!Decode(*binary, *loaded_account_)) {
+  if (!Decode(master_key_, *binary, *loaded_account_)) {
     ClearAccount();
     return std::unexpected(CoreStatus::kCorrupted);
   }

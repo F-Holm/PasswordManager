@@ -612,3 +612,140 @@ TEST_F(CoreTest, DescriptionAndDataCannotBeSwapped) {
   ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
   EXPECT_TRUE(core.Index().empty());
 }
+
+class CoreChangePasswordTest : public CoreTest {
+ protected:
+  static constexpr std::string_view kNewPassword = "a brand new password";
+
+  // Creates the vault with two accounts and leaves `core` unlocked.
+  void Populate(Core& core) const {
+    ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+    ASSERT_EQ(core.AddAccount(MakeAccount("bank", "e1", "u1", "pw1", "x1")),
+              CoreStatus::kOk);
+    ASSERT_EQ(core.AddAccount(MakeAccount("mail", "e2", "u2", "pw2", "x2")),
+              CoreStatus::kOk);
+  }
+
+  VaultMeta ReadMeta() const {
+    DB db;
+    EXPECT_TRUE(db.Open(test_file));
+    return db.GetMeta().value();
+  }
+};
+
+TEST_F(CoreChangePasswordTest, NewPasswordOpensEverythingAndOldOneFails) {
+  {
+    Core core;
+    Populate(core);
+    ASSERT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
+              CoreStatus::kOk);
+    // The session keeps working with the new key.
+    ASSERT_NE(Fetch(core, 1), nullptr);
+    EXPECT_EQ(GetAccountField(Fetch(core, 1)->password), "pw2");
+    ASSERT_EQ(core.AddAccount(MakeAccount("new", "e", "u", "p3", "x")),
+              CoreStatus::kOk);
+  }
+
+  Core core;
+  EXPECT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kWrongPassword);
+  ASSERT_EQ(core.Unlock(test_file, kNewPassword), CoreStatus::kOk);
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+  ASSERT_EQ(core.Index().size(), 3u);
+  EXPECT_EQ(GetAccountField(Fetch(core, 0)->password), "pw1");
+  EXPECT_EQ(GetAccountField(Fetch(core, 1)->password), "pw2");
+  EXPECT_EQ(GetAccountField(Fetch(core, 2)->password), "p3");
+}
+
+TEST_F(CoreChangePasswordTest, BumpsKeyEpochAndRenewsSalt) {
+  Core core;
+  Populate(core);
+  const VaultMeta before = ReadMeta();
+
+  ASSERT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
+            CoreStatus::kOk);
+
+  const VaultMeta after = ReadMeta();
+  EXPECT_EQ(after.key_epoch, before.key_epoch + 1);
+  EXPECT_NE(after.kdf_salt, before.kdf_salt);
+  EXPECT_NE(after.verifier_tag, before.verifier_tag);
+  EXPECT_EQ(after.kdf_params, before.kdf_params);
+}
+
+TEST_F(CoreChangePasswordTest, CanChangeKdfParams) {
+  Core core;
+  Populate(core);
+  constexpr Crypto::KdfParams kStronger{
+      .memory_kib = 16, .iterations = 2, .parallelism = 1};
+
+  ASSERT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword, kStronger),
+            CoreStatus::kOk);
+  EXPECT_EQ(ReadMeta().kdf_params, kStronger);
+  core.Close();
+  EXPECT_EQ(core.Unlock(test_file, kNewPassword), CoreStatus::kOk);
+}
+
+TEST_F(CoreChangePasswordTest, WrongCurrentPasswordChangesNothing) {
+  Core core;
+  Populate(core);
+  const VaultMeta before = ReadMeta();
+
+  EXPECT_EQ(core.ChangeMasterPassword("not it", kNewPassword),
+            CoreStatus::kWrongPassword);
+  EXPECT_EQ(ReadMeta(), before);
+  EXPECT_NE(Fetch(core, 0), nullptr);
+}
+
+TEST_F(CoreChangePasswordTest, RejectsEmptyNewPasswordAndBadParams) {
+  Core core;
+  Populate(core);
+  const VaultMeta before = ReadMeta();
+
+  EXPECT_EQ(core.ChangeMasterPassword(kPassword, ""),
+            CoreStatus::kInvalidArgument);
+  EXPECT_EQ(core.ChangeMasterPassword(
+                kPassword, kNewPassword,
+                Crypto::KdfParams{
+                    .memory_kib = 1, .iterations = 1, .parallelism = 1}),
+            CoreStatus::kInvalidArgument);
+  EXPECT_EQ(ReadMeta(), before);
+}
+
+TEST_F(CoreChangePasswordTest, FailureHalfwayLeavesTheVaultUntouched) {
+  Core core;
+  Populate(core);
+  const VaultMeta before = ReadMeta();
+
+  // Corrupt the second account: the first one gets re-encrypted before the
+  // second fails to decrypt, so the transaction must roll that back.
+  Tamper(test_file,
+         "UPDATE accounts SET tag_data = zeroblob(16) WHERE position = 1;");
+
+  EXPECT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
+            CoreStatus::kCorrupted);
+  EXPECT_EQ(ReadMeta(), before);
+
+  // The session still uses the old key, and so does the file.
+  EXPECT_EQ(GetAccountField(Fetch(core, 0)->password), "pw1");
+  core.Close();
+  EXPECT_EQ(core.Unlock(test_file, kNewPassword), CoreStatus::kWrongPassword);
+  ASSERT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kOk);
+  EXPECT_EQ(GetAccountField(Fetch(core, 0)->password), "pw1");
+}
+
+TEST_F(CoreChangePasswordTest, ClearsCachedPlaintext) {
+  Core core;
+  Populate(core);
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+  ASSERT_NE(Fetch(core, 0), nullptr);
+
+  ASSERT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
+            CoreStatus::kOk);
+  EXPECT_TRUE(core.Index().empty());
+  EXPECT_EQ(core.CurrentAccount(), nullptr);
+}
+
+TEST_F(CoreChangePasswordTest, RequiresAnOpenVault) {
+  Core core;
+  EXPECT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
+            CoreStatus::kLocked);
+}
