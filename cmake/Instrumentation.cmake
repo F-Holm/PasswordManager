@@ -1,20 +1,14 @@
 include_guard(GLOBAL)
 
 include(ASan)
-include(Valgrind)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    if(ENABLE_ASAN AND ENABLE_VALGRIND)
-        message(FATAL_ERROR "Conflict: Cannot enable ASan and Valgrind at the same time")
-    elseif(ENABLE_ASAN)
+    if(ENABLE_ASAN)
         AddASanInstrumentation()
-    elseif(NOT ENABLE_VALGRIND)
+    else()
         message(STATUS "No dynamic instrumentation enabled")
     endif()
 endif()
 
 function(AddInstrumentation target)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND ENABLE_VALGRIND)
-        AddValgrindInstrumentation("${target}")
-    endif()
 endfunction()
