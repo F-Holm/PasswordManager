@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <optional>
 #include <span>
 #include <string_view>
@@ -22,6 +23,9 @@
 // so it can be encrypted into (or decrypted out of) an AccountBinary without
 // heap allocation.
 struct AccountPlain {
+  // Revision the account was read at (set by Core::GetAccount; ignored by
+  // AddAccount). Pass it back to EditAccount to detect concurrent edits.
+  std::int64_t revision = 0;
   std::array<char, AccountSize::kDescription> description{};
   std::array<char, AccountSize::kEmail> email{};
   std::array<char, AccountSize::kUsername> username{};
@@ -36,7 +40,12 @@ struct AccountPlain {
 // plus its decrypted description, used to render account lists without
 // decrypting the (much larger) account data.
 struct AccountEntry {
+  // Stable identifier used to address the account in every Core operation.
+  std::int64_t id = -1;
+  // Place of the account in the list (0-based).
   std::int64_t position = -1;
+  // Current revision of the account (see AccountPlain::revision).
+  std::int64_t revision = 0;
   std::array<char, AccountSize::kDescription> description{};
 
   void SetZero() noexcept;
@@ -105,23 +114,38 @@ class Core {
   void Close() noexcept;
   [[nodiscard]] bool IsOpen() const noexcept;
 
-  // Every operation below returns kLocked if no vault is open.
+  // Every operation below returns kLocked if no vault is open. They also
+  // return kLocked, and close the session, if another program changed the
+  // master password since this session unlocked the vault: unlock it again
+  // with the new password. Writes check this before writing anything.
+  //
+  // Accounts are addressed by their id (AccountEntry::id), which never
+  // changes and is never reused, so an id read from the index keeps naming
+  // the same account even if another program removes or reorders accounts
+  // in the meantime: at worst the operation reports kNotFound.
 
-  // Encrypts and appends `account` as a new entry. Invalidates the cached
-  // index.
-  CoreStatus AddAccount(const AccountPlain& account);
-  // Encrypts and overwrites the account at `position` (kNotFound if there is
-  // none). Invalidates the cached index, and clears the loaded account if it
-  // was `position`.
-  CoreStatus EditAccount(std::int64_t position, const AccountPlain& account);
-  // Deletes the account at `position`, shifting later positions down.
-  // Invalidates the cached index and the loaded account.
-  CoreStatus RemoveAccount(std::int64_t position);
-  // Moves the account at `from_position` to `to_position`, shifting the
-  // accounts in between. Invalidates the cached index and the loaded
-  // account.
-  CoreStatus ReorderAccount(std::int64_t from_position,
-                            std::int64_t to_position);
+  // Encrypts and appends `account` as a new entry and writes its id to
+  // *out_id if given. Invalidates the cached index.
+  CoreStatus AddAccount(const AccountPlain& account,
+                        std::int64_t* out_id = nullptr);
+  // Passed as `expected_revision` to EditAccount to overwrite the account
+  // whatever its revision.
+  static constexpr std::int64_t kAnyRevision = DB::kAnyRevision;
+
+  // Encrypts and overwrites the account `id` (kNotFound if there is none),
+  // provided nobody changed it since it was read at `expected_revision`
+  // (normally the `revision` GetAccount returned): otherwise nothing is
+  // written and kConflict is returned, so the caller can reload it and show
+  // the newer version instead of silently discarding it. Invalidates the
+  // cached index, and clears the loaded account if it was `id`.
+  CoreStatus EditAccount(std::int64_t id, std::int64_t expected_revision,
+                         const AccountPlain& account);
+  // Deletes the account `id`, shifting later positions down. Invalidates the
+  // cached index and the loaded account.
+  CoreStatus RemoveAccount(std::int64_t id);
+  // Moves the account `id` to `to_position` (0-based), shifting the accounts
+  // in between. Invalidates the cached index and the loaded account.
+  CoreStatus ReorderAccount(std::int64_t id, std::int64_t to_position);
 
   // Reloads and decrypts every index entry from the vault into the cache
   // returned by Index(). Entries that fail authentication are left out.
@@ -137,17 +161,24 @@ class Core {
   [[nodiscard]] std::vector<std::size_t> SearchIndex(
       std::string_view query) const;
 
+  // Whether another program committed a change to the vault since it was
+  // unlocked, since the last LoadIndex() or since the last call to this
+  // function, whichever was latest. When it did, the cached index and the
+  // loaded account are cleared (they may be stale), so the caller should
+  // LoadIndex() again. Changes made through this Core are not reported.
+  // Cheap enough to poll (e.g. when a window regains focus).
+  std::expected<bool, CoreStatus> CheckExternalChanges();
+
   // Number of accounts in the vault (without decrypting anything).
   std::expected<std::size_t, CoreStatus> Count();
   // Rebuilds the vault file to reclaim the space of deleted accounts.
   CoreStatus Compact();
 
-  // Decrypts the account at `position`, replacing whatever account was
+  // Decrypts the account `id`, replacing whatever account was
   // previously loaded, and returns a pointer to it. The pointer is
   // invalidated by the next call to GetAccount or ClearAccount, or by any
   // mutating operation. kCorrupted if the stored data fails authentication.
-  std::expected<const AccountPlain*, CoreStatus> GetAccount(
-      std::int64_t position);
+  std::expected<const AccountPlain*, CoreStatus> GetAccount(std::int64_t id);
   [[nodiscard]] const AccountPlain* CurrentAccount() const noexcept;
   void ClearAccount() noexcept;
 
@@ -158,10 +189,24 @@ class Core {
   Key master_key_{};
   bool has_key_ = false;
   std::int64_t key_epoch_ = 0;
+  // DB::DataVersion() as of the last unlock, LoadIndex or
+  // CheckExternalChanges.
+  std::int64_t data_version_ = 0;
+
+  // Records the current DB::DataVersion() in data_version_.
+  void SnapshotDataVersion();
+  // Runs `write` in one transaction after checking that the vault's key
+  // epoch is still the one this session unlocked with. If another program
+  // changed the master password meanwhile, nothing is written, the session
+  // is closed and kLocked is returned.
+  CoreStatus WriteWithCurrentKey(const std::function<CoreStatus()>& write);
+  // Closes the session and returns true if the vault's key epoch changed
+  // since it was unlocked (i.e. our key no longer opens it).
+  bool KeyIsStale();
 
   std::vector<AccountEntry> index_;
   std::optional<AccountPlain> loaded_account_;
-  std::int64_t loaded_position_ = -1;
+  std::int64_t loaded_id_ = -1;
 
   // Derives the key for `meta` from `password` into `key`.
   static bool DeriveKey(std::string_view password, const VaultMeta& meta,

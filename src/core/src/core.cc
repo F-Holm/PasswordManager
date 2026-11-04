@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstring>
 #include <filesystem>
+#include <functional>
 #include <optional>
 #include <span>
 #include <string_view>
@@ -35,6 +36,8 @@ CoreStatus FromDBStatus(DBStatus status) noexcept {
       return CoreStatus::kBusy;
     case DBStatus::kAlreadyExists:
       return CoreStatus::kAlreadyExists;
+    case DBStatus::kConflict:
+      return CoreStatus::kConflict;
     case DBStatus::kClosed:
       return CoreStatus::kLocked;
     case DBStatus::kError:
@@ -85,6 +88,7 @@ std::string_view ToString(CoreStatus status) noexcept {
 }
 
 void AccountPlain::SetZero() noexcept {
+  revision = 0;
   Crypto::SecureClear(std::as_writable_bytes(std::span(description)));
   Crypto::SecureClear(std::as_writable_bytes(std::span(email)));
   Crypto::SecureClear(std::as_writable_bytes(std::span(username)));
@@ -97,7 +101,9 @@ AccountPlain::~AccountPlain() noexcept {
 }
 
 void AccountEntry::SetZero() noexcept {
+  id = -1;
   position = -1;
+  revision = 0;
   Crypto::SecureClear(std::as_writable_bytes(std::span(description)));
 }
 
@@ -180,6 +186,7 @@ CoreStatus Core::Create(std::string_view db_path,
   Crypto::SecureClear(key);
   has_key_ = true;
   key_epoch_ = meta.key_epoch;
+  SnapshotDataVersion();
   return CoreStatus::kOk;
 }
 
@@ -220,6 +227,7 @@ CoreStatus Core::Unlock(std::string_view db_path,
   Crypto::SecureClear(key);
   has_key_ = true;
   key_epoch_ = meta->key_epoch;
+  SnapshotDataVersion();
   return CoreStatus::kOk;
 }
 
@@ -277,7 +285,7 @@ CoreStatus Core::ChangeMasterPassword(
     if (!accounts.has_value()) {
       return fail(FromDBStatus(accounts.error()));
     }
-    for (auto& [position, binary] : *accounts) {
+    for (auto& [id, binary] : *accounts) {
       AccountPlain plain;
       if (!Decode(old_key, binary, plain)) {
         return fail(CoreStatus::kCorrupted);
@@ -286,7 +294,8 @@ CoreStatus Core::ChangeMasterPassword(
       if (!Encode(new_key, plain, uid, binary)) {
         return fail(CoreStatus::kError);
       }
-      const DBStatus update = db_.UpdateAccount(position, binary);
+      const std::int64_t revision = binary.revision;
+      const DBStatus update = db_.UpdateAccount(id, revision, binary);
       if (update != DBStatus::kOk) {
         return fail(FromDBStatus(update));
       }
@@ -345,6 +354,7 @@ void Core::Close() noexcept {
   Crypto::SecureClear(std::span(master_key_));
   has_key_ = false;
   key_epoch_ = 0;
+  data_version_ = 0;
   ClearIndex();
   ClearAccount();
 }
@@ -421,13 +431,60 @@ bool Core::DecodeDescription(AccountIndex& index, AccountEntry& out) const {
     return false;
   }
 
+  out.id = index.id;
   out.position = index.position;
+  out.revision = index.revision;
   std::memcpy(out.description.data(), index.description.data(),
               out.description.size());
   return true;
 }
 
-CoreStatus Core::AddAccount(const AccountPlain& account) {
+CoreStatus Core::WriteWithCurrentKey(const std::function<CoreStatus()>& write) {
+  if (!IsOpen()) {
+    return CoreStatus::kLocked;
+  }
+
+  // The epoch check and the write share one transaction: a password change
+  // committed by another program either happens before (and the write is
+  // refused) or after (and re-encrypts what was written).
+  CoreStatus result = CoreStatus::kOk;
+  bool stale_key = false;
+  const DBStatus db_status = db_.RunInTransaction([&]() -> DBStatus {
+    const auto meta = db_.GetMeta();
+    if (!meta.has_value()) {
+      result = FromDBStatus(meta.error());
+      return DBStatus::kError;
+    }
+    if (meta->key_epoch != key_epoch_) {
+      stale_key = true;
+      result = CoreStatus::kLocked;
+      return DBStatus::kError;
+    }
+    result = write();
+    return result == CoreStatus::kOk ? DBStatus::kOk : DBStatus::kError;
+  });
+
+  if (stale_key) {
+    // Our key no longer opens the vault: forget it so nothing is ever
+    // written with it, and make the caller unlock again.
+    Close();
+  }
+  if (db_status != DBStatus::kOk) {
+    return result != CoreStatus::kOk ? result : FromDBStatus(db_status);
+  }
+  return CoreStatus::kOk;
+}
+
+bool Core::KeyIsStale() {
+  const auto meta = db_.GetMeta();
+  if (meta.has_value() && meta->key_epoch != key_epoch_) {
+    Close();
+    return true;
+  }
+  return false;
+}
+
+CoreStatus Core::AddAccount(const AccountPlain& account, std::int64_t* out_id) {
   if (!IsOpen()) {
     return CoreStatus::kLocked;
   }
@@ -442,52 +499,45 @@ CoreStatus Core::AddAccount(const AccountPlain& account) {
     return CoreStatus::kError;
   }
 
-  const CoreStatus status = FromDBStatus(db_.AddAccount(binary));
+  std::int64_t id = -1;
+  const CoreStatus status = WriteWithCurrentKey(
+      [&] { return FromDBStatus(db_.AddAccount(binary, &id)); });
   if (status == CoreStatus::kOk) {
     ClearIndex();
+    if (out_id != nullptr) {
+      *out_id = id;
+    }
   }
   return status;
 }
 
-CoreStatus Core::EditAccount(std::int64_t position,
+CoreStatus Core::EditAccount(std::int64_t id, std::int64_t expected_revision,
                              const AccountPlain& account) {
-  if (!IsOpen()) {
-    return CoreStatus::kLocked;
-  }
-  if (position < 0) {
-    return CoreStatus::kNotFound;
-  }
+  const CoreStatus status = WriteWithCurrentKey([&] {
+    // Keep the account's uid: it identifies the account, not its contents.
+    const auto current = db_.GetAccount(id);
+    if (!current.has_value()) {
+      return FromDBStatus(current.error());
+    }
 
-  // Keep the account's uid: it identifies the account, not its contents.
-  const auto current = db_.GetAccount(position);
-  if (!current.has_value()) {
-    return FromDBStatus(current.error());
-  }
-
-  AccountBinary binary;
-  if (!Encode(master_key_, account, current->uid, binary)) {
-    return CoreStatus::kError;
-  }
-
-  const CoreStatus status = FromDBStatus(db_.UpdateAccount(position, binary));
+    AccountBinary binary;
+    if (!Encode(master_key_, account, current->uid, binary)) {
+      return CoreStatus::kError;
+    }
+    return FromDBStatus(db_.UpdateAccount(id, expected_revision, binary));
+  });
   if (status == CoreStatus::kOk) {
     ClearIndex();
-    if (position == loaded_position_) {
+    if (id == loaded_id_) {
       ClearAccount();
     }
   }
   return status;
 }
 
-CoreStatus Core::RemoveAccount(std::int64_t position) {
-  if (!IsOpen()) {
-    return CoreStatus::kLocked;
-  }
-  if (position < 0) {
-    return CoreStatus::kNotFound;
-  }
-
-  const CoreStatus status = FromDBStatus(db_.DeleteAccount(position));
+CoreStatus Core::RemoveAccount(std::int64_t id) {
+  const CoreStatus status =
+      WriteWithCurrentKey([&] { return FromDBStatus(db_.DeleteAccount(id)); });
   if (status == CoreStatus::kOk) {
     ClearIndex();
     ClearAccount();
@@ -495,14 +545,9 @@ CoreStatus Core::RemoveAccount(std::int64_t position) {
   return status;
 }
 
-CoreStatus Core::ReorderAccount(std::int64_t from_position,
-                                std::int64_t to_position) {
-  if (!IsOpen()) {
-    return CoreStatus::kLocked;
-  }
-
-  const CoreStatus status =
-      FromDBStatus(db_.MoveAccount(from_position, to_position));
+CoreStatus Core::ReorderAccount(std::int64_t id, std::int64_t to_position) {
+  const CoreStatus status = WriteWithCurrentKey(
+      [&] { return FromDBStatus(db_.MoveAccount(id, to_position)); });
   if (status == CoreStatus::kOk) {
     ClearIndex();
     ClearAccount();
@@ -516,16 +561,27 @@ CoreStatus Core::LoadIndex() {
     return CoreStatus::kLocked;
   }
 
+  // Snapshot before reading, so a change committed while reading is
+  // reported by the next CheckExternalChanges().
+  SnapshotDataVersion();
   auto raw = db_.GetAllIndex();
   if (!raw.has_value()) {
     return FromDBStatus(raw.error());
   }
   index_.reserve(raw->size());
+  bool undecryptable = false;
   for (AccountIndex& entry : *raw) {
     AccountEntry decoded;
     if (DecodeDescription(entry, decoded)) {
       index_.push_back(decoded);
+    } else {
+      undecryptable = true;
     }
+  }
+  // Entries that fail authentication are usually corrupted, but they all
+  // fail if another program changed the master password.
+  if (undecryptable && KeyIsStale()) {
+    return CoreStatus::kLocked;
   }
   return CoreStatus::kOk;
 }
@@ -555,6 +611,27 @@ std::vector<std::size_t> Core::SearchIndex(std::string_view query) const {
   return matches;
 }
 
+void Core::SnapshotDataVersion() {
+  data_version_ = db_.DataVersion().value_or(data_version_);
+}
+
+std::expected<bool, CoreStatus> Core::CheckExternalChanges() {
+  if (!IsOpen()) {
+    return std::unexpected(CoreStatus::kLocked);
+  }
+  const auto version = db_.DataVersion();
+  if (!version.has_value()) {
+    return std::unexpected(FromDBStatus(version.error()));
+  }
+  if (*version == data_version_) {
+    return false;
+  }
+  data_version_ = *version;
+  ClearIndex();
+  ClearAccount();
+  return true;
+}
+
 std::expected<std::size_t, CoreStatus> Core::Count() {
   if (!IsOpen()) {
     return std::unexpected(CoreStatus::kLocked);
@@ -574,16 +651,13 @@ CoreStatus Core::Compact() {
 }
 
 std::expected<const AccountPlain*, CoreStatus> Core::GetAccount(
-    std::int64_t position) {
+    std::int64_t id) {
   ClearAccount();
   if (!IsOpen()) {
     return std::unexpected(CoreStatus::kLocked);
   }
-  if (position < 0) {
-    return std::unexpected(CoreStatus::kNotFound);
-  }
 
-  auto binary = db_.GetAccount(position);
+  auto binary = db_.GetAccount(id);
   if (!binary.has_value()) {
     return std::unexpected(FromDBStatus(binary.error()));
   }
@@ -591,10 +665,12 @@ std::expected<const AccountPlain*, CoreStatus> Core::GetAccount(
   loaded_account_.emplace();
   if (!Decode(master_key_, *binary, *loaded_account_)) {
     ClearAccount();
-    return std::unexpected(CoreStatus::kCorrupted);
+    return std::unexpected(KeyIsStale() ? CoreStatus::kLocked
+                                        : CoreStatus::kCorrupted);
   }
 
-  loaded_position_ = position;
+  loaded_account_->revision = binary->revision;
+  loaded_id_ = id;
   return &(*loaded_account_);
 }
 
@@ -604,5 +680,5 @@ const AccountPlain* Core::CurrentAccount() const noexcept {
 
 void Core::ClearAccount() noexcept {
   loaded_account_.reset();
-  loaded_position_ = -1;
+  loaded_id_ = -1;
 }

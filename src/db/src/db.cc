@@ -80,6 +80,7 @@ bool DB::CreateSchema() {
       "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
       "  uid BLOB NOT NULL UNIQUE,"
       "  position INTEGER NOT NULL,"
+      "  revision INTEGER NOT NULL DEFAULT 0,"
       "  description BLOB NOT NULL,"
       "  data BLOB NOT NULL,"
       "  iv_description BLOB NOT NULL,"
@@ -103,7 +104,7 @@ bool DB::CreateSchema() {
       ");");
 }
 
-DBStatus DB::AddAccount(const AccountBinary& account) {
+DBStatus DB::AddAccount(const AccountBinary& account, std::int64_t* out_id) {
   if (!IsOpen()) {
     return DBStatus::kClosed;
   }
@@ -135,24 +136,31 @@ DBStatus DB::AddAccount(const AccountBinary& account) {
   if (insert.Step() != SQLITE_DONE) {
     return LastStatus();
   }
+  const std::int64_t id = sqlite3_last_insert_rowid(db_);
 
-  return tx.Commit() ? DBStatus::kOk : LastStatus();
+  if (!tx.Commit()) {
+    return LastStatus();
+  }
+  if (out_id != nullptr) {
+    *out_id = id;
+  }
+  return DBStatus::kOk;
 }
 
-std::expected<AccountBinary, DBStatus> DB::GetAccount(std::int64_t position) {
+std::expected<AccountBinary, DBStatus> DB::GetAccount(std::int64_t id) {
   if (!IsOpen()) {
     return std::unexpected(DBStatus::kClosed);
   }
 
   Statement select(db_,
                    "SELECT uid, description, data, iv_description, iv_data, "
-                   "tag_description, tag_data FROM accounts "
-                   "WHERE position = ?;");
+                   "tag_description, tag_data, revision FROM accounts "
+                   "WHERE id = ?;");
   if (!select.IsValid()) {
     return std::unexpected(LastStatus());
   }
 
-  select.BindInt64(1, position);
+  select.BindInt64(1, id);
 
   const int step = select.Step();
   if (step == SQLITE_DONE) {
@@ -173,41 +181,88 @@ std::expected<AccountBinary, DBStatus> DB::GetAccount(std::int64_t position) {
   if (!ok) {
     return std::unexpected(DBStatus::kError);
   }
+  account.revision = select.ColumnInt64(7);
 
   return account;
 }
 
-DBStatus DB::UpdateAccount(std::int64_t position,
+DBStatus DB::UpdateAccount(std::int64_t id, std::int64_t expected_revision,
                            const AccountBinary& account) {
   if (!IsOpen()) {
     return DBStatus::kClosed;
   }
 
-  Statement update(db_,
-                   "UPDATE accounts SET description = ?, data = ?, "
-                   "iv_description = ?, iv_data = ?, tag_description = ?, "
-                   "tag_data = ? WHERE position = ? AND uid = ?;");
-  if (!update.IsValid()) {
-    return LastStatus();
+  // The update and the conflict check must see the same state.
+  Transaction tx(db_);
+  if (!tx.IsActive()) {
+    return DBStatusFromSqlite(tx.BeginResult());
   }
 
-  update.BindBlob(1, account.description);
-  update.BindBlob(2, account.data);
-  update.BindBlob(3, account.iv_description);
-  update.BindBlob(4, account.iv_data);
-  update.BindBlob(5, account.tag_description);
-  update.BindBlob(6, account.tag_data);
-  update.BindInt64(7, position);
-  update.BindBlob(8, account.uid);
+  {
+    Statement update(
+        db_,
+        "UPDATE accounts SET description = ?, data = ?, iv_description = ?, "
+        "iv_data = ?, tag_description = ?, tag_data = ?, "
+        "revision = revision + 1 "
+        "WHERE id = ? AND uid = ? AND (? = -1 OR revision = ?);");
+    if (!update.IsValid()) {
+      return LastStatus();
+    }
 
-  if (update.Step() != SQLITE_DONE) {
-    return LastStatus();
+    update.BindBlob(1, account.description);
+    update.BindBlob(2, account.data);
+    update.BindBlob(3, account.iv_description);
+    update.BindBlob(4, account.iv_data);
+    update.BindBlob(5, account.tag_description);
+    update.BindBlob(6, account.tag_data);
+    update.BindInt64(7, id);
+    update.BindBlob(8, account.uid);
+    update.BindInt64(9, expected_revision);
+    update.BindInt64(10, expected_revision);
+
+    if (update.Step() != SQLITE_DONE) {
+      return LastStatus();
+    }
   }
 
-  return sqlite3_changes(db_) > 0 ? DBStatus::kOk : DBStatus::kNotFound;
+  if (sqlite3_changes(db_) == 0) {
+    // Nothing matched: tell a stale revision apart from a missing account.
+    Statement find(db_, "SELECT 1 FROM accounts WHERE id = ? AND uid = ?;");
+    if (!find.IsValid()) {
+      return LastStatus();
+    }
+    find.BindInt64(1, id);
+    find.BindBlob(2, account.uid);
+    const int step = find.Step();
+    if (step == SQLITE_ROW) {
+      return DBStatus::kConflict;
+    }
+    if (step != SQLITE_DONE) {
+      return LastStatus();
+    }
+    return DBStatus::kNotFound;
+  }
+
+  return tx.Commit() ? DBStatus::kOk : LastStatus();
 }
 
-DBStatus DB::DeleteAccount(std::int64_t position) {
+std::expected<std::int64_t, DBStatus> DB::PositionOf(std::int64_t id) {
+  Statement find(db_, "SELECT position FROM accounts WHERE id = ?;");
+  if (!find.IsValid()) {
+    return std::unexpected(LastStatus());
+  }
+  find.BindInt64(1, id);
+  const int step = find.Step();
+  if (step == SQLITE_DONE) {
+    return std::unexpected(DBStatus::kNotFound);
+  }
+  if (step != SQLITE_ROW) {
+    return std::unexpected(LastStatus());
+  }
+  return find.ColumnInt64(0);
+}
+
+DBStatus DB::DeleteAccount(std::int64_t id) {
   if (!IsOpen()) {
     return DBStatus::kClosed;
   }
@@ -217,17 +272,19 @@ DBStatus DB::DeleteAccount(std::int64_t position) {
     return DBStatusFromSqlite(tx.BeginResult());
   }
 
+  const auto position = PositionOf(id);
+  if (!position.has_value()) {
+    return position.error();
+  }
+
   {
-    Statement del(db_, "DELETE FROM accounts WHERE position = ?;");
+    Statement del(db_, "DELETE FROM accounts WHERE id = ?;");
     if (!del.IsValid()) {
       return LastStatus();
     }
-    del.BindInt64(1, position);
+    del.BindInt64(1, id);
     if (del.Step() != SQLITE_DONE) {
       return LastStatus();
-    }
-    if (sqlite3_changes(db_) == 0) {
-      return DBStatus::kNotFound;
     }
   }
 
@@ -236,7 +293,7 @@ DBStatus DB::DeleteAccount(std::int64_t position) {
   if (!shift.IsValid()) {
     return LastStatus();
   }
-  shift.BindInt64(1, position);
+  shift.BindInt64(1, *position);
   if (shift.Step() != SQLITE_DONE) {
     return LastStatus();
   }
@@ -244,17 +301,12 @@ DBStatus DB::DeleteAccount(std::int64_t position) {
   return tx.Commit() ? DBStatus::kOk : LastStatus();
 }
 
-DBStatus DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
+DBStatus DB::MoveAccount(std::int64_t id, std::int64_t to_position) {
   if (!IsOpen()) {
     return DBStatus::kClosed;
   }
-  if (from_position < 0 || to_position < 0) {
+  if (to_position < 0) {
     return DBStatus::kNotFound;
-  }
-
-  if (from_position == to_position) {
-    const auto account = GetAccount(from_position);
-    return account.has_value() ? DBStatus::kOk : account.error();
   }
 
   Transaction tx(db_);
@@ -262,22 +314,11 @@ DBStatus DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
     return DBStatusFromSqlite(tx.BeginResult());
   }
 
-  std::int64_t moving_id = -1;
-  {
-    Statement find(db_, "SELECT id FROM accounts WHERE position = ?;");
-    if (!find.IsValid()) {
-      return LastStatus();
-    }
-    find.BindInt64(1, from_position);
-    const int step = find.Step();
-    if (step == SQLITE_DONE) {
-      return DBStatus::kNotFound;
-    }
-    if (step != SQLITE_ROW) {
-      return LastStatus();
-    }
-    moving_id = find.ColumnInt64(0);
+  const auto from = PositionOf(id);
+  if (!from.has_value()) {
+    return from.error();
   }
+  const std::int64_t from_position = *from;
 
   {
     Statement count(db_, "SELECT COUNT(*) FROM accounts;");
@@ -287,6 +328,10 @@ DBStatus DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
     if (to_position >= count.ColumnInt64(0)) {
       return DBStatus::kNotFound;
     }
+  }
+
+  if (from_position == to_position) {
+    return tx.Commit() ? DBStatus::kOk : LastStatus();
   }
 
   const bool moving_down = to_position > from_position;
@@ -316,7 +361,7 @@ DBStatus DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
     return LastStatus();
   }
   move.BindInt64(1, to_position);
-  move.BindInt64(2, moving_id);
+  move.BindInt64(2, id);
   if (move.Step() != SQLITE_DONE) {
     return LastStatus();
   }
@@ -330,8 +375,9 @@ std::expected<std::vector<AccountIndex>, DBStatus> DB::GetAllIndex() {
   }
 
   Statement select(db_,
-                   "SELECT position, uid, description, iv_description, "
-                   "tag_description FROM accounts ORDER BY position;");
+                   "SELECT id, position, revision, uid, description, "
+                   "iv_description, tag_description FROM accounts "
+                   "ORDER BY position;");
   if (!select.IsValid()) {
     return std::unexpected(LastStatus());
   }
@@ -340,11 +386,13 @@ std::expected<std::vector<AccountIndex>, DBStatus> DB::GetAllIndex() {
   int step = SQLITE_ROW;
   while ((step = select.Step()) == SQLITE_ROW) {
     AccountIndex index;
-    index.position = select.ColumnInt64(0);
-    const bool ok = select.ColumnBlob(1, index.uid) &&
-                    select.ColumnBlob(2, index.description) &&
-                    select.ColumnBlob(3, index.iv_description) &&
-                    select.ColumnBlob(4, index.tag_description);
+    index.id = select.ColumnInt64(0);
+    index.position = select.ColumnInt64(1);
+    index.revision = select.ColumnInt64(2);
+    const bool ok = select.ColumnBlob(3, index.uid) &&
+                    select.ColumnBlob(4, index.description) &&
+                    select.ColumnBlob(5, index.iv_description) &&
+                    select.ColumnBlob(6, index.tag_description);
     if (!ok) {
       return std::unexpected(DBStatus::kError);
     }
@@ -364,9 +412,9 @@ DB::GetAllAccounts() {
   }
 
   Statement select(db_,
-                   "SELECT position, uid, description, data, iv_description, "
-                   "iv_data, tag_description, tag_data FROM accounts "
-                   "ORDER BY position;");
+                   "SELECT id, uid, description, data, iv_description, "
+                   "iv_data, tag_description, tag_data, revision "
+                   "FROM accounts ORDER BY position;");
   if (!select.IsValid()) {
     return std::unexpected(LastStatus());
   }
@@ -375,7 +423,7 @@ DB::GetAllAccounts() {
   int step = SQLITE_ROW;
   while ((step = select.Step()) == SQLITE_ROW) {
     AccountBinary account;
-    const std::int64_t position = select.ColumnInt64(0);
+    const std::int64_t id = select.ColumnInt64(0);
     const bool ok = select.ColumnBlob(1, account.uid) &&
                     select.ColumnBlob(2, account.description) &&
                     select.ColumnBlob(3, account.data) &&
@@ -386,13 +434,25 @@ DB::GetAllAccounts() {
     if (!ok) {
       return std::unexpected(DBStatus::kError);
     }
-    result.emplace_back(position, account);
+    account.revision = select.ColumnInt64(8);
+    result.emplace_back(id, account);
   }
   if (step != SQLITE_DONE) {
     return std::unexpected(LastStatus());
   }
 
   return result;
+}
+
+std::expected<std::int64_t, DBStatus> DB::DataVersion() {
+  if (!IsOpen()) {
+    return std::unexpected(DBStatus::kClosed);
+  }
+  Statement pragma(db_, "PRAGMA data_version;");
+  if (!pragma.IsValid() || pragma.Step() != SQLITE_ROW) {
+    return std::unexpected(LastStatus());
+  }
+  return pragma.ColumnInt64(0);
 }
 
 DBStatus DB::RunInTransaction(const std::function<DBStatus()>& body) {

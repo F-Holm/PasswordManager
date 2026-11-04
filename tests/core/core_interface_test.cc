@@ -8,6 +8,7 @@
 #include <string>
 
 #include "crypto/crypto.h"
+#include "db/db.h"
 #include "types/account_size.h"
 
 extern "C" int CoreCHeaderSmokeTest(void);
@@ -51,6 +52,25 @@ class CoreInterfaceTest : public ::testing::Test {
   void TearDown() override {
     CoreFree(session);
     std::remove(test_file.c_str());
+  }
+
+  // Id of the account at `position` in the vault file, or -1 if there is
+  // none, read through a separate connection so it has no effect on the
+  // Core under test. Lets the tests speak in positions.
+  [[nodiscard]] std::int64_t IdAt(std::int64_t position) const {
+    DB db;
+    if (!db.Open(test_file, DB::OpenMode::kExistingOnly)) {
+      return -1;
+    }
+    const auto index = db.GetAllIndex();
+    if (index.has_value()) {
+      for (const AccountIndex& entry : *index) {
+        if (entry.position == position) {
+          return entry.id;
+        }
+      }
+    }
+    return -1;
   }
 
   CoreResult Open() const {
@@ -128,7 +148,7 @@ TEST_F(CoreInterfaceTest, CreateTwiceReportsAlreadyExists) {
 TEST_F(CoreInterfaceTest, UnlockChecksThePassword) {
   ASSERT_EQ(Open(), kCoreOk);
   const CoreAccount account = MakeAccount("d", "e", "u", "s3cr3t", "x");
-  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &account, nullptr), kCoreOk);
   CoreClose(session);
 
   EXPECT_EQ(CoreUnlock(session, test_file.c_str(), "nope", 4),
@@ -141,7 +161,7 @@ TEST_F(CoreInterfaceTest, UnlockChecksThePassword) {
       CoreUnlock(session, test_file.c_str(), padded.data(), kPasswordSize),
       kCoreOk);
   CoreAccount fetched{};
-  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  ASSERT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreOk);
   EXPECT_STREQ(fetched.password, "s3cr3t");
 }
 
@@ -168,8 +188,9 @@ TEST_F(CoreInterfaceTest, NullSessionCallsFailSafely) {
   CoreClose(nullptr);
   EXPECT_FALSE(CoreIsOpen(nullptr));
   const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
-  EXPECT_EQ(CoreAddAccount(nullptr, &account), kCoreInvalidArgument);
-  EXPECT_EQ(CoreEditAccount(nullptr, 0, &account), kCoreInvalidArgument);
+  EXPECT_EQ(CoreAddAccount(nullptr, &account, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreEditAccount(nullptr, 0, kCoreAnyRevision, &account),
+            kCoreInvalidArgument);
   EXPECT_EQ(CoreRemoveAccount(nullptr, 0), kCoreInvalidArgument);
   EXPECT_EQ(CoreReorderAccount(nullptr, 0, 1), kCoreInvalidArgument);
   std::size_t count = 0;
@@ -184,20 +205,21 @@ TEST_F(CoreInterfaceTest, NullSessionCallsFailSafely) {
 
 TEST_F(CoreInterfaceTest, NullOutputPointersAreRejected) {
   ASSERT_EQ(Open(), kCoreOk);
-  EXPECT_EQ(CoreAddAccount(session, nullptr), kCoreInvalidArgument);
-  EXPECT_EQ(CoreEditAccount(session, 0, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreAddAccount(session, nullptr, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreEditAccount(session, IdAt(0), kCoreAnyRevision, nullptr),
+            kCoreInvalidArgument);
   EXPECT_EQ(CoreLoadIndex(session, nullptr), kCoreInvalidArgument);
   EXPECT_EQ(CoreGetIndexEntry(session, 0, nullptr), kCoreInvalidArgument);
-  EXPECT_EQ(CoreGetAccount(session, 0, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreGetAccount(session, IdAt(0), nullptr), kCoreInvalidArgument);
 }
 
 TEST_F(CoreInterfaceTest, OperationsReportLockedWhenNotOpen) {
   const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
-  EXPECT_EQ(CoreAddAccount(session, &account), kCoreLocked);
+  EXPECT_EQ(CoreAddAccount(session, &account, nullptr), kCoreLocked);
   std::size_t count = 0;
   EXPECT_EQ(CoreLoadIndex(session, &count), kCoreLocked);
   CoreAccount out{};
-  EXPECT_EQ(CoreGetAccount(session, 0, &out), kCoreLocked);
+  EXPECT_EQ(CoreGetAccount(session, IdAt(0), &out), kCoreLocked);
 }
 
 TEST_F(CoreInterfaceTest, AddAndGetAccountRoundTrip) {
@@ -205,10 +227,10 @@ TEST_F(CoreInterfaceTest, AddAndGetAccountRoundTrip) {
 
   const CoreAccount account =
       MakeAccount("My Bank", "me@example.com", "me", "s3cr3t", "notes");
-  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &account, nullptr), kCoreOk);
 
   CoreAccount fetched{};
-  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  ASSERT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreOk);
   EXPECT_STREQ(fetched.description, "My Bank");
   EXPECT_STREQ(fetched.email, "me@example.com");
   EXPECT_STREQ(fetched.username, "me");
@@ -220,25 +242,26 @@ TEST_F(CoreInterfaceTest, GetAccountReportsNotFoundForMissingPosition) {
   ASSERT_EQ(Open(), kCoreOk);
 
   CoreAccount fetched{};
-  EXPECT_EQ(CoreGetAccount(session, 0, &fetched), kCoreNotFound);
+  EXPECT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreNotFound);
 }
 
 TEST_F(CoreInterfaceTest, EditAndRemoveAccount) {
   ASSERT_EQ(Open(), kCoreOk);
 
   const CoreAccount original = MakeAccount("old", "e", "u", "p", "x");
-  ASSERT_EQ(CoreAddAccount(session, &original), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &original, nullptr), kCoreOk);
 
   const CoreAccount edited = MakeAccount("new", "e", "u", "p", "x");
-  ASSERT_EQ(CoreEditAccount(session, 0, &edited), kCoreOk);
+  ASSERT_EQ(CoreEditAccount(session, IdAt(0), kCoreAnyRevision, &edited),
+            kCoreOk);
 
   CoreAccount fetched{};
-  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  ASSERT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreOk);
   EXPECT_STREQ(fetched.description, "new");
 
-  ASSERT_EQ(CoreRemoveAccount(session, 0), kCoreOk);
-  EXPECT_EQ(CoreGetAccount(session, 0, &fetched), kCoreNotFound);
-  EXPECT_EQ(CoreRemoveAccount(session, 0), kCoreNotFound);
+  ASSERT_EQ(CoreRemoveAccount(session, IdAt(0)), kCoreOk);
+  EXPECT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreNotFound);
+  EXPECT_EQ(CoreRemoveAccount(session, IdAt(0)), kCoreNotFound);
 }
 
 TEST_F(CoreInterfaceTest, ReorderAccounts) {
@@ -246,14 +269,14 @@ TEST_F(CoreInterfaceTest, ReorderAccounts) {
 
   const CoreAccount a = MakeAccount("a", "e", "u", "p", "x");
   const CoreAccount b = MakeAccount("b", "e", "u", "p", "x");
-  ASSERT_EQ(CoreAddAccount(session, &a), kCoreOk);
-  ASSERT_EQ(CoreAddAccount(session, &b), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &a, nullptr), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &b, nullptr), kCoreOk);
 
-  ASSERT_EQ(CoreReorderAccount(session, 0, 1), kCoreOk);
-  EXPECT_EQ(CoreReorderAccount(session, 0, 7), kCoreNotFound);
+  ASSERT_EQ(CoreReorderAccount(session, IdAt(0), 1), kCoreOk);
+  EXPECT_EQ(CoreReorderAccount(session, IdAt(0), 7), kCoreNotFound);
 
   CoreAccount fetched{};
-  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  ASSERT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreOk);
   EXPECT_STREQ(fetched.description, "b");
 }
 
@@ -262,8 +285,8 @@ TEST_F(CoreInterfaceTest, LoadIndexAndReadEntries) {
 
   const CoreAccount alpha = MakeAccount("alpha", "e", "u", "p", "x");
   const CoreAccount beta = MakeAccount("beta", "e", "u", "p", "x");
-  ASSERT_EQ(CoreAddAccount(session, &alpha), kCoreOk);
-  ASSERT_EQ(CoreAddAccount(session, &beta), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &alpha, nullptr), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &beta, nullptr), kCoreOk);
 
   std::size_t count = 0;
   ASSERT_EQ(CoreLoadIndex(session, &count), kCoreOk);
@@ -288,10 +311,10 @@ TEST_F(CoreInterfaceTest, ClearAccountDropsLoadedAccount) {
   ASSERT_EQ(Open(), kCoreOk);
 
   const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
-  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &account, nullptr), kCoreOk);
 
   CoreAccount fetched{};
-  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  ASSERT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreOk);
 
   CoreClearAccount(session);
 }
@@ -299,7 +322,7 @@ TEST_F(CoreInterfaceTest, ClearAccountDropsLoadedAccount) {
 TEST_F(CoreInterfaceTest, ChangeMasterPassword) {
   ASSERT_EQ(Open(), kCoreOk);
   const CoreAccount account = MakeAccount("d", "e", "u", "s3cr3t", "x");
-  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &account, nullptr), kCoreOk);
 
   EXPECT_EQ(CoreChangeMasterPassword(session, "nope", 4, "new", 3, nullptr),
             kCoreWrongPassword);
@@ -315,7 +338,7 @@ TEST_F(CoreInterfaceTest, ChangeMasterPassword) {
             kCoreWrongPassword);
   ASSERT_EQ(CoreUnlock(session, test_file.c_str(), "new", 3), kCoreOk);
   CoreAccount fetched{};
-  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  ASSERT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreOk);
   EXPECT_STREQ(fetched.password, "s3cr3t");
 }
 
@@ -334,9 +357,9 @@ TEST_F(CoreInterfaceTest, SearchCountAndCompact) {
   const CoreAccount bank = MakeAccount("My Bank", "e", "u", "p", "x");
   const CoreAccount mail = MakeAccount("Email", "e", "u", "p", "x");
   const CoreAccount old_bank = MakeAccount("bank (old)", "e", "u", "p", "x");
-  ASSERT_EQ(CoreAddAccount(session, &bank), kCoreOk);
-  ASSERT_EQ(CoreAddAccount(session, &mail), kCoreOk);
-  ASSERT_EQ(CoreAddAccount(session, &old_bank), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &bank, nullptr), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &mail, nullptr), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &old_bank, nullptr), kCoreOk);
 
   std::size_t count = 0;
   ASSERT_EQ(CoreCount(session, &count), kCoreOk);
@@ -363,4 +386,71 @@ TEST_F(CoreInterfaceTest, SearchCountAndCompact) {
   EXPECT_EQ(CoreCompact(session), kCoreOk);
   EXPECT_EQ(CoreCompact(nullptr), kCoreInvalidArgument);
   EXPECT_EQ(CoreCount(session, nullptr), kCoreInvalidArgument);
+}
+
+TEST_F(CoreInterfaceTest, AddAccountReportsTheIdUsedByTheIndex) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
+  std::int64_t id = -1;
+  ASSERT_EQ(CoreAddAccount(session, &account, &id), kCoreOk);
+
+  std::size_t count = 0;
+  ASSERT_EQ(CoreLoadIndex(session, &count), kCoreOk);
+  CoreAccountEntry entry{};
+  ASSERT_EQ(CoreGetIndexEntry(session, 0, &entry), kCoreOk);
+  EXPECT_EQ(entry.id, id);
+  EXPECT_EQ(entry.position, 0);
+
+  CoreAccount fetched{};
+  ASSERT_EQ(CoreGetAccount(session, id, &fetched), kCoreOk);
+  ASSERT_EQ(CoreRemoveAccount(session, id), kCoreOk);
+  EXPECT_EQ(CoreGetAccount(session, id, &fetched), kCoreNotFound);
+}
+
+TEST_F(CoreInterfaceTest, EditWithStaleRevisionReportsConflict) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount original = MakeAccount("d", "e", "u", "p1", "x");
+  std::int64_t id = -1;
+  ASSERT_EQ(CoreAddAccount(session, &original, &id), kCoreOk);
+
+  CoreAccount read{};
+  ASSERT_EQ(CoreGetAccount(session, id, &read), kCoreOk);
+  EXPECT_EQ(read.revision, 0);
+
+  const CoreAccount first = MakeAccount("d", "e", "u", "p2", "x");
+  ASSERT_EQ(CoreEditAccount(session, id, read.revision, &first), kCoreOk);
+  const CoreAccount second = MakeAccount("d", "e", "u", "p3", "x");
+  EXPECT_EQ(CoreEditAccount(session, id, read.revision, &second),
+            kCoreConflict);
+
+  ASSERT_EQ(CoreGetAccount(session, id, &read), kCoreOk);
+  EXPECT_STREQ(read.password, "p2");
+  EXPECT_EQ(read.revision, 1);
+
+  std::size_t count = 0;
+  ASSERT_EQ(CoreLoadIndex(session, &count), kCoreOk);
+  CoreAccountEntry entry{};
+  ASSERT_EQ(CoreGetIndexEntry(session, 0, &entry), kCoreOk);
+  EXPECT_EQ(entry.revision, 1);
+}
+
+TEST_F(CoreInterfaceTest, CheckExternalChanges) {
+  ASSERT_EQ(Open(), kCoreOk);
+  bool changed = true;
+  ASSERT_EQ(CoreCheckExternalChanges(session, &changed), kCoreOk);
+  EXPECT_FALSE(changed);
+
+  CoreSession* other = CoreNew();
+  ASSERT_NE(other, nullptr);
+  ASSERT_EQ(CoreUnlock(other, test_file.c_str(), kPassword, kPasswordSize),
+            kCoreOk);
+  const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
+  ASSERT_EQ(CoreAddAccount(other, &account, nullptr), kCoreOk);
+  CoreFree(other);
+
+  ASSERT_EQ(CoreCheckExternalChanges(session, &changed), kCoreOk);
+  EXPECT_TRUE(changed);
+
+  EXPECT_EQ(CoreCheckExternalChanges(session, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreCheckExternalChanges(nullptr, &changed), kCoreInvalidArgument);
 }

@@ -2,6 +2,7 @@ add_executable(core_test
     core_test.cc
     core_interface_test.cc
     password_generator_test.cc
+    concurrency_test.cc
     c_header_test.c
 )
 
