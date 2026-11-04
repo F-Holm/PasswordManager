@@ -322,3 +322,28 @@ TEST_F(DBTest, PersistenceBetweenSessions) {
     EXPECT_EQ(fetched->description[0], std::byte{0x2A});
   }
 }
+
+TEST_F(DBTest, WritesFailCleanlyWhileAnotherConnectionHoldsTheWriteLock) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
+  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
+
+  sqlite3* other = nullptr;
+  ASSERT_EQ(sqlite3_open(test_file.c_str(), &other), SQLITE_OK);
+  sqlite3_busy_timeout(other, 0);
+  ASSERT_EQ(sqlite3_exec(other, "BEGIN IMMEDIATE;", nullptr, nullptr, nullptr),
+            SQLITE_OK);
+
+  EXPECT_FALSE(db.AddAccount(MakeAccount(std::byte{0x03})));
+  EXPECT_FALSE(db.DeleteAccount(0));
+  EXPECT_FALSE(db.MoveAccount(0, 1));
+
+  sqlite3_exec(other, "ROLLBACK;", nullptr, nullptr, nullptr);
+  sqlite3_close(other);
+
+  // Nothing was half-applied: both accounts are still at their positions.
+  ASSERT_EQ(db.Count(), 2u);
+  EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x01});
+  EXPECT_EQ(db.GetAccount(1)->description[0], std::byte{0x02});
+}

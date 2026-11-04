@@ -5,6 +5,7 @@
 #include <string>
 
 #include "db/statement.h"
+#include "db/transaction.h"
 
 DB::DB() noexcept = default;
 
@@ -70,7 +71,10 @@ bool DB::AddAccount(const AccountBinary& account) {
     return false;
   }
 
-  Execute("BEGIN IMMEDIATE;");
+  Transaction tx(db_);
+  if (!tx.IsActive()) {
+    return false;
+  }
 
   Statement insert(db_,
                    "INSERT INTO accounts (position, description, data, "
@@ -80,7 +84,6 @@ bool DB::AddAccount(const AccountBinary& account) {
                    "     FROM accounts),"
                    "  ?, ?, ?, ?, ?, ?);");
   if (!insert.IsValid()) {
-    Execute("ROLLBACK;");
     return false;
   }
 
@@ -92,11 +95,10 @@ bool DB::AddAccount(const AccountBinary& account) {
   insert.BindBlob(6, account.tag_data);
 
   if (insert.Step() != SQLITE_DONE) {
-    Execute("ROLLBACK;");
     return false;
   }
 
-  return Execute("COMMIT;");
+  return tx.Commit();
 }
 
 std::optional<AccountBinary> DB::GetAccount(std::int64_t position) {
@@ -165,41 +167,39 @@ bool DB::DeleteAccount(std::int64_t position) {
     return false;
   }
 
-  Execute("BEGIN IMMEDIATE;");
+  Transaction tx(db_);
+  if (!tx.IsActive()) {
+    return false;
+  }
 
   bool deleted = false;
   {
     Statement del(db_, "DELETE FROM accounts WHERE position = ?;");
     if (!del.IsValid()) {
-      Execute("ROLLBACK;");
       return false;
     }
     del.BindInt64(1, position);
     if (del.Step() != SQLITE_DONE) {
-      Execute("ROLLBACK;");
       return false;
     }
     deleted = sqlite3_changes(db_) > 0;
   }
 
   if (!deleted) {
-    Execute("ROLLBACK;");
     return false;
   }
 
   Statement shift(
       db_, "UPDATE accounts SET position = position - 1 WHERE position > ?;");
   if (!shift.IsValid()) {
-    Execute("ROLLBACK;");
     return false;
   }
   shift.BindInt64(1, position);
   if (shift.Step() != SQLITE_DONE) {
-    Execute("ROLLBACK;");
     return false;
   }
 
-  return Execute("COMMIT;");
+  return tx.Commit();
 }
 
 bool DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
@@ -211,18 +211,19 @@ bool DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
     return GetAccount(from_position).has_value();
   }
 
-  Execute("BEGIN IMMEDIATE;");
+  Transaction tx(db_);
+  if (!tx.IsActive()) {
+    return false;
+  }
 
   std::int64_t moving_id = -1;
   {
     Statement find(db_, "SELECT id FROM accounts WHERE position = ?;");
     if (!find.IsValid()) {
-      Execute("ROLLBACK;");
       return false;
     }
     find.BindInt64(1, from_position);
     if (find.Step() != SQLITE_ROW) {
-      Execute("ROLLBACK;");
       return false;
     }
     moving_id = find.ColumnInt64(0);
@@ -231,11 +232,9 @@ bool DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
   {
     Statement count(db_, "SELECT COUNT(*) FROM accounts;");
     if (!count.IsValid() || count.Step() != SQLITE_ROW) {
-      Execute("ROLLBACK;");
       return false;
     }
     if (to_position >= count.ColumnInt64(0)) {
-      Execute("ROLLBACK;");
       return false;
     }
   }
@@ -249,7 +248,6 @@ bool DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
 
   Statement shift(db_, shift_sql);
   if (!shift.IsValid()) {
-    Execute("ROLLBACK;");
     return false;
   }
   if (moving_down) {
@@ -260,23 +258,20 @@ bool DB::MoveAccount(std::int64_t from_position, std::int64_t to_position) {
     shift.BindInt64(2, from_position);
   }
   if (shift.Step() != SQLITE_DONE) {
-    Execute("ROLLBACK;");
     return false;
   }
 
   Statement move(db_, "UPDATE accounts SET position = ? WHERE id = ?;");
   if (!move.IsValid()) {
-    Execute("ROLLBACK;");
     return false;
   }
   move.BindInt64(1, to_position);
   move.BindInt64(2, moving_id);
   if (move.Step() != SQLITE_DONE) {
-    Execute("ROLLBACK;");
     return false;
   }
 
-  return Execute("COMMIT;");
+  return tx.Commit();
 }
 
 std::vector<AccountIndex> DB::GetAllIndex() {
