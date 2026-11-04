@@ -197,6 +197,50 @@ TEST(KDFTest, SamePasswordDifferentSaltProducesDifferentOutputs) {
   EXPECT_NE(0, std::memcmp(key_a, key_b, 32));
 }
 
+TEST(KDFTest, ParamsOverloadIsDeterministic) {
+  const auto password = ToByteSpan("my_secure_password");
+  const auto salt = ToByteSpan("random_salt");
+  constexpr Crypto::KdfParams kCheap{8, 1, 1};
+
+  std::array<std::byte, 32> key1{};
+  std::array<std::byte, 32> key2{};
+  ASSERT_TRUE(Crypto::Kdf(password, salt, kCheap, key1));
+  ASSERT_TRUE(Crypto::Kdf(password, salt, kCheap, key2));
+  EXPECT_EQ(key1, key2);
+}
+
+TEST(KDFTest, DifferentParamsProduceDifferentKeys) {
+  const auto password = ToByteSpan("my_secure_password");
+  const auto salt = ToByteSpan("random_salt");
+
+  std::array<std::byte, 32> key1{};
+  std::array<std::byte, 32> key2{};
+  ASSERT_TRUE(Crypto::Kdf(password, salt, Crypto::KdfParams{8, 1, 1}, key1));
+  ASSERT_TRUE(Crypto::Kdf(password, salt, Crypto::KdfParams{16, 1, 1}, key2));
+  EXPECT_NE(key1, key2);
+}
+
+TEST(KDFTest, DefaultOverloadMatchesArgon2Defaults) {
+  const auto password = ToByteSpan("my_secure_password");
+  const auto salt = ToByteSpan("random_salt");
+
+  std::array<std::byte, 32> key1{};
+  std::array<std::byte, 32> key2{};
+  ASSERT_TRUE(Crypto::Kdf(password, salt, key1));
+  ASSERT_TRUE(
+      Crypto::Kdf(password, salt, Crypto::KdfParams{19456, 2, 1}, key2));
+  EXPECT_EQ(key1, key2);
+}
+
+TEST(KDFTest, RejectsInvalidParams) {
+  const auto password = ToByteSpan("my_secure_password");
+  const auto salt = ToByteSpan("random_salt");
+  std::array<std::byte, 32> key{};
+  EXPECT_FALSE(Crypto::Kdf(password, salt, Crypto::KdfParams{4, 1, 1}, key));
+  EXPECT_FALSE(Crypto::Kdf(password, salt, Crypto::KdfParams{8, 0, 1}, key));
+  EXPECT_FALSE(Crypto::Kdf(password, salt, Crypto::KdfParams{8, 1, 0}, key));
+}
+
 // --- SecureClear Tests ---
 
 TEST(SecureClearTest, ZerosOutBuffer) {
