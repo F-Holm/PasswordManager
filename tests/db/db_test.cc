@@ -3,10 +3,12 @@
 #include <gtest/gtest.h>
 #include <sqlite3.h>
 
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <thread>
 
 #include "types/account_binary.h"
 
@@ -329,9 +331,11 @@ TEST_F(DBTest, WritesFailCleanlyWhileAnotherConnectionHoldsTheWriteLock) {
   ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
   ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
 
+  // Do not wait for the lock: this test is about failing cleanly.
+  ASSERT_TRUE(db.SetBusyTimeout(0));
+
   sqlite3* other = nullptr;
   ASSERT_EQ(sqlite3_open(test_file.c_str(), &other), SQLITE_OK);
-  sqlite3_busy_timeout(other, 0);
   ASSERT_EQ(sqlite3_exec(other, "BEGIN IMMEDIATE;", nullptr, nullptr, nullptr),
             SQLITE_OK);
 
@@ -346,4 +350,34 @@ TEST_F(DBTest, WritesFailCleanlyWhileAnotherConnectionHoldsTheWriteLock) {
   ASSERT_EQ(db.Count(), 2u);
   EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x01});
   EXPECT_EQ(db.GetAccount(1)->description[0], std::byte{0x02});
+}
+
+TEST_F(DBTest, WritesWaitForAnotherConnectionToReleaseTheLock) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+
+  sqlite3* other = nullptr;
+  ASSERT_EQ(sqlite3_open(test_file.c_str(), &other), SQLITE_OK);
+  ASSERT_EQ(sqlite3_exec(other, "BEGIN IMMEDIATE;", nullptr, nullptr, nullptr),
+            SQLITE_OK);
+
+  // Release the lock well within DB::kDefaultBusyTimeoutMs.
+  std::thread releaser([other] {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    sqlite3_exec(other, "COMMIT;", nullptr, nullptr, nullptr);
+  });
+
+  EXPECT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
+
+  releaser.join();
+  sqlite3_close(other);
+  EXPECT_EQ(db.Count(), 1u);
+}
+
+TEST_F(DBTest, SetBusyTimeoutFailsWhenClosedOrNegative) {
+  DB db;
+  EXPECT_FALSE(db.SetBusyTimeout(100));
+  ASSERT_TRUE(db.Open(test_file));
+  EXPECT_FALSE(db.SetBusyTimeout(-1));
+  EXPECT_TRUE(db.SetBusyTimeout(100));
 }

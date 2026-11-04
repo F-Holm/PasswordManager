@@ -13,6 +13,10 @@ struct sqlite3;
 
 class DB {
  public:
+  // How long a write waits for another connection (e.g. a second program
+  // using the same vault) to release the database lock before giving up.
+  static constexpr int kDefaultBusyTimeoutMs = 5000;
+
   DB() noexcept;
   ~DB();
 
@@ -24,6 +28,9 @@ class DB {
   bool Open(std::string_view path);
   void Close();
   [[nodiscard]] bool IsOpen() const noexcept;
+  // Overrides the busy timeout of the open connection. Returns false if the
+  // database is not open or `milliseconds` is negative.
+  bool SetBusyTimeout(int milliseconds);
 
   bool AddAccount(const AccountBinary& account);
   std::optional<AccountBinary> GetAccount(std::int64_t position);

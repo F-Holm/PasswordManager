@@ -22,6 +22,7 @@ bool DB::Open(std::string_view path) {
     return false;
   }
 
+  sqlite3_busy_timeout(db_, kDefaultBusyTimeoutMs);
   Execute("PRAGMA foreign_keys = ON;");
   Execute("PRAGMA journal_mode = WAL;");
 
@@ -42,6 +43,13 @@ void DB::Close() {
 
 bool DB::IsOpen() const noexcept {
   return db_ != nullptr;
+}
+
+bool DB::SetBusyTimeout(int milliseconds) {
+  if (!IsOpen() || milliseconds < 0) {
+    return false;
+  }
+  return sqlite3_busy_timeout(db_, milliseconds) == SQLITE_OK;
 }
 
 bool DB::Execute(std::string_view sql) {
