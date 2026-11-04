@@ -143,6 +143,22 @@ pub unsafe extern "C" fn argon2id_hash(
     argon2.hash_password_into(pwd, slt, out).is_ok()
 }
 
+/// Fills `len` bytes at `output` with randomness from the operating system's
+/// cryptographically secure generator. Returns false if `output` is null or
+/// the generator fails; on failure the buffer is zeroed.
+#[allow(clippy::missing_safety_doc)]
+#[no_mangle]
+pub unsafe extern "C" fn random_bytes(output: *mut u8, len: usize) -> bool {
+    check_null!(output);
+    let out = unsafe { slice::from_raw_parts_mut(output, len) };
+    if getrandom::fill(out).is_ok() {
+        true
+    } else {
+        out.zeroize();
+        false
+    }
+}
+
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn secure_set_zero(ptr: *mut u8, len: usize) -> bool {
@@ -451,6 +467,34 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_random_bytes_null_parameter() {
+        unsafe {
+            assert!(!random_bytes(std::ptr::null_mut(), 16));
+        }
+    }
+
+    #[test]
+    fn test_random_bytes_empty_buffer() {
+        let mut out = [0u8; 0];
+        unsafe {
+            assert!(random_bytes(out.as_mut_ptr(), 0));
+        }
+    }
+
+    #[test]
+    fn test_random_bytes_fills_buffer() {
+        let mut first = [0u8; 32];
+        let mut second = [0u8; 32];
+        unsafe {
+            assert!(random_bytes(first.as_mut_ptr(), first.len()));
+            assert!(random_bytes(second.as_mut_ptr(), second.len()));
+        }
+        // 2^-256 chance of a false failure for each assertion.
+        assert_ne!(first, [0u8; 32]);
+        assert_ne!(first, second);
     }
 
     #[test]
