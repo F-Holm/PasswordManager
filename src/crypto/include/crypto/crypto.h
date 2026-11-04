@@ -26,4 +26,7 @@ bool Decrypt(const std::byte* key, const std::byte* iv,
 bool Kdf(std::span<const std::byte> password, std::span<const std::byte> salt,
          std::span<std::byte> kdf);
 bool SecureClear(std::span<std::byte> buffer);
+// Fills `buffer` with bytes from the operating system's cryptographically
+// secure random generator. Returns false (with `buffer` zeroed) on failure.
+bool RandomBytes(std::span<std::byte> buffer);
 }  // namespace Crypto

@@ -44,3 +44,7 @@ bool Crypto::SecureClear(std::span<std::byte> buffer) {
   return secure_set_zero(reinterpret_cast<uint8_t*>(buffer.data()),
                          buffer.size());
 }
+
+bool Crypto::RandomBytes(std::span<std::byte> buffer) {
+  return random_bytes(reinterpret_cast<uint8_t*>(buffer.data()), buffer.size());
+}

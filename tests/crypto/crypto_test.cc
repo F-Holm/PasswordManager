@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -225,3 +226,29 @@ TEST(SecureClearTest, HandlesEmptyBuffer) {
 }
 
 }  // namespace
+
+TEST(RandomBytesTest, FillsBuffer) {
+  std::array<std::byte, 32> first{};
+  std::array<std::byte, 32> second{};
+  ASSERT_TRUE(Crypto::RandomBytes(first));
+  ASSERT_TRUE(Crypto::RandomBytes(second));
+
+  // Each assertion has a 2^-256 chance of failing by accident.
+  constexpr std::array<std::byte, 32> kZero{};
+  EXPECT_NE(first, kZero);
+  EXPECT_NE(first, second);
+}
+
+TEST(RandomBytesTest, AcceptsEmptyBuffer) {
+  std::array<std::byte, 1> buffer{};
+  EXPECT_TRUE(Crypto::RandomBytes(std::span(buffer).first(0)));
+}
+
+TEST(RandomBytesTest, CoversEveryByteValue) {
+  // 64 KiB of uniform bytes hits all 256 values with overwhelming
+  // probability; a stuck or biased generator would not.
+  std::vector<std::byte> buffer(64 * 1024);
+  ASSERT_TRUE(Crypto::RandomBytes(buffer));
+  std::set<std::byte> seen(buffer.begin(), buffer.end());
+  EXPECT_EQ(seen.size(), 256u);
+}
