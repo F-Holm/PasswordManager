@@ -334,3 +334,23 @@ TEST_F(CoreTest, AccountPlainDestructorClearsPassword) {
                                     [](char c) { return c == '\0'; });
   EXPECT_TRUE(all_zero) << "Destructor did not wipe AccountPlain";
 }
+
+TEST_F(CoreTest, EditingDrawsFreshIvs) {
+  Core core;
+  ASSERT_TRUE(core.Open(test_file, key));
+  const AccountPlain account = MakeAccount("desc", "e", "u", "p", "x");
+  ASSERT_TRUE(core.AddAccount(account));
+
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  const std::optional<AccountBinary> before = db.GetAccount(0);
+  ASSERT_TRUE(before.has_value());
+
+  // Re-encrypting identical plaintext must not reuse the (key, IV) pair.
+  ASSERT_TRUE(core.EditAccount(0, account));
+  const std::optional<AccountBinary> after = db.GetAccount(0);
+  ASSERT_TRUE(after.has_value());
+  EXPECT_NE(before->iv_description, after->iv_description);
+  EXPECT_NE(before->iv_data, after->iv_data);
+  EXPECT_NE(before->data, after->data);
+}

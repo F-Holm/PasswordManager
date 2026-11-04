@@ -2,7 +2,6 @@
 
 #include <cstring>
 #include <optional>
-#include <random>
 #include <span>
 #include <string_view>
 
@@ -18,17 +17,6 @@ constexpr std::string_view kDataAad = "account.data";
 
 std::span<const std::byte> AsBytes(std::string_view value) noexcept {
   return {reinterpret_cast<const std::byte*>(value.data()), value.size()};
-}
-
-// Fills `out` with fresh OS entropy. AES-GCM requires the (key, IV) pair to
-// never repeat, so every encryption draws a brand new IV rather than reusing
-// or deriving one.
-void FillRandom(std::span<std::byte> out) noexcept {
-  static std::random_device device;
-  std::uniform_int_distribution<int> byte_dist(0, 255);
-  for (std::byte& b : out) {
-    b = static_cast<std::byte>(byte_dist(device));
-  }
 }
 
 }  // namespace
@@ -117,8 +105,14 @@ bool Core::Encode(const AccountPlain& account, AccountBinary& out) const {
               view.password.size());
   std::memcpy(view.extra.data(), account.extra.data(), view.extra.size());
 
-  FillRandom(out.iv_description);
-  FillRandom(out.iv_data);
+  // AES-GCM requires the (key, IV) pair to never repeat, so every encryption
+  // draws brand new IVs from the OS CSPRNG rather than reusing or deriving
+  // them.
+  if (!Crypto::RandomBytes(out.iv_description) ||
+      !Crypto::RandomBytes(out.iv_data)) {
+    out.SetZero();
+    return false;
+  }
 
   const bool description_ok = Crypto::Encrypt(
       master_key_.data(), out.iv_description.data(), AsBytes(kDescriptionAad),
