@@ -14,11 +14,15 @@ DB::~DB() {
   Close();
 }
 
-bool DB::Open(std::string_view path) {
+bool DB::Open(std::string_view path, OpenMode mode) {
   Close();
 
   const std::string path_str(path);
-  if (sqlite3_open(path_str.c_str(), &db_) != SQLITE_OK) {
+  int flags = SQLITE_OPEN_READWRITE;
+  if (mode == OpenMode::kCreateIfMissing) {
+    flags |= SQLITE_OPEN_CREATE;
+  }
+  if (sqlite3_open_v2(path_str.c_str(), &db_, flags, nullptr) != SQLITE_OK) {
     Close();
     return false;
   }

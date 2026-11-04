@@ -482,3 +482,19 @@ TEST_F(DBTest, GetMetaRejectsOutOfRangeKdfParams) {
 
   EXPECT_EQ(db.GetMeta().error(), DBStatus::kError);
 }
+
+TEST_F(DBTest, OpenExistingOnlyFailsForMissingFile) {
+  DB db;
+  EXPECT_FALSE(db.Open(test_file, DB::OpenMode::kExistingOnly));
+  EXPECT_FALSE(db.IsOpen());
+  EXPECT_FALSE(std::filesystem::exists(test_file));
+}
+
+TEST_F(DBTest, OpenExistingOnlyOpensExistingFile) {
+  {
+    DB db;
+    ASSERT_TRUE(db.Open(test_file));
+  }
+  DB db;
+  EXPECT_TRUE(db.Open(test_file, DB::OpenMode::kExistingOnly));
+}

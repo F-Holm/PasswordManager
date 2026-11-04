@@ -27,7 +27,14 @@ class DB {
   DB(DB&&) = delete;
   DB& operator=(DB&&) = delete;
 
-  bool Open(std::string_view path);
+  enum class OpenMode : std::uint8_t {
+    // Create the database file if it does not exist.
+    kCreateIfMissing,
+    // Fail if the database file does not exist.
+    kExistingOnly,
+  };
+
+  bool Open(std::string_view path, OpenMode mode = OpenMode::kCreateIfMissing);
   void Close();
   [[nodiscard]] bool IsOpen() const noexcept;
   // Overrides the busy timeout of the open connection. Returns false if the
