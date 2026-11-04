@@ -6,6 +6,7 @@
 #include <optional>
 #include <span>
 #include <string_view>
+#include <vector>
 
 #include "types/account_view.h"
 
@@ -13,7 +14,8 @@ namespace {
 
 // Domain-separates the two independently-encrypted fields of an account so
 // their ciphertexts (and authentication tags) can never be swapped for one
-// another.
+// another. Each label is followed by the account's uid in the AAD (see
+// AccountAad), which also stops fields being moved between accounts.
 constexpr std::string_view kDescriptionAad = "account.description";
 constexpr std::string_view kDataAad = "account.data";
 constexpr std::string_view kVerifierAad = "vault.verifier";
@@ -38,6 +40,19 @@ CoreStatus FromDBStatus(DBStatus status) noexcept {
       break;
   }
   return CoreStatus::kError;
+}
+
+using Uid = std::array<std::byte, AccountSize::kUid>;
+
+// Additional authenticated data for one field of the account `uid`:
+// `label || uid`.
+std::vector<std::byte> AccountAad(std::string_view label, const Uid& uid) {
+  std::vector<std::byte> aad;
+  aad.reserve(label.size() + uid.size());
+  const std::span<const std::byte> label_bytes = AsBytes(label);
+  aad.insert(aad.end(), label_bytes.begin(), label_bytes.end());
+  aad.insert(aad.end(), uid.begin(), uid.end());
+  return aad;
 }
 
 }  // namespace
@@ -271,23 +286,25 @@ bool Core::Encode(const AccountPlain& account,
     return false;
   }
 
-  const bool description_ok = Crypto::Encrypt(
-      master_key_.data(), out.iv_description.data(), AsBytes(kDescriptionAad),
-      std::span(out.description), out.tag_description.data());
-  const bool data_ok =
-      Crypto::Encrypt(master_key_.data(), out.iv_data.data(), AsBytes(kDataAad),
-                      std::span(out.data), out.tag_data.data());
+  const bool description_ok =
+      Crypto::Encrypt(master_key_.data(), out.iv_description.data(),
+                      AccountAad(kDescriptionAad, out.uid),
+                      std::span(out.description), out.tag_description.data());
+  const bool data_ok = Crypto::Encrypt(
+      master_key_.data(), out.iv_data.data(), AccountAad(kDataAad, out.uid),
+      std::span(out.data), out.tag_data.data());
   return description_ok && data_ok;
 }
 
 bool Core::Decode(AccountBinary& binary, AccountPlain& out) const {
-  const bool description_ok =
-      Crypto::Decrypt(master_key_.data(), binary.iv_description.data(),
-                      AsBytes(kDescriptionAad), std::span(binary.description),
-                      binary.tag_description.data());
-  const bool data_ok = Crypto::Decrypt(
-      master_key_.data(), binary.iv_data.data(), AsBytes(kDataAad),
-      std::span(binary.data), binary.tag_data.data());
+  const bool description_ok = Crypto::Decrypt(
+      master_key_.data(), binary.iv_description.data(),
+      AccountAad(kDescriptionAad, binary.uid), std::span(binary.description),
+      binary.tag_description.data());
+  const bool data_ok =
+      Crypto::Decrypt(master_key_.data(), binary.iv_data.data(),
+                      AccountAad(kDataAad, binary.uid), std::span(binary.data),
+                      binary.tag_data.data());
   if (!description_ok || !data_ok) {
     return false;
   }
@@ -305,8 +322,9 @@ bool Core::Decode(AccountBinary& binary, AccountPlain& out) const {
 
 bool Core::DecodeDescription(AccountIndex& index, AccountEntry& out) const {
   const bool ok = Crypto::Decrypt(
-      master_key_.data(), index.iv_description.data(), AsBytes(kDescriptionAad),
-      std::span(index.description), index.tag_description.data());
+      master_key_.data(), index.iv_description.data(),
+      AccountAad(kDescriptionAad, index.uid), std::span(index.description),
+      index.tag_description.data());
   if (!ok) {
     return false;
   }

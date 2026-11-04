@@ -1,6 +1,7 @@
 #include "core/core.h"
 
 #include <gtest/gtest.h>
+#include <sqlite3.h>
 
 #include <algorithm>
 #include <array>
@@ -38,6 +39,16 @@ const AccountPlain* Fetch(Core& core, std::int64_t position) {
 const std::vector<AccountEntry>& LoadedIndex(Core& core) {
   EXPECT_EQ(core.LoadIndex(), CoreStatus::kOk);
   return core.Index();
+}
+
+// Runs `sql` on `path` through a separate raw connection, simulating someone
+// editing the vault file behind Core's back.
+void Tamper(const std::string& path, const char* sql) {
+  sqlite3* raw = nullptr;
+  ASSERT_EQ(sqlite3_open(path.c_str(), &raw), SQLITE_OK);
+  ASSERT_EQ(sqlite3_exec(raw, sql, nullptr, nullptr, nullptr), SQLITE_OK)
+      << sqlite3_errmsg(raw);
+  sqlite3_close(raw);
 }
 
 }  // namespace
@@ -543,4 +554,61 @@ TEST_F(CoreTest, EachAccountGetsARandomUid) {
   ASSERT_TRUE(second.has_value());
   EXPECT_NE(first->uid, second->uid);
   EXPECT_NE(first->uid, decltype(first->uid){});
+}
+
+TEST_F(CoreTest, CiphertextsMovedBetweenAccountsFailAuthentication) {
+  Core core;
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  ASSERT_EQ(core.AddAccount(MakeAccount("bank", "e", "u", "bank-pw", "x")),
+            CoreStatus::kOk);
+  ASSERT_EQ(core.AddAccount(MakeAccount("mail", "e", "u", "mail-pw", "x")),
+            CoreStatus::kOk);
+
+  // Give the "mail" row the ciphertexts of the "bank" row (keeping its own
+  // uid): every field is validly encrypted under the vault key, but for
+  // another account.
+  Tamper(test_file,
+         "UPDATE accounts SET "
+         "  description = (SELECT description FROM accounts WHERE position = "
+         "0),"
+         "  data = (SELECT data FROM accounts WHERE position = 0),"
+         "  iv_description = (SELECT iv_description FROM accounts WHERE "
+         "position = 0),"
+         "  iv_data = (SELECT iv_data FROM accounts WHERE position = 0),"
+         "  tag_description = (SELECT tag_description FROM accounts WHERE "
+         "position = 0),"
+         "  tag_data = (SELECT tag_data FROM accounts WHERE position = 0) "
+         "WHERE position = 1;");
+
+  EXPECT_EQ(core.GetAccount(1).error(), CoreStatus::kCorrupted);
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+  ASSERT_EQ(core.Index().size(), 1u);
+  EXPECT_EQ(GetAccountField(core.Index()[0].description), "bank");
+}
+
+TEST_F(CoreTest, DescriptionAndDataCannotBeSwapped) {
+  Core core;
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+  ASSERT_EQ(core.AddAccount(MakeAccount("b", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+
+  // Swap only the description ciphertext (with its IV and tag) of the two
+  // accounts.
+  Tamper(test_file,
+         "CREATE TEMP TABLE d AS SELECT position, description, iv_description, "
+         "tag_description FROM accounts;"
+         "UPDATE accounts SET "
+         "  description = (SELECT description FROM d WHERE d.position = 1 - "
+         "accounts.position),"
+         "  iv_description = (SELECT iv_description FROM d WHERE d.position = "
+         "1 - accounts.position),"
+         "  tag_description = (SELECT tag_description FROM d WHERE "
+         "d.position = 1 - accounts.position);");
+
+  EXPECT_EQ(core.GetAccount(0).error(), CoreStatus::kCorrupted);
+  EXPECT_EQ(core.GetAccount(1).error(), CoreStatus::kCorrupted);
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+  EXPECT_TRUE(core.Index().empty());
 }
