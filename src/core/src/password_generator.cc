@@ -73,11 +73,11 @@ CoreStatus GeneratePassword(const PasswordOptions& options,
   std::ranges::fill(out, '\0');
 
   std::vector<std::string> classes;
-  const std::pair<bool, std::string_view> requested[] = {
-      {options.numbers, kNumbers},
-      {options.upper, kUpper},
-      {options.lower, kLower},
-      {options.symbols, kSymbols}};
+  const std::array<std::pair<bool, std::string_view>, 4> requested{
+      {{options.numbers, kNumbers},
+       {options.upper, kUpper},
+       {options.lower, kLower},
+       {options.symbols, kSymbols}}};
   for (const auto& [enabled, chars] : requested) {
     if (enabled) {
       classes.push_back(Filter(chars, options.exclude_ambiguous));

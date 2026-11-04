@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "db/statement.h"
 #include "db/transaction.h"
@@ -373,8 +374,8 @@ DB::GetAllAccounts() {
   std::vector<std::pair<std::int64_t, AccountBinary>> result;
   int step = SQLITE_ROW;
   while ((step = select.Step()) == SQLITE_ROW) {
-    auto& [position, account] = result.emplace_back();
-    position = select.ColumnInt64(0);
+    AccountBinary account;
+    const std::int64_t position = select.ColumnInt64(0);
     const bool ok = select.ColumnBlob(1, account.uid) &&
                     select.ColumnBlob(2, account.description) &&
                     select.ColumnBlob(3, account.data) &&
@@ -385,6 +386,7 @@ DB::GetAllAccounts() {
     if (!ok) {
       return std::unexpected(DBStatus::kError);
     }
+    result.emplace_back(position, account);
   }
   if (step != SQLITE_DONE) {
     return std::unexpected(LastStatus());
@@ -452,7 +454,7 @@ std::expected<VaultMeta, DBStatus> DB::GetMeta() {
   }
 
   const auto to_u32 = [](std::int64_t value, std::uint32_t& out) {
-    if (value < 0 || value > UINT32_MAX) {
+    if (!std::in_range<std::uint32_t>(value)) {
       return false;
     }
     out = static_cast<std::uint32_t>(value);

@@ -6,6 +6,7 @@
 // Outcome of a Core operation. The numeric values are part of the C ABI
 // (mirrored as kCore* constants in core/core_interface.h) and must never be
 // renumbered.
+// NOLINTNEXTLINE(performance-enum-size): int32_t is fixed by the C ABI.
 enum class CoreStatus : std::int32_t {
   kOk = 0,
   // The requested account does not exist (any more).

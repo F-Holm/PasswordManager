@@ -129,6 +129,7 @@ Core::~Core() {
   Close();
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): named for callers.
 CoreStatus Core::Create(std::string_view db_path,
                         std::string_view master_password,
                         const Crypto::KdfParams& kdf_params) {
@@ -182,6 +183,7 @@ CoreStatus Core::Create(std::string_view db_path,
   return CoreStatus::kOk;
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters): named for callers.
 CoreStatus Core::Unlock(std::string_view db_path,
                         std::string_view master_password) {
   Close();
@@ -221,9 +223,11 @@ CoreStatus Core::Unlock(std::string_view db_path,
   return CoreStatus::kOk;
 }
 
+// NOLINTBEGIN(bugprone-easily-swappable-parameters): named for callers.
 CoreStatus Core::ChangeMasterPassword(
     std::string_view current_password, std::string_view new_password,
     const std::optional<Crypto::KdfParams>& kdf_params) {
+  // NOLINTEND(bugprone-easily-swappable-parameters)
   if (!IsOpen()) {
     return CoreStatus::kLocked;
   }

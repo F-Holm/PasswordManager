@@ -38,7 +38,7 @@ class Transaction {
 
  private:
   sqlite3* db_;
-  bool nested_;
+  bool nested_ = false;
   int begin_result_;
   bool active_ = false;
 };

@@ -27,7 +27,8 @@ struct KdfParams {
 };
 
 // Defaults for new vaults: 64 MiB, 3 passes, 4 lanes.
-constexpr KdfParams kDefaultKdfParams{65536, 3, 4};
+constexpr KdfParams kDefaultKdfParams{
+    .memory_kib = 65536, .iterations = 3, .parallelism = 4};
 
 bool Hash256(std::span<const std::byte> buffer, std::byte* hash);
 bool Hash512(std::span<const std::byte> buffer, std::byte* hash);

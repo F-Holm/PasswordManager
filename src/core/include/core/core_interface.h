@@ -23,6 +23,10 @@
 extern "C" {
 #endif
 
+// This header must stay valid C, so it keeps typedef'd structs, C arrays and
+// plain enums that C++-only checks would rather see modernized.
+// NOLINTBEGIN(modernize-use-using,modernize-avoid-c-arrays,performance-enum-size)
+
 // Field capacities, in bytes, so bindings can size their own buffers without
 // depending on the C++ headers. core_interface.cc checks that they match
 // AccountSize.
@@ -182,6 +186,8 @@ CoreResult CoreCompact(CoreSession* session);
 CoreResult CoreGetAccount(CoreSession* session, int64_t position,
                           CoreAccount* out_account);
 void CoreClearAccount(CoreSession* session);
+
+// NOLINTEND(modernize-use-using,modernize-avoid-c-arrays,performance-enum-size)
 
 #ifdef __cplusplus
 }  // extern "C"
