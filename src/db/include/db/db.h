@@ -2,17 +2,25 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
+#include <expected>
+#include <functional>
 #include <string_view>
+#include <utility>
 #include <vector>
 
+#include "db/db_status.h"
 #include "types/account_binary.h"
 #include "types/account_index.h"
+#include "types/vault_meta.h"
 
 struct sqlite3;
 
 class DB {
  public:
+  // How long a write waits for another connection (e.g. a second program
+  // using the same vault) to release the database lock before giving up.
+  static constexpr int kDefaultBusyTimeoutMs = 5000;
+
   DB() noexcept;
   ~DB();
 
@@ -21,22 +29,52 @@ class DB {
   DB(DB&&) = delete;
   DB& operator=(DB&&) = delete;
 
-  bool Open(std::string_view path);
+  enum class OpenMode : std::uint8_t {
+    // Create the database file if it does not exist.
+    kCreateIfMissing,
+    // Fail if the database file does not exist.
+    kExistingOnly,
+  };
+
+  bool Open(std::string_view path, OpenMode mode = OpenMode::kCreateIfMissing);
   void Close();
   [[nodiscard]] bool IsOpen() const noexcept;
+  // Overrides the busy timeout of the open connection. Returns false if the
+  // database is not open or `milliseconds` is negative.
+  bool SetBusyTimeout(int milliseconds);
 
-  bool AddAccount(const AccountBinary& account);
-  std::optional<AccountBinary> GetAccount(std::int64_t position);
-  bool UpdateAccount(std::int64_t position, const AccountBinary& account);
-  bool DeleteAccount(std::int64_t position);
-  bool MoveAccount(std::int64_t from_position, std::int64_t to_position);
-  std::vector<AccountIndex> GetAllIndex();
-  std::size_t Count();
-  bool Compact();
+  DBStatus AddAccount(const AccountBinary& account);
+  std::expected<AccountBinary, DBStatus> GetAccount(std::int64_t position);
+  // Overwrites the account at `position`. Its uid never changes: kNotFound
+  // unless the stored account at `position` has `account.uid`.
+  DBStatus UpdateAccount(std::int64_t position, const AccountBinary& account);
+  DBStatus DeleteAccount(std::int64_t position);
+  DBStatus MoveAccount(std::int64_t from_position, std::int64_t to_position);
+  std::expected<std::vector<AccountIndex>, DBStatus> GetAllIndex();
+  // Every account with its position, ordered by position.
+  std::expected<std::vector<std::pair<std::int64_t, AccountBinary>>, DBStatus>
+  GetAllAccounts();
+  std::expected<std::size_t, DBStatus> Count();
+  DBStatus Compact();
+
+  // Runs `body` inside one write transaction: either everything it does is
+  // committed, or (if it returns anything but kOk, or the commit fails)
+  // nothing is. DB methods called from `body` join the transaction.
+  DBStatus RunInTransaction(const std::function<DBStatus()>& body);
+
+  // Vault metadata (a single row). GetMeta() returns kNotFound for a vault
+  // that has not been initialized yet; CreateMeta() returns kAlreadyExists
+  // if it has; UpdateMeta() returns kNotFound if it has not.
+  std::expected<VaultMeta, DBStatus> GetMeta();
+  DBStatus CreateMeta(const VaultMeta& meta);
+  DBStatus UpdateMeta(const VaultMeta& meta);
 
  private:
   sqlite3* db_ = nullptr;
 
   bool CreateSchema();
+  DBStatus WriteMeta(std::string_view sql, const VaultMeta& meta);
   bool Execute(std::string_view sql);
+  // Returns the DBStatus matching the connection's last error.
+  [[nodiscard]] DBStatus LastStatus() const noexcept;
 };

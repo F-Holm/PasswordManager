@@ -7,6 +7,7 @@
 #include "types/account_size.h"
 
 struct AccountBinary {
+  std::array<std::byte, AccountSize::kUid> uid;
   std::array<std::byte, AccountSize::kDescription> description;
   std::array<std::byte, AccountSize::kData> data;
   std::array<std::byte, Crypto::Size::kIv> iv_description;

@@ -40,7 +40,21 @@ bool Crypto::Kdf(std::span<const std::byte> password,
       reinterpret_cast<uint8_t*>(kdf.data()), kdf.size());
 }
 
+bool Crypto::Kdf(std::span<const std::byte> password,
+                 std::span<const std::byte> salt, const KdfParams& params,
+                 std::span<std::byte> kdf) {
+  return argon2id_hash_params(
+      reinterpret_cast<const uint8_t*>(password.data()), password.size(),
+      reinterpret_cast<const uint8_t*>(salt.data()), salt.size(),
+      params.memory_kib, params.iterations, params.parallelism,
+      reinterpret_cast<uint8_t*>(kdf.data()), kdf.size());
+}
+
 bool Crypto::SecureClear(std::span<std::byte> buffer) {
   return secure_set_zero(reinterpret_cast<uint8_t*>(buffer.data()),
                          buffer.size());
+}
+
+bool Crypto::RandomBytes(std::span<std::byte> buffer) {
+  return random_bytes(reinterpret_cast<uint8_t*>(buffer.data()), buffer.size());
 }

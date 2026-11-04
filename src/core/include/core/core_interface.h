@@ -1,83 +1,194 @@
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-
-#include "types/account_size.h"
+/* NOLINTBEGIN(modernize-deprecated-headers,modernize-use-using) */
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+/* NOLINTEND(modernize-deprecated-headers,modernize-use-using) */
 
 // Generic C ABI bridging Core to any host language with a C FFI (Rust, C,
-// C#, Swift, ...). Every function is exception-safe: a C++ exception raised
-// while servicing a call is caught internally and reported as a failure
-// return instead of unwinding across the ABI boundary, which callers on the
-// C side could not handle.
+// C#, Swift, ...). This header is valid C (C99 or later) and C++.
+//
+// Every function is exception-safe: a C++ exception raised while servicing a
+// call is caught internally and reported as a failure return instead of
+// unwinding across the ABI boundary, which callers on the C side could not
+// handle.
 //
 // CoreSession is opaque on purpose: callers only ever hold a pointer to it,
-// created by CoreOpen and destroyed by CoreClose.
+// created by CoreNew and destroyed by CoreFree.
+//
+// Every fallible function returns a CoreResult (kCoreOk on success); outputs
+// are written through pointer arguments and left untouched on failure.
+#ifdef __cplusplus
 extern "C" {
+#endif
 
-// Field capacities, in bytes, mirrored from AccountSize/Crypto::Size so
-// bindings can size their own buffers without depending on the C++ headers.
-extern const std::size_t kCoreDescriptionSize;
-extern const std::size_t kCoreEmailSize;
-extern const std::size_t kCoreUsernameSize;
-extern const std::size_t kCorePasswordSize;
-extern const std::size_t kCoreExtraSize;
-extern const std::size_t kCoreMasterKeySize;
+// This header must stay valid C, so it keeps typedef'd structs, C arrays and
+// plain enums that C++-only checks would rather see modernized.
+// NOLINTBEGIN(modernize-use-using,modernize-avoid-c-arrays,performance-enum-size)
 
-struct CoreSession;
+// Field capacities, in bytes, so bindings can size their own buffers without
+// depending on the C++ headers. core_interface.cc checks that they match
+// AccountSize.
+enum {
+  kCoreDescriptionSize = 128,
+  kCoreEmailSize = 256,
+  kCoreUsernameSize = 128,
+  kCorePasswordSize = 256,
+  kCoreExtraSize = 1024
+};
+
+// Result codes. Same values as CoreStatus in core/core_status.h.
+typedef int32_t CoreResult;
+enum {
+  kCoreOk = 0,
+  kCoreNotFound = 1,
+  kCoreConflict = 2,
+  kCoreBusy = 3,
+  kCoreLocked = 4,
+  kCoreWrongPassword = 5,
+  kCoreInvalidArgument = 6,
+  kCoreAlreadyExists = 7,
+  kCoreCorrupted = 8,
+  kCoreError = 9
+};
+
+typedef struct CoreSession CoreSession;
+
+// Argon2id cost parameters used to derive a new vault's master key:
+// memory in KiB (at least 8 per lane), passes and lanes (at least 1 each).
+typedef struct CoreKdfParams {
+  uint32_t memory_kib;
+  uint32_t iterations;
+  uint32_t parallelism;
+} CoreKdfParams;
+
+// The parameters CoreCreate uses when given NULL (64 MiB, 3 passes, 4 lanes).
+CoreKdfParams CoreDefaultKdfParams(void);
 
 // Flat, fixed-size plaintext account record used at the C boundary. Every
 // array is NUL-padded; unused trailing bytes are zero.
-struct CoreAccount {
-  char description[AccountSize::kDescription];
-  char email[AccountSize::kEmail];
-  char username[AccountSize::kUsername];
-  char password[AccountSize::kPassword];
-  char extra[AccountSize::kExtra];
-};
+typedef struct CoreAccount {
+  char description[kCoreDescriptionSize];
+  char email[kCoreEmailSize];
+  char username[kCoreUsernameSize];
+  char password[kCorePasswordSize];
+  char extra[kCoreExtraSize];
+} CoreAccount;
 
 // A single entry of the account index: its storage position plus its
 // decrypted description.
-struct CoreAccountEntry {
-  std::int64_t position;
-  char description[AccountSize::kDescription];
-};
+typedef struct CoreAccountEntry {
+  int64_t position;
+  char description[kCoreDescriptionSize];
+} CoreAccountEntry;
 
-// Opens the vault database at `db_path` (a NUL-terminated path) using an
-// already-derived master key of exactly kCoreMasterKeySize bytes. Returns a
-// new session on success, or nullptr on failure (invalid key size, or the
-// database could not be opened).
-CoreSession* CoreOpen(const char* db_path, const std::uint8_t* master_key,
-                      std::size_t master_key_size);
-// Closes and frees `session`, wiping every secret it held. `session` may be
-// nullptr, in which case this is a no-op.
+// What CoreGeneratePassword may put in a password (see PasswordOptions in
+// core/password_generator.h). `length` is 1 to kCoreMaxGeneratedPasswordLength.
+typedef struct CorePasswordOptions {
+  size_t length;
+  bool numbers;
+  bool upper;
+  bool lower;
+  bool symbols;
+  bool exclude_ambiguous;
+} CorePasswordOptions;
+
+enum { kCoreMaxGeneratedPasswordLength = kCorePasswordSize - 1 };
+
+// Writes a random password plus a terminating NUL into the `out_size` bytes
+// at `out`, with at least one character of every enabled class. Needs no
+// session. kCoreInvalidArgument (with `out` zeroed when it is not NULL) if
+// the options are unusable or `out` is too small.
+CoreResult CoreGeneratePassword(const CorePasswordOptions* options, char* out,
+                                size_t out_size);
+
+// Stable, human-readable, NUL-terminated name of `result` (e.g. "busy").
+// Never returns NULL.
+const char* CoreResultName(CoreResult result);
+
+// Creates an empty session with no vault open. Returns NULL only if memory
+// is exhausted.
+CoreSession* CoreNew(void);
+// Closes any open vault, wipes every secret the session held and frees it.
+// `session` may be NULL.
+void CoreFree(CoreSession* session);
+
+// Creates a new vault at `db_path` (a NUL-terminated path) protected by the
+// `password_size` bytes at `password` (not necessarily NUL-terminated) and
+// leaves it open in `session`. `kdf_params` may be NULL to use
+// CoreDefaultKdfParams(). Replaces any vault already open in `session`.
+//
+// kCoreAlreadyExists if `db_path` already holds a vault; kCoreInvalidArgument
+// if the password is empty or the parameters are invalid.
+CoreResult CoreCreate(CoreSession* session, const char* db_path,
+                      const char* password, size_t password_size,
+                      const CoreKdfParams* kdf_params);
+// Opens the existing vault at `db_path` with the master password. Replaces
+// any vault already open in `session`.
+//
+// kCoreNotFound if there is no vault at `db_path`; kCoreWrongPassword if the
+// password does not open it.
+CoreResult CoreUnlock(CoreSession* session, const char* db_path,
+                      const char* password, size_t password_size);
+// Replaces the master password of the vault open in `session` (see
+// Core::ChangeMasterPassword). `kdf_params` may be NULL to keep the vault's
+// current parameters. On failure the vault is left exactly as it was.
+//
+// kCoreWrongPassword if `current_password` is wrong; kCoreInvalidArgument if
+// the new password is empty or the parameters are invalid.
+CoreResult CoreChangeMasterPassword(CoreSession* session,
+                                    const char* current_password,
+                                    size_t current_password_size,
+                                    const char* new_password,
+                                    size_t new_password_size,
+                                    const CoreKdfParams* kdf_params);
+// Closes the vault and wipes the master key and every cached plaintext; the
+// session can be reused. `session` may be NULL.
 void CoreClose(CoreSession* session);
 bool CoreIsOpen(const CoreSession* session);
 
 // Encrypts and appends `account` as a new entry.
-bool CoreAddAccount(CoreSession* session, const CoreAccount* account);
+CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account);
 // Encrypts and overwrites the account at `position`.
-bool CoreEditAccount(CoreSession* session, std::int64_t position,
-                     const CoreAccount* account);
+CoreResult CoreEditAccount(CoreSession* session, int64_t position,
+                           const CoreAccount* account);
 // Deletes the account at `position`, shifting later positions down.
-bool CoreRemoveAccount(CoreSession* session, std::int64_t position);
+CoreResult CoreRemoveAccount(CoreSession* session, int64_t position);
 // Moves the account at `from_position` to `to_position`.
-bool CoreReorderAccount(CoreSession* session, std::int64_t from_position,
-                        std::int64_t to_position);
+CoreResult CoreReorderAccount(CoreSession* session, int64_t from_position,
+                              int64_t to_position);
 
-// Reloads the full account index and returns its entry count. Individual
-// entries are then read with CoreGetIndexEntry.
-std::size_t CoreLoadIndex(CoreSession* session);
-// Copies the `list_index`-th (0-based) cached index entry into *out_entry.
-// Returns false if `list_index` is out of range.
-bool CoreGetIndexEntry(const CoreSession* session, std::size_t list_index,
-                       CoreAccountEntry* out_entry);
+// Reloads the full account index and writes its entry count to *out_count.
+// Individual entries are then read with CoreGetIndexEntry.
+CoreResult CoreLoadIndex(CoreSession* session, size_t* out_count);
+// Copies the `list_index`-th (0-based) loaded index entry into *out_entry.
+// kCoreNotFound if `list_index` is out of range.
+CoreResult CoreGetIndexEntry(const CoreSession* session, size_t list_index,
+                             CoreAccountEntry* out_entry);
 void CoreClearIndex(CoreSession* session);
+// Finds the loaded index entries whose description contains the
+// `query_size` bytes at `query`, ignoring ASCII case (an empty query matches
+// everything). Writes the total number of matches to *out_count and the
+// first min(*out_count, capacity) matching list indices (as accepted by
+// CoreGetIndexEntry) to `out_indices`, which may be NULL if capacity is 0.
+CoreResult CoreSearchIndex(const CoreSession* session, const char* query,
+                           size_t query_size, size_t* out_indices,
+                           size_t capacity, size_t* out_count);
+
+// Writes the number of accounts in the vault to *out_count.
+CoreResult CoreCount(CoreSession* session, size_t* out_count);
+// Rebuilds the vault file to reclaim the space of deleted accounts.
+CoreResult CoreCompact(CoreSession* session);
 
 // Decrypts the account at `position` and copies it into *out_account,
 // replacing whatever account was previously loaded in this session.
-bool CoreGetAccount(CoreSession* session, std::int64_t position,
-                    CoreAccount* out_account);
+CoreResult CoreGetAccount(CoreSession* session, int64_t position,
+                          CoreAccount* out_account);
 void CoreClearAccount(CoreSession* session);
 
+// NOLINTEND(modernize-use-using,modernize-avoid-c-arrays,performance-enum-size)
+
+#ifdef __cplusplus
 }  // extern "C"
+#endif

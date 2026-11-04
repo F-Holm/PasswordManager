@@ -108,3 +108,20 @@ TEST(AccountIndexTest, DestructorImplicitlyClearsData) {
 }
 
 }  // namespace
+
+TEST(AccountIndexTest, ConstructorCopiesUid) {
+  AccountBinary binary;
+  binary.uid.fill(std::byte{0x5A});
+
+  const AccountIndex index(binary, 3);
+  EXPECT_EQ(index.uid, binary.uid);
+}
+
+TEST(AccountIndexTest, SetZeroClearsUid) {
+  AccountBinary binary;
+  binary.uid.fill(std::byte{0x5A});
+
+  AccountIndex index(binary);
+  index.SetZero();
+  EXPECT_EQ(index.uid, decltype(index.uid){});
+}

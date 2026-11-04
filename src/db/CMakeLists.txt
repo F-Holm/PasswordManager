@@ -1,6 +1,8 @@
 add_library(db STATIC
     src/db.cc
+    src/db_status.cc
     src/statement.cc
+    src/transaction.cc
 )
 
 target_include_directories(db PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")

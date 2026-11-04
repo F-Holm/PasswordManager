@@ -3,16 +3,19 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <optional>
 #include <span>
 #include <string_view>
 #include <vector>
 
+#include "core/core_status.h"
 #include "crypto/crypto.h"
 #include "db/db.h"
 #include "types/account_binary.h"
 #include "types/account_index.h"
 #include "types/account_size.h"
+#include "types/vault_meta.h"
 
 // Plaintext view of an account, as exchanged with callers of Core. Every
 // field is a fixed-capacity, NUL-padded buffer sized to match AccountSize,
@@ -69,55 +72,111 @@ class Core {
   Core(Core&&) = delete;
   Core& operator=(Core&&) = delete;
 
-  // Opens the vault database at `db_path` using an already-derived
-  // `master_key` (e.g. via Crypto::Kdf). Replaces any previously open vault.
-  bool Open(std::string_view db_path,
-            const std::array<std::byte, Crypto::Size::kKey>& master_key);
+  // Creates a new vault at `db_path` protected by `master_password` and
+  // leaves it unlocked. A random salt is generated and the master key is
+  // derived from the password with Argon2id using `kdf_params`, which are
+  // stored in the vault. Replaces any previously open vault.
+  //
+  // kAlreadyExists if `db_path` already holds a vault (or accounts);
+  // kInvalidArgument if the password is empty or `kdf_params` are invalid.
+  CoreStatus Create(
+      std::string_view db_path, std::string_view master_password,
+      const Crypto::KdfParams& kdf_params = Crypto::kDefaultKdfParams);
+  // Unlocks the existing vault at `db_path` with `master_password`.
+  // Replaces any previously open vault.
+  //
+  // kNotFound if there is no vault at `db_path`; kWrongPassword if the
+  // password does not open it; kCorrupted if its metadata is unusable.
+  CoreStatus Unlock(std::string_view db_path, std::string_view master_password);
+  // Replaces the master password of the open vault. `current_password` must
+  // open the vault. Every account is re-encrypted under a key derived from
+  // `new_password` with a fresh salt, using `kdf_params` (or the vault's
+  // current parameters if not given), and the key epoch is bumped; all of it
+  // in one transaction, so on any failure the vault is left exactly as it
+  // was and the session keeps the old key.
+  //
+  // kWrongPassword if `current_password` is wrong; kInvalidArgument if
+  // `new_password` is empty or `kdf_params` are invalid; kCorrupted if some
+  // account cannot be decrypted (nothing is changed then either).
+  CoreStatus ChangeMasterPassword(
+      std::string_view current_password, std::string_view new_password,
+      const std::optional<Crypto::KdfParams>& kdf_params = std::nullopt);
   // Closes the vault, wipes the master key and every cached plaintext.
   void Close() noexcept;
   [[nodiscard]] bool IsOpen() const noexcept;
 
+  // Every operation below returns kLocked if no vault is open.
+
   // Encrypts and appends `account` as a new entry. Invalidates the cached
   // index.
-  bool AddAccount(const AccountPlain& account);
-  // Encrypts and overwrites the account at `position`. Invalidates the
-  // cached index, and clears the loaded account if it was `position`.
-  bool EditAccount(std::int64_t position, const AccountPlain& account);
+  CoreStatus AddAccount(const AccountPlain& account);
+  // Encrypts and overwrites the account at `position` (kNotFound if there is
+  // none). Invalidates the cached index, and clears the loaded account if it
+  // was `position`.
+  CoreStatus EditAccount(std::int64_t position, const AccountPlain& account);
   // Deletes the account at `position`, shifting later positions down.
   // Invalidates the cached index and the loaded account.
-  bool RemoveAccount(std::int64_t position);
+  CoreStatus RemoveAccount(std::int64_t position);
   // Moves the account at `from_position` to `to_position`, shifting the
   // accounts in between. Invalidates the cached index and the loaded
   // account.
-  bool ReorderAccount(std::int64_t from_position, std::int64_t to_position);
+  CoreStatus ReorderAccount(std::int64_t from_position,
+                            std::int64_t to_position);
 
-  // Reloads and decrypts every index entry from the vault, caches it and
-  // returns a reference to the cache. The reference is invalidated by the
-  // next call to GetAllIndex or ClearIndex.
-  const std::vector<AccountEntry>& GetAllIndex();
-  // Returns the index cache as it stands, without refreshing it from the
-  // vault. Useful to read entries back after a prior GetAllIndex() call.
-  [[nodiscard]] const std::vector<AccountEntry>& IndexCache() const noexcept;
+  // Reloads and decrypts every index entry from the vault into the cache
+  // returned by Index(). Entries that fail authentication are left out.
+  CoreStatus LoadIndex();
+  // The index as loaded by the last LoadIndex() call. The reference stays
+  // valid for the lifetime of the Core; its contents are replaced by the
+  // next LoadIndex() and cleared by ClearIndex() and by any mutation.
+  [[nodiscard]] const std::vector<AccountEntry>& Index() const noexcept;
   void ClearIndex() noexcept;
+  // Positions within Index() (0-based, ascending) of the entries whose
+  // description contains `query`, ignoring ASCII case. An empty query
+  // matches every entry. Works on the loaded index; call LoadIndex() first.
+  [[nodiscard]] std::vector<std::size_t> SearchIndex(
+      std::string_view query) const;
+
+  // Number of accounts in the vault (without decrypting anything).
+  std::expected<std::size_t, CoreStatus> Count();
+  // Rebuilds the vault file to reclaim the space of deleted accounts.
+  CoreStatus Compact();
 
   // Decrypts the account at `position`, replacing whatever account was
-  // previously loaded, and returns a pointer to it (nullptr on failure).
-  // The pointer is invalidated by the next call to GetAccount or
-  // ClearAccount, or by any mutating operation.
-  const AccountPlain* GetAccount(std::int64_t position);
+  // previously loaded, and returns a pointer to it. The pointer is
+  // invalidated by the next call to GetAccount or ClearAccount, or by any
+  // mutating operation. kCorrupted if the stored data fails authentication.
+  std::expected<const AccountPlain*, CoreStatus> GetAccount(
+      std::int64_t position);
   [[nodiscard]] const AccountPlain* CurrentAccount() const noexcept;
   void ClearAccount() noexcept;
 
  private:
+  using Key = std::array<std::byte, Crypto::Size::kKey>;
+
   DB db_;
-  std::array<std::byte, Crypto::Size::kKey> master_key_{};
+  Key master_key_{};
   bool has_key_ = false;
+  std::int64_t key_epoch_ = 0;
 
   std::vector<AccountEntry> index_;
   std::optional<AccountPlain> loaded_account_;
   std::int64_t loaded_position_ = -1;
 
-  bool Encode(const AccountPlain& account, AccountBinary& out) const;
-  bool Decode(AccountBinary& binary, AccountPlain& out) const;
+  // Derives the key for `meta` from `password` into `key`.
+  static bool DeriveKey(std::string_view password, const VaultMeta& meta,
+                        Key& key);
+  // Fills meta.verifier* by encrypting the known verifier block with `key`.
+  static bool SealVerifier(const Key& key, VaultMeta& meta);
+  // True if `key` decrypts and authenticates meta.verifier.
+  static bool CheckVerifier(const Key& key, const VaultMeta& meta);
+
+  // Encrypts `account` with `key` into `out` under `uid` (the account's
+  // stable random identifier, generated once by AddAccount).
+  static bool Encode(const Key& key, const AccountPlain& account,
+                     const std::array<std::byte, AccountSize::kUid>& uid,
+                     AccountBinary& out);
+  // Decrypts `binary` in place with `key` and copies it into `out`.
+  static bool Decode(const Key& key, AccountBinary& binary, AccountPlain& out);
   bool DecodeDescription(AccountIndex& index, AccountEntry& out) const;
 };

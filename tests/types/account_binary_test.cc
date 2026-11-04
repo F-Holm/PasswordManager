@@ -16,6 +16,7 @@ bool IsBufferZeroed(const std::byte* data, size_t size) {
 TEST(AccountBinaryTest, SetZeroClearsAllFields) {
   AccountBinary account;
 
+  std::memset(account.uid.data(), 0x99, account.uid.size());
   std::memset(account.description.data(), 0xAA, account.description.size());
   std::memset(account.data.data(), 0xBB, account.data.size());
   std::memset(account.iv_description.data(), 0xCC,
@@ -27,6 +28,7 @@ TEST(AccountBinaryTest, SetZeroClearsAllFields) {
 
   account.SetZero();
 
+  EXPECT_TRUE(IsBufferZeroed(account.uid.data(), account.uid.size()));
   EXPECT_TRUE(
       IsBufferZeroed(account.description.data(), account.description.size()));
   EXPECT_TRUE(IsBufferZeroed(account.data.data(), account.data.size()));

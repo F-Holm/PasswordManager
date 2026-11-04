@@ -7,13 +7,17 @@
 #include <cstring>
 #include <string>
 
+#include "crypto/crypto.h"
+#include "types/account_size.h"
+
+extern "C" int CoreCHeaderSmokeTest(void);
+
 namespace {
 
-std::array<std::uint8_t, 32> MakeKey(std::uint8_t marker) {
-  std::array<std::uint8_t, 32> key{};
-  key.fill(marker);
-  return key;
-}
+constexpr char kPassword[] = "correct horse battery staple";
+constexpr std::size_t kPasswordSize = sizeof(kPassword) - 1;
+constexpr CoreKdfParams kTestKdf{
+    .memory_kib = 8, .iterations = 1, .parallelism = 1};
 
 CoreAccount MakeAccount(const char* description, const char* email,
                         const char* username, const char* password,
@@ -36,169 +40,327 @@ class CoreInterfaceTest : public ::testing::Test {
       std::string("core_interface_test_") +
       ::testing::UnitTest::GetInstance()->current_test_info()->name() +
       ".sqlite3";
-  const std::array<std::uint8_t, 32> key = MakeKey(0x42);
+  CoreSession* session = nullptr;
 
   void SetUp() override {
     std::remove(test_file.c_str());
+    session = CoreNew();
+    ASSERT_NE(session, nullptr);
   }
 
   void TearDown() override {
+    CoreFree(session);
     std::remove(test_file.c_str());
+  }
+
+  CoreResult Open() const {
+    return CoreCreate(session, test_file.c_str(), kPassword, kPasswordSize,
+                      &kTestKdf);
   }
 };
 
 TEST_F(CoreInterfaceTest, FieldSizesMatchAccountLayout) {
-  EXPECT_EQ(kCoreMasterKeySize, 32u);
-  EXPECT_GT(kCoreDescriptionSize, 0u);
-  EXPECT_GT(kCoreEmailSize, 0u);
-  EXPECT_GT(kCoreUsernameSize, 0u);
-  EXPECT_GT(kCorePasswordSize, 0u);
-  EXPECT_GT(kCoreExtraSize, 0u);
+  EXPECT_EQ(sizeof(CoreAccount::description), AccountSize::kDescription);
+  EXPECT_EQ(sizeof(CoreAccount::email), AccountSize::kEmail);
+  EXPECT_EQ(sizeof(CoreAccount::username), AccountSize::kUsername);
+  EXPECT_EQ(sizeof(CoreAccount::password), AccountSize::kPassword);
+  EXPECT_EQ(sizeof(CoreAccount::extra), AccountSize::kExtra);
 }
 
-TEST_F(CoreInterfaceTest, OpenRejectsWrongKeySize) {
-  const std::array<std::uint8_t, 4> short_key{1, 2, 3, 4};
-  CoreSession* session =
-      CoreOpen(test_file.c_str(), short_key.data(), short_key.size());
-  EXPECT_EQ(session, nullptr);
+TEST_F(CoreInterfaceTest, HeaderCompilesAndWorksFromC) {
+  EXPECT_EQ(CoreCHeaderSmokeTest(), 0);
 }
 
-TEST_F(CoreInterfaceTest, OpenRejectsNullArguments) {
-  EXPECT_EQ(CoreOpen(nullptr, key.data(), key.size()), nullptr);
-  EXPECT_EQ(CoreOpen(test_file.c_str(), nullptr, key.size()), nullptr);
+TEST_F(CoreInterfaceTest, ResultNames) {
+  EXPECT_STREQ(CoreResultName(kCoreOk), "ok");
+  EXPECT_STREQ(CoreResultName(kCoreBusy), "busy");
+  EXPECT_STREQ(CoreResultName(kCoreCorrupted), "corrupted");
+  EXPECT_STREQ(CoreResultName(12345), "unknown");
+}
+
+TEST_F(CoreInterfaceTest, NewSessionIsNotOpen) {
+  EXPECT_FALSE(CoreIsOpen(session));
+}
+
+TEST_F(CoreInterfaceTest, DefaultKdfParamsMatchCore) {
+  const CoreKdfParams params = CoreDefaultKdfParams();
+  EXPECT_EQ(params.memory_kib, Crypto::kDefaultKdfParams.memory_kib);
+  EXPECT_EQ(params.iterations, Crypto::kDefaultKdfParams.iterations);
+  EXPECT_EQ(params.parallelism, Crypto::kDefaultKdfParams.parallelism);
+}
+
+TEST_F(CoreInterfaceTest, CreateAndUnlockRejectNullArguments) {
+  const char* path = test_file.c_str();
+  EXPECT_EQ(CoreCreate(nullptr, path, kPassword, kPasswordSize, &kTestKdf),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreCreate(session, nullptr, kPassword, kPasswordSize, &kTestKdf),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreCreate(session, path, nullptr, kPasswordSize, &kTestKdf),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreUnlock(nullptr, path, kPassword, kPasswordSize),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreUnlock(session, nullptr, kPassword, kPasswordSize),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreUnlock(session, path, nullptr, kPasswordSize),
+            kCoreInvalidArgument);
+}
+
+TEST_F(CoreInterfaceTest, CreateRejectsEmptyPasswordAndBadParams) {
+  EXPECT_EQ(CoreCreate(session, test_file.c_str(), kPassword, 0, &kTestKdf),
+            kCoreInvalidArgument);
+  const CoreKdfParams bad{.memory_kib = 1, .iterations = 1, .parallelism = 1};
+  EXPECT_EQ(
+      CoreCreate(session, test_file.c_str(), kPassword, kPasswordSize, &bad),
+      kCoreInvalidArgument);
+}
+
+TEST_F(CoreInterfaceTest, CreateFailsForUnreachablePath) {
+  EXPECT_EQ(CoreCreate(session, "/nonexistent_dir_xyz/vault.sqlite3", kPassword,
+                       kPasswordSize, &kTestKdf),
+            kCoreError);
+}
+
+TEST_F(CoreInterfaceTest, CreateTwiceReportsAlreadyExists) {
+  ASSERT_EQ(Open(), kCoreOk);
+  EXPECT_EQ(Open(), kCoreAlreadyExists);
+}
+
+TEST_F(CoreInterfaceTest, UnlockChecksThePassword) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount account = MakeAccount("d", "e", "u", "s3cr3t", "x");
+  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
+  CoreClose(session);
+
+  EXPECT_EQ(CoreUnlock(session, test_file.c_str(), "nope", 4),
+            kCoreWrongPassword);
+  EXPECT_FALSE(CoreIsOpen(session));
+
+  // The password does not need to be NUL-terminated.
+  const std::string padded = std::string(kPassword) + "trailing garbage";
+  ASSERT_EQ(
+      CoreUnlock(session, test_file.c_str(), padded.data(), kPasswordSize),
+      kCoreOk);
+  CoreAccount fetched{};
+  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  EXPECT_STREQ(fetched.password, "s3cr3t");
+}
+
+TEST_F(CoreInterfaceTest, UnlockMissingVaultReportsNotFound) {
+  EXPECT_EQ(CoreUnlock(session, test_file.c_str(), kPassword, kPasswordSize),
+            kCoreNotFound);
 }
 
 TEST_F(CoreInterfaceTest, OpenAndCloseRoundTrip) {
-  CoreSession* session = CoreOpen(test_file.c_str(), key.data(), key.size());
-  ASSERT_NE(session, nullptr);
+  ASSERT_EQ(Open(), kCoreOk);
   EXPECT_TRUE(CoreIsOpen(session));
 
   CoreClose(session);
-}
+  EXPECT_FALSE(CoreIsOpen(session));
 
-TEST_F(CoreInterfaceTest, CloseAcceptsNullptr) {
-  CoreClose(nullptr);
+  // The session can be reused after closing.
+  ASSERT_EQ(CoreUnlock(session, test_file.c_str(), kPassword, kPasswordSize),
+            kCoreOk);
+  EXPECT_TRUE(CoreIsOpen(session));
 }
 
 TEST_F(CoreInterfaceTest, NullSessionCallsFailSafely) {
+  CoreFree(nullptr);
+  CoreClose(nullptr);
   EXPECT_FALSE(CoreIsOpen(nullptr));
   const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
-  EXPECT_FALSE(CoreAddAccount(nullptr, &account));
-  EXPECT_FALSE(CoreEditAccount(nullptr, 0, &account));
-  EXPECT_FALSE(CoreRemoveAccount(nullptr, 0));
-  EXPECT_FALSE(CoreReorderAccount(nullptr, 0, 1));
-  EXPECT_EQ(CoreLoadIndex(nullptr), 0u);
+  EXPECT_EQ(CoreAddAccount(nullptr, &account), kCoreInvalidArgument);
+  EXPECT_EQ(CoreEditAccount(nullptr, 0, &account), kCoreInvalidArgument);
+  EXPECT_EQ(CoreRemoveAccount(nullptr, 0), kCoreInvalidArgument);
+  EXPECT_EQ(CoreReorderAccount(nullptr, 0, 1), kCoreInvalidArgument);
+  std::size_t count = 0;
+  EXPECT_EQ(CoreLoadIndex(nullptr, &count), kCoreInvalidArgument);
   CoreAccountEntry entry{};
-  EXPECT_FALSE(CoreGetIndexEntry(nullptr, 0, &entry));
+  EXPECT_EQ(CoreGetIndexEntry(nullptr, 0, &entry), kCoreInvalidArgument);
   CoreAccount out{};
-  EXPECT_FALSE(CoreGetAccount(nullptr, 0, &out));
+  EXPECT_EQ(CoreGetAccount(nullptr, 0, &out), kCoreInvalidArgument);
   CoreClearIndex(nullptr);
   CoreClearAccount(nullptr);
 }
 
+TEST_F(CoreInterfaceTest, NullOutputPointersAreRejected) {
+  ASSERT_EQ(Open(), kCoreOk);
+  EXPECT_EQ(CoreAddAccount(session, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreEditAccount(session, 0, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreLoadIndex(session, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreGetIndexEntry(session, 0, nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreGetAccount(session, 0, nullptr), kCoreInvalidArgument);
+}
+
+TEST_F(CoreInterfaceTest, OperationsReportLockedWhenNotOpen) {
+  const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
+  EXPECT_EQ(CoreAddAccount(session, &account), kCoreLocked);
+  std::size_t count = 0;
+  EXPECT_EQ(CoreLoadIndex(session, &count), kCoreLocked);
+  CoreAccount out{};
+  EXPECT_EQ(CoreGetAccount(session, 0, &out), kCoreLocked);
+}
+
 TEST_F(CoreInterfaceTest, AddAndGetAccountRoundTrip) {
-  CoreSession* session = CoreOpen(test_file.c_str(), key.data(), key.size());
-  ASSERT_NE(session, nullptr);
+  ASSERT_EQ(Open(), kCoreOk);
 
   const CoreAccount account =
       MakeAccount("My Bank", "me@example.com", "me", "s3cr3t", "notes");
-  ASSERT_TRUE(CoreAddAccount(session, &account));
+  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
 
   CoreAccount fetched{};
-  ASSERT_TRUE(CoreGetAccount(session, 0, &fetched));
+  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
   EXPECT_STREQ(fetched.description, "My Bank");
+  EXPECT_STREQ(fetched.email, "me@example.com");
+  EXPECT_STREQ(fetched.username, "me");
   EXPECT_STREQ(fetched.password, "s3cr3t");
-
-  CoreClose(session);
+  EXPECT_STREQ(fetched.extra, "notes");
 }
 
-TEST_F(CoreInterfaceTest, GetAccountFailsForMissingPosition) {
-  CoreSession* session = CoreOpen(test_file.c_str(), key.data(), key.size());
-  ASSERT_NE(session, nullptr);
+TEST_F(CoreInterfaceTest, GetAccountReportsNotFoundForMissingPosition) {
+  ASSERT_EQ(Open(), kCoreOk);
 
   CoreAccount fetched{};
-  EXPECT_FALSE(CoreGetAccount(session, 0, &fetched));
-
-  CoreClose(session);
+  EXPECT_EQ(CoreGetAccount(session, 0, &fetched), kCoreNotFound);
 }
 
 TEST_F(CoreInterfaceTest, EditAndRemoveAccount) {
-  CoreSession* session = CoreOpen(test_file.c_str(), key.data(), key.size());
-  ASSERT_NE(session, nullptr);
+  ASSERT_EQ(Open(), kCoreOk);
 
   const CoreAccount original = MakeAccount("old", "e", "u", "p", "x");
-  ASSERT_TRUE(CoreAddAccount(session, &original));
+  ASSERT_EQ(CoreAddAccount(session, &original), kCoreOk);
 
   const CoreAccount edited = MakeAccount("new", "e", "u", "p", "x");
-  ASSERT_TRUE(CoreEditAccount(session, 0, &edited));
+  ASSERT_EQ(CoreEditAccount(session, 0, &edited), kCoreOk);
 
   CoreAccount fetched{};
-  ASSERT_TRUE(CoreGetAccount(session, 0, &fetched));
+  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
   EXPECT_STREQ(fetched.description, "new");
 
-  ASSERT_TRUE(CoreRemoveAccount(session, 0));
-  EXPECT_FALSE(CoreGetAccount(session, 0, &fetched));
-
-  CoreClose(session);
+  ASSERT_EQ(CoreRemoveAccount(session, 0), kCoreOk);
+  EXPECT_EQ(CoreGetAccount(session, 0, &fetched), kCoreNotFound);
+  EXPECT_EQ(CoreRemoveAccount(session, 0), kCoreNotFound);
 }
 
 TEST_F(CoreInterfaceTest, ReorderAccounts) {
-  CoreSession* session = CoreOpen(test_file.c_str(), key.data(), key.size());
-  ASSERT_NE(session, nullptr);
+  ASSERT_EQ(Open(), kCoreOk);
 
   const CoreAccount a = MakeAccount("a", "e", "u", "p", "x");
   const CoreAccount b = MakeAccount("b", "e", "u", "p", "x");
-  ASSERT_TRUE(CoreAddAccount(session, &a));
-  ASSERT_TRUE(CoreAddAccount(session, &b));
+  ASSERT_EQ(CoreAddAccount(session, &a), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &b), kCoreOk);
 
-  ASSERT_TRUE(CoreReorderAccount(session, 0, 1));
+  ASSERT_EQ(CoreReorderAccount(session, 0, 1), kCoreOk);
+  EXPECT_EQ(CoreReorderAccount(session, 0, 7), kCoreNotFound);
 
   CoreAccount fetched{};
-  ASSERT_TRUE(CoreGetAccount(session, 0, &fetched));
+  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
   EXPECT_STREQ(fetched.description, "b");
-
-  CoreClose(session);
 }
 
 TEST_F(CoreInterfaceTest, LoadIndexAndReadEntries) {
-  CoreSession* session = CoreOpen(test_file.c_str(), key.data(), key.size());
-  ASSERT_NE(session, nullptr);
+  ASSERT_EQ(Open(), kCoreOk);
 
   const CoreAccount alpha = MakeAccount("alpha", "e", "u", "p", "x");
   const CoreAccount beta = MakeAccount("beta", "e", "u", "p", "x");
-  ASSERT_TRUE(CoreAddAccount(session, &alpha));
-  ASSERT_TRUE(CoreAddAccount(session, &beta));
+  ASSERT_EQ(CoreAddAccount(session, &alpha), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &beta), kCoreOk);
 
-  EXPECT_EQ(CoreLoadIndex(session), 2u);
+  std::size_t count = 0;
+  ASSERT_EQ(CoreLoadIndex(session, &count), kCoreOk);
+  EXPECT_EQ(count, 2u);
 
   CoreAccountEntry entry{};
-  ASSERT_TRUE(CoreGetIndexEntry(session, 0, &entry));
+  ASSERT_EQ(CoreGetIndexEntry(session, 0, &entry), kCoreOk);
   EXPECT_EQ(entry.position, 0);
   EXPECT_STREQ(entry.description, "alpha");
 
-  ASSERT_TRUE(CoreGetIndexEntry(session, 1, &entry));
+  ASSERT_EQ(CoreGetIndexEntry(session, 1, &entry), kCoreOk);
   EXPECT_EQ(entry.position, 1);
   EXPECT_STREQ(entry.description, "beta");
 
-  EXPECT_FALSE(CoreGetIndexEntry(session, 2, &entry));
+  EXPECT_EQ(CoreGetIndexEntry(session, 2, &entry), kCoreNotFound);
 
   CoreClearIndex(session);
-  EXPECT_FALSE(CoreGetIndexEntry(session, 0, &entry));
-
-  CoreClose(session);
+  EXPECT_EQ(CoreGetIndexEntry(session, 0, &entry), kCoreNotFound);
 }
 
 TEST_F(CoreInterfaceTest, ClearAccountDropsLoadedAccount) {
-  CoreSession* session = CoreOpen(test_file.c_str(), key.data(), key.size());
-  ASSERT_NE(session, nullptr);
+  ASSERT_EQ(Open(), kCoreOk);
 
   const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
-  ASSERT_TRUE(CoreAddAccount(session, &account));
+  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
 
   CoreAccount fetched{};
-  ASSERT_TRUE(CoreGetAccount(session, 0, &fetched));
+  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
 
   CoreClearAccount(session);
+}
+
+TEST_F(CoreInterfaceTest, ChangeMasterPassword) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount account = MakeAccount("d", "e", "u", "s3cr3t", "x");
+  ASSERT_EQ(CoreAddAccount(session, &account), kCoreOk);
+
+  EXPECT_EQ(CoreChangeMasterPassword(session, "nope", 4, "new", 3, nullptr),
+            kCoreWrongPassword);
+  EXPECT_EQ(CoreChangeMasterPassword(session, kPassword, kPasswordSize, "new",
+                                     0, nullptr),
+            kCoreInvalidArgument);
+  ASSERT_EQ(CoreChangeMasterPassword(session, kPassword, kPasswordSize, "new",
+                                     3, &kTestKdf),
+            kCoreOk);
 
   CoreClose(session);
+  EXPECT_EQ(CoreUnlock(session, test_file.c_str(), kPassword, kPasswordSize),
+            kCoreWrongPassword);
+  ASSERT_EQ(CoreUnlock(session, test_file.c_str(), "new", 3), kCoreOk);
+  CoreAccount fetched{};
+  ASSERT_EQ(CoreGetAccount(session, 0, &fetched), kCoreOk);
+  EXPECT_STREQ(fetched.password, "s3cr3t");
+}
+
+TEST_F(CoreInterfaceTest, ChangeMasterPasswordRejectsNullArguments) {
+  ASSERT_EQ(Open(), kCoreOk);
+  EXPECT_EQ(CoreChangeMasterPassword(nullptr, "a", 1, "b", 1, nullptr),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreChangeMasterPassword(session, nullptr, 1, "b", 1, nullptr),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreChangeMasterPassword(session, "a", 1, nullptr, 1, nullptr),
+            kCoreInvalidArgument);
+}
+
+TEST_F(CoreInterfaceTest, SearchCountAndCompact) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount bank = MakeAccount("My Bank", "e", "u", "p", "x");
+  const CoreAccount mail = MakeAccount("Email", "e", "u", "p", "x");
+  const CoreAccount old_bank = MakeAccount("bank (old)", "e", "u", "p", "x");
+  ASSERT_EQ(CoreAddAccount(session, &bank), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &mail), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &old_bank), kCoreOk);
+
+  std::size_t count = 0;
+  ASSERT_EQ(CoreCount(session, &count), kCoreOk);
+  EXPECT_EQ(count, 3u);
+  ASSERT_EQ(CoreLoadIndex(session, &count), kCoreOk);
+
+  std::array<std::size_t, 1> indices{};
+  ASSERT_EQ(CoreSearchIndex(session, "BANK", 4, indices.data(), indices.size(),
+                            &count),
+            kCoreOk);
+  EXPECT_EQ(count, 2u);  // Total matches, even though only one fits.
+  EXPECT_EQ(indices[0], 0u);
+
+  ASSERT_EQ(CoreSearchIndex(session, nullptr, 0, nullptr, 0, &count), kCoreOk);
+  EXPECT_EQ(count, 3u);
+
+  EXPECT_EQ(CoreSearchIndex(session, nullptr, 1, nullptr, 0, &count),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreSearchIndex(session, "a", 1, nullptr, 1, &count),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreSearchIndex(session, "a", 1, nullptr, 0, nullptr),
+            kCoreInvalidArgument);
+
+  EXPECT_EQ(CoreCompact(session), kCoreOk);
+  EXPECT_EQ(CoreCompact(nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreCount(session, nullptr), kCoreInvalidArgument);
 }

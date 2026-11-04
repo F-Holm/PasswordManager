@@ -10,6 +10,7 @@
 
 struct AccountIndex {
   std::int64_t position;
+  std::array<std::byte, AccountSize::kUid> uid;
   std::array<std::byte, AccountSize::kDescription> description;
   std::array<std::byte, Crypto::Size::kIv> iv_description;
   std::array<std::byte, Crypto::Size::kTag> tag_description;
