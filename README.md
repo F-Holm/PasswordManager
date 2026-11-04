@@ -64,8 +64,8 @@ just build-install
 | `just sanitize <group>` | Configures, builds and tests a sanitizer group (`asan` or `tsan`) in its own `build/debug-<group>` directory. |
 | `just sanitize-all` | Runs every sanitizer group supported by the platform, one build after another. |
 | `just format` | Formats both C++ and Rust source code. |
-| `just format-cpp` | Runs `clang-format` on `core` and `tests` directories. |
-| `just format-rust` | Runs `cargo fmt` inside the `crypto` directory. |
+| `just format-cpp` | Runs `clang-format` on the `src` and `tests` directories. |
+| `just format-rust` | Runs `cargo fmt` inside every `src/rust_*` crate. |
 | `just docs` | Generates HTML documentation via **Doxygen** (includes Graphviz support if found). |
 
 ---
