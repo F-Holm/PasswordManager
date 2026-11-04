@@ -170,7 +170,7 @@ bool Core::AddAccount(const AccountPlain& account) {
     return false;
   }
 
-  if (!db_.AddAccount(binary)) {
+  if (db_.AddAccount(binary) != DBStatus::kOk) {
     return false;
   }
 
@@ -188,7 +188,7 @@ bool Core::EditAccount(std::int64_t position, const AccountPlain& account) {
     return false;
   }
 
-  if (!db_.UpdateAccount(position, binary)) {
+  if (db_.UpdateAccount(position, binary) != DBStatus::kOk) {
     return false;
   }
 
@@ -204,7 +204,7 @@ bool Core::RemoveAccount(std::int64_t position) {
     return false;
   }
 
-  if (!db_.DeleteAccount(position)) {
+  if (db_.DeleteAccount(position) != DBStatus::kOk) {
     return false;
   }
 
@@ -219,7 +219,7 @@ bool Core::ReorderAccount(std::int64_t from_position,
     return false;
   }
 
-  if (!db_.MoveAccount(from_position, to_position)) {
+  if (db_.MoveAccount(from_position, to_position) != DBStatus::kOk) {
     return false;
   }
 
@@ -234,9 +234,12 @@ const std::vector<AccountEntry>& Core::GetAllIndex() {
     return index_;
   }
 
-  std::vector<AccountIndex> raw = db_.GetAllIndex();
-  index_.reserve(raw.size());
-  for (AccountIndex& entry : raw) {
+  auto raw = db_.GetAllIndex();
+  if (!raw.has_value()) {
+    return index_;
+  }
+  index_.reserve(raw->size());
+  for (AccountIndex& entry : *raw) {
     AccountEntry decoded;
     if (DecodeDescription(entry, decoded)) {
       index_.push_back(decoded);
@@ -259,7 +262,7 @@ const AccountPlain* Core::GetAccount(std::int64_t position) {
     return nullptr;
   }
 
-  std::optional<AccountBinary> binary = db_.GetAccount(position);
+  auto binary = db_.GetAccount(position);
   if (!binary.has_value()) {
     return nullptr;
   }

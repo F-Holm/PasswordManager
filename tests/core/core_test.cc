@@ -343,12 +343,12 @@ TEST_F(CoreTest, EditingDrawsFreshIvs) {
 
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  const std::optional<AccountBinary> before = db.GetAccount(0);
+  const auto before = db.GetAccount(0);
   ASSERT_TRUE(before.has_value());
 
   // Re-encrypting identical plaintext must not reuse the (key, IV) pair.
   ASSERT_TRUE(core.EditAccount(0, account));
-  const std::optional<AccountBinary> after = db.GetAccount(0);
+  const auto after = db.GetAccount(0);
   ASSERT_TRUE(after.has_value());
   EXPECT_NE(before->iv_description, after->iv_description);
   EXPECT_NE(before->iv_data, after->iv_data);

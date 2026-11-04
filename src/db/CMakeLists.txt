@@ -1,5 +1,6 @@
 add_library(db STATIC
     src/db.cc
+    src/db_status.cc
     src/statement.cc
     src/transaction.cc
 )

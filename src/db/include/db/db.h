@@ -2,10 +2,11 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
+#include <expected>
 #include <string_view>
 #include <vector>
 
+#include "db/db_status.h"
 #include "types/account_binary.h"
 #include "types/account_index.h"
 
@@ -32,18 +33,20 @@ class DB {
   // database is not open or `milliseconds` is negative.
   bool SetBusyTimeout(int milliseconds);
 
-  bool AddAccount(const AccountBinary& account);
-  std::optional<AccountBinary> GetAccount(std::int64_t position);
-  bool UpdateAccount(std::int64_t position, const AccountBinary& account);
-  bool DeleteAccount(std::int64_t position);
-  bool MoveAccount(std::int64_t from_position, std::int64_t to_position);
-  std::vector<AccountIndex> GetAllIndex();
-  std::size_t Count();
-  bool Compact();
+  DBStatus AddAccount(const AccountBinary& account);
+  std::expected<AccountBinary, DBStatus> GetAccount(std::int64_t position);
+  DBStatus UpdateAccount(std::int64_t position, const AccountBinary& account);
+  DBStatus DeleteAccount(std::int64_t position);
+  DBStatus MoveAccount(std::int64_t from_position, std::int64_t to_position);
+  std::expected<std::vector<AccountIndex>, DBStatus> GetAllIndex();
+  std::expected<std::size_t, DBStatus> Count();
+  DBStatus Compact();
 
  private:
   sqlite3* db_ = nullptr;
 
   bool CreateSchema();
   bool Execute(std::string_view sql);
+  // Returns the DBStatus matching the connection's last error.
+  [[nodiscard]] DBStatus LastStatus() const noexcept;
 };

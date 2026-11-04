@@ -50,7 +50,7 @@ TEST_F(DBTest, OpenCreatesEmptyDatabase) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
   EXPECT_TRUE(db.IsOpen());
-  EXPECT_EQ(db.Count(), 0u);
+  EXPECT_EQ(db.Count().value(), 0u);
 }
 
 TEST_F(DBTest, OpenFailsForUnreachablePath) {
@@ -76,14 +76,15 @@ TEST_F(DBTest, OperationsFailWhenDatabaseNotOpen) {
   DB db;
   ASSERT_FALSE(db.IsOpen());
 
-  EXPECT_FALSE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  EXPECT_FALSE(db.GetAccount(0).has_value());
-  EXPECT_FALSE(db.UpdateAccount(0, MakeAccount(std::byte{0x01})));
-  EXPECT_FALSE(db.DeleteAccount(0));
-  EXPECT_FALSE(db.MoveAccount(0, 1));
-  EXPECT_TRUE(db.GetAllIndex().empty());
-  EXPECT_EQ(db.Count(), 0u);
-  EXPECT_FALSE(db.Compact());
+  EXPECT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kClosed);
+  EXPECT_EQ(db.GetAccount(0).error(), DBStatus::kClosed);
+  EXPECT_EQ(db.UpdateAccount(0, MakeAccount(std::byte{0x01})),
+            DBStatus::kClosed);
+  EXPECT_EQ(db.DeleteAccount(0), DBStatus::kClosed);
+  EXPECT_EQ(db.MoveAccount(0, 1), DBStatus::kClosed);
+  EXPECT_EQ(db.GetAllIndex().error(), DBStatus::kClosed);
+  EXPECT_EQ(db.Count().error(), DBStatus::kClosed);
+  EXPECT_EQ(db.Compact(), DBStatus::kClosed);
 }
 
 TEST_F(DBTest, AddAndGetAccount) {
@@ -91,8 +92,8 @@ TEST_F(DBTest, AddAndGetAccount) {
   ASSERT_TRUE(db.Open(test_file));
 
   AccountBinary account = MakeAccount(std::byte{0xAB});
-  ASSERT_TRUE(db.AddAccount(account));
-  EXPECT_EQ(db.Count(), 1u);
+  ASSERT_EQ(db.AddAccount(account), DBStatus::kOk);
+  EXPECT_EQ(db.Count().value(), 1u);
 
   auto fetched = db.GetAccount(0);
   ASSERT_TRUE(fetched.has_value());
@@ -104,16 +105,16 @@ TEST_F(DBTest, AddAndGetAccount) {
             0);
 }
 
-TEST_F(DBTest, GetMissingAccountReturnsNullopt) {
+TEST_F(DBTest, GetMissingAccountReturnsNotFound) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  EXPECT_FALSE(db.GetAccount(0).has_value());
+  EXPECT_EQ(db.GetAccount(0).error(), DBStatus::kNotFound);
 }
 
 TEST_F(DBTest, GetAccountReturnsNulloptWhenBlobIsCorrupted) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
 
   // Simulate on-disk corruption (or tampering) by rewriting a blob column to
   // the wrong length through a second raw connection to the same file.
@@ -133,9 +134,9 @@ TEST_F(DBTest, AddAppendsAtIncrementingPositions) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
 
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x03})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x03})), DBStatus::kOk);
 
   ASSERT_TRUE(db.GetAccount(0).has_value());
   ASSERT_TRUE(db.GetAccount(1).has_value());
@@ -149,8 +150,8 @@ TEST_F(DBTest, UpdateAccountOverwritesExistingRecord) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
 
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.UpdateAccount(0, MakeAccount(std::byte{0x02})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.UpdateAccount(0, MakeAccount(std::byte{0x02})), DBStatus::kOk);
 
   auto fetched = db.GetAccount(0);
   ASSERT_TRUE(fetched.has_value());
@@ -160,20 +161,21 @@ TEST_F(DBTest, UpdateAccountOverwritesExistingRecord) {
 TEST_F(DBTest, UpdateMissingAccountFails) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  EXPECT_FALSE(db.UpdateAccount(0, MakeAccount(std::byte{0x02})));
+  EXPECT_EQ(db.UpdateAccount(0, MakeAccount(std::byte{0x02})),
+            DBStatus::kNotFound);
 }
 
 TEST_F(DBTest, DeleteAccountShiftsFollowingPositions) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
 
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x03})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x03})), DBStatus::kOk);
 
-  ASSERT_TRUE(db.DeleteAccount(0));
+  ASSERT_EQ(db.DeleteAccount(0), DBStatus::kOk);
 
-  EXPECT_EQ(db.Count(), 2u);
+  EXPECT_EQ(db.Count().value(), 2u);
   ASSERT_TRUE(db.GetAccount(0).has_value());
   ASSERT_TRUE(db.GetAccount(1).has_value());
   EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x02});
@@ -184,20 +186,20 @@ TEST_F(DBTest, DeleteAccountShiftsFollowingPositions) {
 TEST_F(DBTest, DeleteMissingAccountFails) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  EXPECT_FALSE(db.DeleteAccount(0));
+  EXPECT_EQ(db.DeleteAccount(0), DBStatus::kNotFound);
 }
 
 TEST_F(DBTest, MoveAccountForward) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
 
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x03})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x04})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x03})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x04})), DBStatus::kOk);
 
   // Move item at 0 to 2: expected order becomes 2, 3, 1, 4
-  ASSERT_TRUE(db.MoveAccount(0, 2));
+  ASSERT_EQ(db.MoveAccount(0, 2), DBStatus::kOk);
 
   EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x02});
   EXPECT_EQ(db.GetAccount(1)->description[0], std::byte{0x03});
@@ -209,13 +211,13 @@ TEST_F(DBTest, MoveAccountBackward) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
 
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x03})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x04})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x03})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x04})), DBStatus::kOk);
 
   // Move item at 3 to 1: expected order becomes 1, 4, 2, 3
-  ASSERT_TRUE(db.MoveAccount(3, 1));
+  ASSERT_EQ(db.MoveAccount(3, 1), DBStatus::kOk);
 
   EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x01});
   EXPECT_EQ(db.GetAccount(1)->description[0], std::byte{0x04});
@@ -226,10 +228,10 @@ TEST_F(DBTest, MoveAccountBackward) {
 TEST_F(DBTest, MoveAccountToSamePositionIsNoop) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
 
-  EXPECT_TRUE(db.MoveAccount(1, 1));
+  EXPECT_EQ(db.MoveAccount(1, 1), DBStatus::kOk);
 
   EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x01});
   EXPECT_EQ(db.GetAccount(1)->description[0], std::byte{0x02});
@@ -238,29 +240,29 @@ TEST_F(DBTest, MoveAccountToSamePositionIsNoop) {
 TEST_F(DBTest, MoveAccountOutOfRangeFails) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
 
-  EXPECT_FALSE(db.MoveAccount(0, 5));
-  EXPECT_FALSE(db.MoveAccount(-1, 0));
+  EXPECT_EQ(db.MoveAccount(0, 5), DBStatus::kNotFound);
+  EXPECT_EQ(db.MoveAccount(-1, 0), DBStatus::kNotFound);
 }
 
 TEST_F(DBTest, MoveAccountFromMissingPositionFails) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
 
-  EXPECT_FALSE(db.MoveAccount(50, 0));
+  EXPECT_EQ(db.MoveAccount(50, 0), DBStatus::kNotFound);
 }
 
 TEST_F(DBTest, GetAllIndexReturnsOrderedEntries) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
 
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x03})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x03})), DBStatus::kOk);
 
-  auto index = db.GetAllIndex();
+  auto index = db.GetAllIndex().value();
   ASSERT_EQ(index.size(), 3u);
   EXPECT_EQ(index[0].position, 0);
   EXPECT_EQ(index[1].position, 1);
@@ -274,12 +276,12 @@ TEST_F(DBTest, CompactKeepsDataIntact) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
 
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
-  ASSERT_TRUE(db.DeleteAccount(0));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  ASSERT_EQ(db.DeleteAccount(0), DBStatus::kOk);
 
-  EXPECT_TRUE(db.Compact());
-  EXPECT_EQ(db.Count(), 1u);
+  EXPECT_EQ(db.Compact(), DBStatus::kOk);
+  EXPECT_EQ(db.Count().value(), 1u);
   ASSERT_TRUE(db.GetAccount(0).has_value());
   EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x02});
 }
@@ -287,7 +289,7 @@ TEST_F(DBTest, CompactKeepsDataIntact) {
 TEST_F(DBTest, OperationsFailGracefullyIfSchemaIsCorrupted) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
 
   // Simulate the vault file being tampered with (or corrupted) externally:
   // drop the table out from under a live DB instance via a second raw
@@ -300,20 +302,20 @@ TEST_F(DBTest, OperationsFailGracefullyIfSchemaIsCorrupted) {
       SQLITE_OK);
   sqlite3_close(raw);
 
-  EXPECT_FALSE(db.AddAccount(MakeAccount(std::byte{0x02})));
+  EXPECT_NE(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
   EXPECT_FALSE(db.GetAccount(0).has_value());
-  EXPECT_FALSE(db.UpdateAccount(0, MakeAccount(std::byte{0x02})));
-  EXPECT_FALSE(db.DeleteAccount(0));
-  EXPECT_FALSE(db.MoveAccount(0, 1));
-  EXPECT_TRUE(db.GetAllIndex().empty());
-  EXPECT_EQ(db.Count(), 0u);
+  EXPECT_NE(db.UpdateAccount(0, MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  EXPECT_NE(db.DeleteAccount(0), DBStatus::kOk);
+  EXPECT_NE(db.MoveAccount(0, 1), DBStatus::kOk);
+  EXPECT_FALSE(db.GetAllIndex().has_value());
+  EXPECT_FALSE(db.Count().has_value());
 }
 
 TEST_F(DBTest, PersistenceBetweenSessions) {
   {
     DB db;
     ASSERT_TRUE(db.Open(test_file));
-    ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x2A})));
+    ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x2A})), DBStatus::kOk);
   }
 
   {
@@ -328,8 +330,8 @@ TEST_F(DBTest, PersistenceBetweenSessions) {
 TEST_F(DBTest, WritesFailCleanlyWhileAnotherConnectionHoldsTheWriteLock) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
-  ASSERT_TRUE(db.AddAccount(MakeAccount(std::byte{0x02})));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
 
   // Do not wait for the lock: this test is about failing cleanly.
   ASSERT_TRUE(db.SetBusyTimeout(0));
@@ -339,15 +341,16 @@ TEST_F(DBTest, WritesFailCleanlyWhileAnotherConnectionHoldsTheWriteLock) {
   ASSERT_EQ(sqlite3_exec(other, "BEGIN IMMEDIATE;", nullptr, nullptr, nullptr),
             SQLITE_OK);
 
-  EXPECT_FALSE(db.AddAccount(MakeAccount(std::byte{0x03})));
-  EXPECT_FALSE(db.DeleteAccount(0));
-  EXPECT_FALSE(db.MoveAccount(0, 1));
+  EXPECT_EQ(db.AddAccount(MakeAccount(std::byte{0x03})), DBStatus::kBusy);
+  EXPECT_EQ(db.DeleteAccount(0), DBStatus::kBusy);
+  EXPECT_EQ(db.MoveAccount(0, 1), DBStatus::kBusy);
+  EXPECT_EQ(db.UpdateAccount(0, MakeAccount(std::byte{0x03})), DBStatus::kBusy);
 
   sqlite3_exec(other, "ROLLBACK;", nullptr, nullptr, nullptr);
   sqlite3_close(other);
 
   // Nothing was half-applied: both accounts are still at their positions.
-  ASSERT_EQ(db.Count(), 2u);
+  ASSERT_EQ(db.Count().value(), 2u);
   EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x01});
   EXPECT_EQ(db.GetAccount(1)->description[0], std::byte{0x02});
 }
@@ -367,11 +370,11 @@ TEST_F(DBTest, WritesWaitForAnotherConnectionToReleaseTheLock) {
     sqlite3_exec(other, "COMMIT;", nullptr, nullptr, nullptr);
   });
 
-  EXPECT_TRUE(db.AddAccount(MakeAccount(std::byte{0x01})));
+  EXPECT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
 
   releaser.join();
   sqlite3_close(other);
-  EXPECT_EQ(db.Count(), 1u);
+  EXPECT_EQ(db.Count().value(), 1u);
 }
 
 TEST_F(DBTest, SetBusyTimeoutFailsWhenClosedOrNegative) {
@@ -380,4 +383,14 @@ TEST_F(DBTest, SetBusyTimeoutFailsWhenClosedOrNegative) {
   ASSERT_TRUE(db.Open(test_file));
   EXPECT_FALSE(db.SetBusyTimeout(-1));
   EXPECT_TRUE(db.SetBusyTimeout(100));
+}
+
+TEST(DBStatusTest, MapsSqliteResultCodes) {
+  EXPECT_EQ(DBStatusFromSqlite(SQLITE_OK), DBStatus::kOk);
+  EXPECT_EQ(DBStatusFromSqlite(SQLITE_DONE), DBStatus::kOk);
+  EXPECT_EQ(DBStatusFromSqlite(SQLITE_BUSY), DBStatus::kBusy);
+  EXPECT_EQ(DBStatusFromSqlite(SQLITE_BUSY_SNAPSHOT), DBStatus::kBusy);
+  EXPECT_EQ(DBStatusFromSqlite(SQLITE_LOCKED), DBStatus::kBusy);
+  EXPECT_EQ(DBStatusFromSqlite(SQLITE_CORRUPT), DBStatus::kError);
+  EXPECT_EQ(DBStatusFromSqlite(SQLITE_IOERR_READ), DBStatus::kError);
 }
