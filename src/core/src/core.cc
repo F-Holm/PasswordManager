@@ -97,6 +97,7 @@ AccountPlain::~AccountPlain() noexcept {
 }
 
 void AccountEntry::SetZero() noexcept {
+  id = -1;
   position = -1;
   Crypto::SecureClear(std::as_writable_bytes(std::span(description)));
 }
@@ -277,7 +278,7 @@ CoreStatus Core::ChangeMasterPassword(
     if (!accounts.has_value()) {
       return fail(FromDBStatus(accounts.error()));
     }
-    for (auto& [position, binary] : *accounts) {
+    for (auto& [id, binary] : *accounts) {
       AccountPlain plain;
       if (!Decode(old_key, binary, plain)) {
         return fail(CoreStatus::kCorrupted);
@@ -286,7 +287,7 @@ CoreStatus Core::ChangeMasterPassword(
       if (!Encode(new_key, plain, uid, binary)) {
         return fail(CoreStatus::kError);
       }
-      const DBStatus update = db_.UpdateAccount(position, binary);
+      const DBStatus update = db_.UpdateAccount(id, binary);
       if (update != DBStatus::kOk) {
         return fail(FromDBStatus(update));
       }
@@ -421,13 +422,14 @@ bool Core::DecodeDescription(AccountIndex& index, AccountEntry& out) const {
     return false;
   }
 
+  out.id = index.id;
   out.position = index.position;
   std::memcpy(out.description.data(), index.description.data(),
               out.description.size());
   return true;
 }
 
-CoreStatus Core::AddAccount(const AccountPlain& account) {
+CoreStatus Core::AddAccount(const AccountPlain& account, std::int64_t* out_id) {
   if (!IsOpen()) {
     return CoreStatus::kLocked;
   }
@@ -442,24 +444,20 @@ CoreStatus Core::AddAccount(const AccountPlain& account) {
     return CoreStatus::kError;
   }
 
-  const CoreStatus status = FromDBStatus(db_.AddAccount(binary));
+  const CoreStatus status = FromDBStatus(db_.AddAccount(binary, out_id));
   if (status == CoreStatus::kOk) {
     ClearIndex();
   }
   return status;
 }
 
-CoreStatus Core::EditAccount(std::int64_t position,
-                             const AccountPlain& account) {
+CoreStatus Core::EditAccount(std::int64_t id, const AccountPlain& account) {
   if (!IsOpen()) {
     return CoreStatus::kLocked;
   }
-  if (position < 0) {
-    return CoreStatus::kNotFound;
-  }
 
   // Keep the account's uid: it identifies the account, not its contents.
-  const auto current = db_.GetAccount(position);
+  const auto current = db_.GetAccount(id);
   if (!current.has_value()) {
     return FromDBStatus(current.error());
   }
@@ -469,25 +467,22 @@ CoreStatus Core::EditAccount(std::int64_t position,
     return CoreStatus::kError;
   }
 
-  const CoreStatus status = FromDBStatus(db_.UpdateAccount(position, binary));
+  const CoreStatus status = FromDBStatus(db_.UpdateAccount(id, binary));
   if (status == CoreStatus::kOk) {
     ClearIndex();
-    if (position == loaded_position_) {
+    if (id == loaded_id_) {
       ClearAccount();
     }
   }
   return status;
 }
 
-CoreStatus Core::RemoveAccount(std::int64_t position) {
+CoreStatus Core::RemoveAccount(std::int64_t id) {
   if (!IsOpen()) {
     return CoreStatus::kLocked;
   }
-  if (position < 0) {
-    return CoreStatus::kNotFound;
-  }
 
-  const CoreStatus status = FromDBStatus(db_.DeleteAccount(position));
+  const CoreStatus status = FromDBStatus(db_.DeleteAccount(id));
   if (status == CoreStatus::kOk) {
     ClearIndex();
     ClearAccount();
@@ -495,14 +490,12 @@ CoreStatus Core::RemoveAccount(std::int64_t position) {
   return status;
 }
 
-CoreStatus Core::ReorderAccount(std::int64_t from_position,
-                                std::int64_t to_position) {
+CoreStatus Core::ReorderAccount(std::int64_t id, std::int64_t to_position) {
   if (!IsOpen()) {
     return CoreStatus::kLocked;
   }
 
-  const CoreStatus status =
-      FromDBStatus(db_.MoveAccount(from_position, to_position));
+  const CoreStatus status = FromDBStatus(db_.MoveAccount(id, to_position));
   if (status == CoreStatus::kOk) {
     ClearIndex();
     ClearAccount();
@@ -574,16 +567,13 @@ CoreStatus Core::Compact() {
 }
 
 std::expected<const AccountPlain*, CoreStatus> Core::GetAccount(
-    std::int64_t position) {
+    std::int64_t id) {
   ClearAccount();
   if (!IsOpen()) {
     return std::unexpected(CoreStatus::kLocked);
   }
-  if (position < 0) {
-    return std::unexpected(CoreStatus::kNotFound);
-  }
 
-  auto binary = db_.GetAccount(position);
+  auto binary = db_.GetAccount(id);
   if (!binary.has_value()) {
     return std::unexpected(FromDBStatus(binary.error()));
   }
@@ -594,7 +584,7 @@ std::expected<const AccountPlain*, CoreStatus> Core::GetAccount(
     return std::unexpected(CoreStatus::kCorrupted);
   }
 
-  loaded_position_ = position;
+  loaded_id_ = id;
   return &(*loaded_account_);
 }
 
@@ -604,5 +594,5 @@ const AccountPlain* Core::CurrentAccount() const noexcept {
 
 void Core::ClearAccount() noexcept {
   loaded_account_.reset();
-  loaded_position_ = -1;
+  loaded_id_ = -1;
 }

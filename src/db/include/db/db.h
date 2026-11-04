@@ -43,15 +43,25 @@ class DB {
   // database is not open or `milliseconds` is negative.
   bool SetBusyTimeout(int milliseconds);
 
-  DBStatus AddAccount(const AccountBinary& account);
-  std::expected<AccountBinary, DBStatus> GetAccount(std::int64_t position);
-  // Overwrites the account at `position`. Its uid never changes: kNotFound
-  // unless the stored account at `position` has `account.uid`.
-  DBStatus UpdateAccount(std::int64_t position, const AccountBinary& account);
-  DBStatus DeleteAccount(std::int64_t position);
-  DBStatus MoveAccount(std::int64_t from_position, std::int64_t to_position);
+  // Accounts are addressed by their `id`: a stable identifier assigned on
+  // insertion, never reused and unaffected by removing or reordering other
+  // accounts (unlike their position in the list).
+
+  // Appends `account` at the end of the list. Writes its id to *out_id if
+  // given.
+  DBStatus AddAccount(const AccountBinary& account,
+                      std::int64_t* out_id = nullptr);
+  std::expected<AccountBinary, DBStatus> GetAccount(std::int64_t id);
+  // Overwrites the account `id`. Its uid never changes: kNotFound unless the
+  // stored account `id` has `account.uid`.
+  DBStatus UpdateAccount(std::int64_t id, const AccountBinary& account);
+  // Deletes the account `id`, shifting the positions after it down.
+  DBStatus DeleteAccount(std::int64_t id);
+  // Moves the account `id` to `to_position`, shifting the accounts in
+  // between. kNotFound if there is no such account or position.
+  DBStatus MoveAccount(std::int64_t id, std::int64_t to_position);
   std::expected<std::vector<AccountIndex>, DBStatus> GetAllIndex();
-  // Every account with its position, ordered by position.
+  // Every account with its id, ordered by position.
   std::expected<std::vector<std::pair<std::int64_t, AccountBinary>>, DBStatus>
   GetAllAccounts();
   std::expected<std::size_t, DBStatus> Count();
@@ -73,6 +83,8 @@ class DB {
   sqlite3* db_ = nullptr;
 
   bool CreateSchema();
+  // Position of the account `id`, or kNotFound.
+  std::expected<std::int64_t, DBStatus> PositionOf(std::int64_t id);
   DBStatus WriteMeta(std::string_view sql, const VaultMeta& meta);
   bool Execute(std::string_view sql);
   // Returns the DBStatus matching the connection's last error.

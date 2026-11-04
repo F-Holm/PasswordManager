@@ -76,9 +76,11 @@ typedef struct CoreAccount {
   char extra[kCoreExtraSize];
 } CoreAccount;
 
-// A single entry of the account index: its storage position plus its
-// decrypted description.
+// A single entry of the account index: the account's stable id (used to
+// address it in every call), its position in the list and its decrypted
+// description.
 typedef struct CoreAccountEntry {
+  int64_t id;
   int64_t position;
   char description[kCoreDescriptionSize];
 } CoreAccountEntry;
@@ -148,15 +150,20 @@ CoreResult CoreChangeMasterPassword(CoreSession* session,
 void CoreClose(CoreSession* session);
 bool CoreIsOpen(const CoreSession* session);
 
-// Encrypts and appends `account` as a new entry.
-CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account);
-// Encrypts and overwrites the account at `position`.
-CoreResult CoreEditAccount(CoreSession* session, int64_t position,
+// Accounts are addressed by their stable id (CoreAccountEntry::id), which
+// never changes and is never reused.
+
+// Encrypts and appends `account` as a new entry and writes its id to
+// *out_id unless `out_id` is NULL.
+CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account,
+                          int64_t* out_id);
+// Encrypts and overwrites the account `id`.
+CoreResult CoreEditAccount(CoreSession* session, int64_t id,
                            const CoreAccount* account);
-// Deletes the account at `position`, shifting later positions down.
-CoreResult CoreRemoveAccount(CoreSession* session, int64_t position);
-// Moves the account at `from_position` to `to_position`.
-CoreResult CoreReorderAccount(CoreSession* session, int64_t from_position,
+// Deletes the account `id`, shifting later positions down.
+CoreResult CoreRemoveAccount(CoreSession* session, int64_t id);
+// Moves the account `id` to `to_position` (0-based).
+CoreResult CoreReorderAccount(CoreSession* session, int64_t id,
                               int64_t to_position);
 
 // Reloads the full account index and writes its entry count to *out_count.
@@ -181,9 +188,9 @@ CoreResult CoreCount(CoreSession* session, size_t* out_count);
 // Rebuilds the vault file to reclaim the space of deleted accounts.
 CoreResult CoreCompact(CoreSession* session);
 
-// Decrypts the account at `position` and copies it into *out_account,
-// replacing whatever account was previously loaded in this session.
-CoreResult CoreGetAccount(CoreSession* session, int64_t position,
+// Decrypts the account `id` and copies it into *out_account, replacing
+// whatever account was previously loaded in this session.
+CoreResult CoreGetAccount(CoreSession* session, int64_t id,
                           CoreAccount* out_account);
 void CoreClearAccount(CoreSession* session);
 

@@ -11,6 +11,8 @@
 #include <string_view>
 #include <vector>
 
+#include "db/db.h"
+
 namespace {
 
 constexpr std::string_view kPassword = "correct horse battery staple";
@@ -71,6 +73,25 @@ class CoreTest : public ::testing::Test {
   void TearDown() override {
     std::remove(test_file.c_str());
   }
+
+  // Id of the account at `position` in the vault file, or -1 if there is
+  // none, read through a separate connection so it has no effect on the
+  // Core under test. Lets the tests speak in positions.
+  [[nodiscard]] std::int64_t IdAt(std::int64_t position) const {
+    DB db;
+    if (!db.Open(test_file, DB::OpenMode::kExistingOnly)) {
+      return -1;
+    }
+    const auto index = db.GetAllIndex();
+    if (index.has_value()) {
+      for (const AccountIndex& entry : *index) {
+        if (entry.position == position) {
+          return entry.id;
+        }
+      }
+    }
+    return -1;
+  }
 };
 
 TEST_F(CoreTest, CreateMakesEmptyUnlockedVault) {
@@ -96,12 +117,12 @@ TEST_F(CoreTest, OperationsReportLockedWhenVaultNotOpen) {
       MakeAccount("desc", "email", "user", "pass", "extra");
 
   EXPECT_EQ(core.AddAccount(account), CoreStatus::kLocked);
-  EXPECT_EQ(core.EditAccount(0, account), CoreStatus::kLocked);
-  EXPECT_EQ(core.RemoveAccount(0), CoreStatus::kLocked);
-  EXPECT_EQ(core.ReorderAccount(0, 1), CoreStatus::kLocked);
+  EXPECT_EQ(core.EditAccount(IdAt(0), account), CoreStatus::kLocked);
+  EXPECT_EQ(core.RemoveAccount(IdAt(0)), CoreStatus::kLocked);
+  EXPECT_EQ(core.ReorderAccount(IdAt(0), 1), CoreStatus::kLocked);
   EXPECT_EQ(core.LoadIndex(), CoreStatus::kLocked);
   EXPECT_TRUE(core.Index().empty());
-  EXPECT_EQ(core.GetAccount(0).error(), CoreStatus::kLocked);
+  EXPECT_EQ(core.GetAccount(IdAt(0)).error(), CoreStatus::kLocked);
 }
 
 TEST_F(CoreTest, CloseWipesSessionState) {
@@ -110,7 +131,7 @@ TEST_F(CoreTest, CloseWipesSessionState) {
   ASSERT_EQ(
       core.AddAccount(MakeAccount("desc", "email", "user", "pass", "extra")),
       CoreStatus::kOk);
-  ASSERT_NE(Fetch(core, 0), nullptr);
+  ASSERT_NE(Fetch(core, IdAt(0)), nullptr);
 
   core.Close();
 
@@ -129,7 +150,7 @@ TEST_F(CoreTest, AddAndGetAccountRoundTrip) {
                                             "s3cr3t!", "some extra notes");
   ASSERT_EQ(core.AddAccount(original), CoreStatus::kOk);
 
-  const AccountPlain* fetched = Fetch(core, 0);
+  const AccountPlain* fetched = Fetch(core, IdAt(0));
   ASSERT_NE(fetched, nullptr);
   EXPECT_EQ(GetAccountField(fetched->description), "My Bank");
   EXPECT_EQ(GetAccountField(fetched->email), "me@example.com");
@@ -141,8 +162,8 @@ TEST_F(CoreTest, AddAndGetAccountRoundTrip) {
 TEST_F(CoreTest, GetAccountReportsNotFoundForMissingPosition) {
   Core core;
   ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
-  EXPECT_EQ(core.GetAccount(0).error(), CoreStatus::kNotFound);
-  EXPECT_EQ(core.GetAccount(-1).error(), CoreStatus::kNotFound);
+  EXPECT_EQ(core.GetAccount(IdAt(0)).error(), CoreStatus::kNotFound);
+  EXPECT_EQ(core.GetAccount(IdAt(-1)).error(), CoreStatus::kNotFound);
   EXPECT_EQ(core.CurrentAccount(), nullptr);
 }
 
@@ -154,13 +175,13 @@ TEST_F(CoreTest, OnlyOneAccountIsLoadedAtOnce) {
   ASSERT_EQ(core.AddAccount(MakeAccount("second", "e2", "u2", "p2", "x2")),
             CoreStatus::kOk);
 
-  const AccountPlain* first = Fetch(core, 0);
+  const AccountPlain* first = Fetch(core, IdAt(0));
   ASSERT_NE(first, nullptr);
   EXPECT_EQ(GetAccountField(first->description), "first");
 
   // Loading a second account replaces the first; the returned pointer now
   // refers to the second account's data.
-  const AccountPlain* second = Fetch(core, 1);
+  const AccountPlain* second = Fetch(core, IdAt(1));
   ASSERT_NE(second, nullptr);
   EXPECT_EQ(first, second);
   EXPECT_EQ(GetAccountField(second->description), "second");
@@ -172,7 +193,7 @@ TEST_F(CoreTest, ClearAccountWipesLoadedAccount) {
   ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "p", "x")),
             CoreStatus::kOk);
-  ASSERT_NE(Fetch(core, 0), nullptr);
+  ASSERT_NE(Fetch(core, IdAt(0)), nullptr);
 
   core.ClearAccount();
 
@@ -186,11 +207,11 @@ TEST_F(CoreTest, EditAccountOverwritesContent) {
       core.AddAccount(MakeAccount("old", "old@e", "old_u", "old_p", "old_x")),
       CoreStatus::kOk);
 
-  ASSERT_EQ(core.EditAccount(
-                0, MakeAccount("new", "new@e", "new_u", "new_p", "new_x")),
+  ASSERT_EQ(core.EditAccount(IdAt(0), MakeAccount("new", "new@e", "new_u",
+                                                  "new_p", "new_x")),
             CoreStatus::kOk);
 
-  const AccountPlain* fetched = Fetch(core, 0);
+  const AccountPlain* fetched = Fetch(core, IdAt(0));
   ASSERT_NE(fetched, nullptr);
   EXPECT_EQ(GetAccountField(fetched->description), "new");
   EXPECT_EQ(GetAccountField(fetched->password), "new_p");
@@ -199,7 +220,7 @@ TEST_F(CoreTest, EditAccountOverwritesContent) {
 TEST_F(CoreTest, EditMissingAccountFails) {
   Core core;
   ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
-  EXPECT_EQ(core.EditAccount(0, MakeAccount("desc", "e", "u", "p", "x")),
+  EXPECT_EQ(core.EditAccount(IdAt(0), MakeAccount("desc", "e", "u", "p", "x")),
             CoreStatus::kNotFound);
 }
 
@@ -208,9 +229,9 @@ TEST_F(CoreTest, EditingLoadedAccountClearsIt) {
   ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("desc", "e", "u", "p", "x")),
             CoreStatus::kOk);
-  ASSERT_NE(Fetch(core, 0), nullptr);
+  ASSERT_NE(Fetch(core, IdAt(0)), nullptr);
 
-  ASSERT_EQ(core.EditAccount(0, MakeAccount("new", "e", "u", "p", "x")),
+  ASSERT_EQ(core.EditAccount(IdAt(0), MakeAccount("new", "e", "u", "p", "x")),
             CoreStatus::kOk);
 
   EXPECT_EQ(core.CurrentAccount(), nullptr);
@@ -223,10 +244,11 @@ TEST_F(CoreTest, EditingOtherAccountKeepsLoadedAccountIntact) {
             CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("second", "e2", "u2", "p2", "x2")),
             CoreStatus::kOk);
-  ASSERT_NE(Fetch(core, 0), nullptr);
+  ASSERT_NE(Fetch(core, IdAt(0)), nullptr);
 
-  ASSERT_EQ(core.EditAccount(1, MakeAccount("edited", "e", "u", "p", "x")),
-            CoreStatus::kOk);
+  ASSERT_EQ(
+      core.EditAccount(IdAt(1), MakeAccount("edited", "e", "u", "p", "x")),
+      CoreStatus::kOk);
 
   ASSERT_NE(core.CurrentAccount(), nullptr);
   EXPECT_EQ(GetAccountField(core.CurrentAccount()->description), "first");
@@ -239,12 +261,12 @@ TEST_F(CoreTest, RemoveAccountShiftsPositionsAndClearsCaches) {
             CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("second", "e2", "u2", "p2", "x2")),
             CoreStatus::kOk);
-  ASSERT_NE(Fetch(core, 0), nullptr);
+  ASSERT_NE(Fetch(core, IdAt(0)), nullptr);
 
-  ASSERT_EQ(core.RemoveAccount(0), CoreStatus::kOk);
+  ASSERT_EQ(core.RemoveAccount(IdAt(0)), CoreStatus::kOk);
 
   EXPECT_EQ(core.CurrentAccount(), nullptr);
-  const AccountPlain* fetched = Fetch(core, 0);
+  const AccountPlain* fetched = Fetch(core, IdAt(0));
   ASSERT_NE(fetched, nullptr);
   EXPECT_EQ(GetAccountField(fetched->description), "second");
 }
@@ -252,7 +274,7 @@ TEST_F(CoreTest, RemoveAccountShiftsPositionsAndClearsCaches) {
 TEST_F(CoreTest, RemoveMissingAccountFails) {
   Core core;
   ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
-  EXPECT_EQ(core.RemoveAccount(0), CoreStatus::kNotFound);
+  EXPECT_EQ(core.RemoveAccount(IdAt(0)), CoreStatus::kNotFound);
 }
 
 TEST_F(CoreTest, ReorderAccountMovesEntries) {
@@ -265,7 +287,7 @@ TEST_F(CoreTest, ReorderAccountMovesEntries) {
   ASSERT_EQ(core.AddAccount(MakeAccount("c", "e", "u", "p", "x")),
             CoreStatus::kOk);
 
-  ASSERT_EQ(core.ReorderAccount(0, 2), CoreStatus::kOk);
+  ASSERT_EQ(core.ReorderAccount(IdAt(0), 2), CoreStatus::kOk);
 
   const std::vector<AccountEntry>& index = LoadedIndex(core);
   ASSERT_EQ(index.size(), 3u);
@@ -279,7 +301,7 @@ TEST_F(CoreTest, ReorderOutOfRangeFails) {
   ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x")),
             CoreStatus::kOk);
-  EXPECT_EQ(core.ReorderAccount(0, 5), CoreStatus::kNotFound);
+  EXPECT_EQ(core.ReorderAccount(IdAt(0), 5), CoreStatus::kNotFound);
 }
 
 TEST_F(CoreTest, GetAllIndexReturnsOrderedDecryptedDescriptions) {
@@ -369,12 +391,12 @@ TEST_F(CoreTest, EditingDrawsFreshIvs) {
 
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  const auto before = db.GetAccount(0);
+  const auto before = db.GetAccount(IdAt(0));
   ASSERT_TRUE(before.has_value());
 
   // Re-encrypting identical plaintext must not reuse the (key, IV) pair.
-  ASSERT_EQ(core.EditAccount(0, account), CoreStatus::kOk);
-  const auto after = db.GetAccount(0);
+  ASSERT_EQ(core.EditAccount(IdAt(0), account), CoreStatus::kOk);
+  const auto after = db.GetAccount(IdAt(0));
   ASSERT_TRUE(after.has_value());
   EXPECT_EQ(before->uid, after->uid);
   EXPECT_NE(before->iv_description, after->iv_description);
@@ -459,7 +481,7 @@ TEST_F(CoreTest, UnlockWithCorrectPasswordReadsAccounts) {
   Core core;
   ASSERT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kOk);
   EXPECT_TRUE(core.IsOpen());
-  const AccountPlain* account = Fetch(core, 0);
+  const AccountPlain* account = Fetch(core, IdAt(0));
   ASSERT_NE(account, nullptr);
   EXPECT_EQ(GetAccountField(account->password), "secret");
 }
@@ -549,8 +571,8 @@ TEST_F(CoreTest, EachAccountGetsARandomUid) {
 
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  const auto first = db.GetAccount(0);
-  const auto second = db.GetAccount(1);
+  const auto first = db.GetAccount(IdAt(0));
+  const auto second = db.GetAccount(IdAt(1));
   ASSERT_TRUE(first.has_value());
   ASSERT_TRUE(second.has_value());
   EXPECT_NE(first->uid, second->uid);
@@ -581,7 +603,7 @@ TEST_F(CoreTest, CiphertextsMovedBetweenAccountsFailAuthentication) {
          "  tag_data = (SELECT tag_data FROM accounts WHERE position = 0) "
          "WHERE position = 1;");
 
-  EXPECT_EQ(core.GetAccount(1).error(), CoreStatus::kCorrupted);
+  EXPECT_EQ(core.GetAccount(IdAt(1)).error(), CoreStatus::kCorrupted);
   ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
   ASSERT_EQ(core.Index().size(), 1u);
   EXPECT_EQ(GetAccountField(core.Index()[0].description), "bank");
@@ -608,8 +630,8 @@ TEST_F(CoreTest, DescriptionAndDataCannotBeSwapped) {
          "  tag_description = (SELECT tag_description FROM d WHERE "
          "d.position = 1 - accounts.position);");
 
-  EXPECT_EQ(core.GetAccount(0).error(), CoreStatus::kCorrupted);
-  EXPECT_EQ(core.GetAccount(1).error(), CoreStatus::kCorrupted);
+  EXPECT_EQ(core.GetAccount(IdAt(0)).error(), CoreStatus::kCorrupted);
+  EXPECT_EQ(core.GetAccount(IdAt(1)).error(), CoreStatus::kCorrupted);
   ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
   EXPECT_TRUE(core.Index().empty());
 }
@@ -641,8 +663,8 @@ TEST_F(CoreChangePasswordTest, NewPasswordOpensEverythingAndOldOneFails) {
     ASSERT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
               CoreStatus::kOk);
     // The session keeps working with the new key.
-    ASSERT_NE(Fetch(core, 1), nullptr);
-    EXPECT_EQ(GetAccountField(Fetch(core, 1)->password), "pw2");
+    ASSERT_NE(Fetch(core, IdAt(1)), nullptr);
+    EXPECT_EQ(GetAccountField(Fetch(core, IdAt(1))->password), "pw2");
     ASSERT_EQ(core.AddAccount(MakeAccount("new", "e", "u", "p3", "x")),
               CoreStatus::kOk);
   }
@@ -652,9 +674,9 @@ TEST_F(CoreChangePasswordTest, NewPasswordOpensEverythingAndOldOneFails) {
   ASSERT_EQ(core.Unlock(test_file, kNewPassword), CoreStatus::kOk);
   ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
   ASSERT_EQ(core.Index().size(), 3u);
-  EXPECT_EQ(GetAccountField(Fetch(core, 0)->password), "pw1");
-  EXPECT_EQ(GetAccountField(Fetch(core, 1)->password), "pw2");
-  EXPECT_EQ(GetAccountField(Fetch(core, 2)->password), "p3");
+  EXPECT_EQ(GetAccountField(Fetch(core, IdAt(0))->password), "pw1");
+  EXPECT_EQ(GetAccountField(Fetch(core, IdAt(1))->password), "pw2");
+  EXPECT_EQ(GetAccountField(Fetch(core, IdAt(2))->password), "p3");
 }
 
 TEST_F(CoreChangePasswordTest, BumpsKeyEpochAndRenewsSalt) {
@@ -693,7 +715,7 @@ TEST_F(CoreChangePasswordTest, WrongCurrentPasswordChangesNothing) {
   EXPECT_EQ(core.ChangeMasterPassword("not it", kNewPassword),
             CoreStatus::kWrongPassword);
   EXPECT_EQ(ReadMeta(), before);
-  EXPECT_NE(Fetch(core, 0), nullptr);
+  EXPECT_NE(Fetch(core, IdAt(0)), nullptr);
 }
 
 TEST_F(CoreChangePasswordTest, RejectsEmptyNewPasswordAndBadParams) {
@@ -726,18 +748,18 @@ TEST_F(CoreChangePasswordTest, FailureHalfwayLeavesTheVaultUntouched) {
   EXPECT_EQ(ReadMeta(), before);
 
   // The session still uses the old key, and so does the file.
-  EXPECT_EQ(GetAccountField(Fetch(core, 0)->password), "pw1");
+  EXPECT_EQ(GetAccountField(Fetch(core, IdAt(0))->password), "pw1");
   core.Close();
   EXPECT_EQ(core.Unlock(test_file, kNewPassword), CoreStatus::kWrongPassword);
   ASSERT_EQ(core.Unlock(test_file, kPassword), CoreStatus::kOk);
-  EXPECT_EQ(GetAccountField(Fetch(core, 0)->password), "pw1");
+  EXPECT_EQ(GetAccountField(Fetch(core, IdAt(0))->password), "pw1");
 }
 
 TEST_F(CoreChangePasswordTest, ClearsCachedPlaintext) {
   Core core;
   Populate(core);
   ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
-  ASSERT_NE(Fetch(core, 0), nullptr);
+  ASSERT_NE(Fetch(core, IdAt(0)), nullptr);
 
   ASSERT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
             CoreStatus::kOk);
@@ -780,10 +802,62 @@ TEST_F(CoreTest, CountAndCompact) {
             CoreStatus::kOk);
   ASSERT_EQ(core.AddAccount(MakeAccount("b", "e", "u", "p", "x")),
             CoreStatus::kOk);
-  ASSERT_EQ(core.RemoveAccount(0), CoreStatus::kOk);
+  ASSERT_EQ(core.RemoveAccount(IdAt(0)), CoreStatus::kOk);
   EXPECT_EQ(core.Count().value(), 1u);
 
   EXPECT_EQ(core.Compact(), CoreStatus::kOk);
   EXPECT_EQ(core.Count().value(), 1u);
-  EXPECT_EQ(GetAccountField(Fetch(core, 0)->description), "b");
+  EXPECT_EQ(GetAccountField(Fetch(core, IdAt(0))->description), "b");
+}
+
+TEST_F(CoreTest, AddAccountReportsTheIdUsedByTheIndex) {
+  Core core;
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  std::int64_t first = -1;
+  std::int64_t second = -1;
+  ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x"), &first),
+            CoreStatus::kOk);
+  ASSERT_EQ(core.AddAccount(MakeAccount("b", "e", "u", "p", "x"), &second),
+            CoreStatus::kOk);
+
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+  ASSERT_EQ(core.Index().size(), 2u);
+  EXPECT_EQ(core.Index()[0].id, first);
+  EXPECT_EQ(core.Index()[0].position, 0);
+  EXPECT_EQ(core.Index()[1].id, second);
+  EXPECT_EQ(core.Index()[1].position, 1);
+}
+
+TEST_F(CoreTest, IdsKeepNamingTheSameAccountWhenAnotherSessionChangesTheList) {
+  Core gui;
+  ASSERT_EQ(gui.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  for (const char* name : {"first", "second", "third", "fourth"}) {
+    ASSERT_EQ(gui.AddAccount(MakeAccount(name, "e", "u", "p", "x")),
+              CoreStatus::kOk);
+  }
+  ASSERT_EQ(gui.LoadIndex(), CoreStatus::kOk);
+  const std::int64_t fourth = gui.Index()[3].id;
+  const std::int64_t first = gui.Index()[0].id;
+
+  // Meanwhile another program removes the first account and moves the last
+  // one to the top: every position the GUI is showing is now stale.
+  Core cli;
+  ASSERT_EQ(cli.Unlock(test_file, kPassword), CoreStatus::kOk);
+  ASSERT_EQ(cli.RemoveAccount(first), CoreStatus::kOk);
+  ASSERT_EQ(cli.ReorderAccount(fourth, 0), CoreStatus::kOk);
+
+  // Editing "the fourth account" still edits the fourth account...
+  ASSERT_EQ(gui.EditAccount(fourth, MakeAccount("fourth*", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+  ASSERT_EQ(gui.LoadIndex(), CoreStatus::kOk);
+  ASSERT_EQ(gui.Index().size(), 3u);
+  EXPECT_EQ(GetAccountField(gui.Index()[0].description), "fourth*");
+  EXPECT_EQ(GetAccountField(gui.Index()[1].description), "second");
+  EXPECT_EQ(GetAccountField(gui.Index()[2].description), "third");
+
+  // ...and acting on the removed one fails instead of hitting another one.
+  EXPECT_EQ(gui.EditAccount(first, MakeAccount("x", "e", "u", "p", "x")),
+            CoreStatus::kNotFound);
+  EXPECT_EQ(gui.RemoveAccount(first), CoreStatus::kNotFound);
+  EXPECT_EQ(gui.GetAccount(first).error(), CoreStatus::kNotFound);
 }

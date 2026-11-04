@@ -196,18 +196,19 @@ bool CoreIsOpen(const CoreSession* session) {
   return session != nullptr && session->core.IsOpen();
 }
 
-CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account) {
+CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account,
+                          std::int64_t* out_id) {
   if (session == nullptr || account == nullptr) {
     return kCoreInvalidArgument;
   }
   return Guard([&] {
     AccountPlain plain;
     ToPlain(*account, plain);
-    return session->core.AddAccount(plain);
+    return session->core.AddAccount(plain, out_id);
   });
 }
 
-CoreResult CoreEditAccount(CoreSession* session, std::int64_t position,
+CoreResult CoreEditAccount(CoreSession* session, std::int64_t id,
                            const CoreAccount* account) {
   if (session == nullptr || account == nullptr) {
     return kCoreInvalidArgument;
@@ -215,24 +216,23 @@ CoreResult CoreEditAccount(CoreSession* session, std::int64_t position,
   return Guard([&] {
     AccountPlain plain;
     ToPlain(*account, plain);
-    return session->core.EditAccount(position, plain);
+    return session->core.EditAccount(id, plain);
   });
 }
 
-CoreResult CoreRemoveAccount(CoreSession* session, std::int64_t position) {
+CoreResult CoreRemoveAccount(CoreSession* session, std::int64_t id) {
   if (session == nullptr) {
     return kCoreInvalidArgument;
   }
-  return Guard([&] { return session->core.RemoveAccount(position); });
+  return Guard([&] { return session->core.RemoveAccount(id); });
 }
 
-CoreResult CoreReorderAccount(CoreSession* session, std::int64_t from_position,
+CoreResult CoreReorderAccount(CoreSession* session, std::int64_t id,
                               std::int64_t to_position) {
   if (session == nullptr) {
     return kCoreInvalidArgument;
   }
-  return Guard(
-      [&] { return session->core.ReorderAccount(from_position, to_position); });
+  return Guard([&] { return session->core.ReorderAccount(id, to_position); });
 }
 
 CoreResult CoreLoadIndex(CoreSession* session, std::size_t* out_count) {
@@ -258,6 +258,7 @@ CoreResult CoreGetIndexEntry(const CoreSession* session, std::size_t list_index,
     return kCoreNotFound;
   }
   const AccountEntry& entry = index[list_index];
+  out_entry->id = entry.id;
   out_entry->position = entry.position;
   std::memcpy(out_entry->description, entry.description.data(),
               entry.description.size());
@@ -310,13 +311,13 @@ CoreResult CoreCompact(CoreSession* session) {
   return Guard([&] { return session->core.Compact(); });
 }
 
-CoreResult CoreGetAccount(CoreSession* session, std::int64_t position,
+CoreResult CoreGetAccount(CoreSession* session, std::int64_t id,
                           CoreAccount* out_account) {
   if (session == nullptr || out_account == nullptr) {
     return kCoreInvalidArgument;
   }
   return Guard([&] {
-    const auto account = session->core.GetAccount(position);
+    const auto account = session->core.GetAccount(id);
     if (!account.has_value()) {
       return account.error();
     }

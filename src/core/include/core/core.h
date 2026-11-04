@@ -36,6 +36,9 @@ struct AccountPlain {
 // plus its decrypted description, used to render account lists without
 // decrypting the (much larger) account data.
 struct AccountEntry {
+  // Stable identifier used to address the account in every Core operation.
+  std::int64_t id = -1;
+  // Place of the account in the list (0-based).
   std::int64_t position = -1;
   std::array<char, AccountSize::kDescription> description{};
 
@@ -106,22 +109,26 @@ class Core {
   [[nodiscard]] bool IsOpen() const noexcept;
 
   // Every operation below returns kLocked if no vault is open.
+  //
+  // Accounts are addressed by their id (AccountEntry::id), which never
+  // changes and is never reused, so an id read from the index keeps naming
+  // the same account even if another program removes or reorders accounts
+  // in the meantime: at worst the operation reports kNotFound.
 
-  // Encrypts and appends `account` as a new entry. Invalidates the cached
-  // index.
-  CoreStatus AddAccount(const AccountPlain& account);
-  // Encrypts and overwrites the account at `position` (kNotFound if there is
-  // none). Invalidates the cached index, and clears the loaded account if it
-  // was `position`.
-  CoreStatus EditAccount(std::int64_t position, const AccountPlain& account);
-  // Deletes the account at `position`, shifting later positions down.
-  // Invalidates the cached index and the loaded account.
-  CoreStatus RemoveAccount(std::int64_t position);
-  // Moves the account at `from_position` to `to_position`, shifting the
-  // accounts in between. Invalidates the cached index and the loaded
-  // account.
-  CoreStatus ReorderAccount(std::int64_t from_position,
-                            std::int64_t to_position);
+  // Encrypts and appends `account` as a new entry and writes its id to
+  // *out_id if given. Invalidates the cached index.
+  CoreStatus AddAccount(const AccountPlain& account,
+                        std::int64_t* out_id = nullptr);
+  // Encrypts and overwrites the account `id` (kNotFound if there is none).
+  // Invalidates the cached index, and clears the loaded account if it was
+  // `id`.
+  CoreStatus EditAccount(std::int64_t id, const AccountPlain& account);
+  // Deletes the account `id`, shifting later positions down. Invalidates the
+  // cached index and the loaded account.
+  CoreStatus RemoveAccount(std::int64_t id);
+  // Moves the account `id` to `to_position` (0-based), shifting the accounts
+  // in between. Invalidates the cached index and the loaded account.
+  CoreStatus ReorderAccount(std::int64_t id, std::int64_t to_position);
 
   // Reloads and decrypts every index entry from the vault into the cache
   // returned by Index(). Entries that fail authentication are left out.
@@ -142,12 +149,11 @@ class Core {
   // Rebuilds the vault file to reclaim the space of deleted accounts.
   CoreStatus Compact();
 
-  // Decrypts the account at `position`, replacing whatever account was
+  // Decrypts the account `id`, replacing whatever account was
   // previously loaded, and returns a pointer to it. The pointer is
   // invalidated by the next call to GetAccount or ClearAccount, or by any
   // mutating operation. kCorrupted if the stored data fails authentication.
-  std::expected<const AccountPlain*, CoreStatus> GetAccount(
-      std::int64_t position);
+  std::expected<const AccountPlain*, CoreStatus> GetAccount(std::int64_t id);
   [[nodiscard]] const AccountPlain* CurrentAccount() const noexcept;
   void ClearAccount() noexcept;
 
@@ -161,7 +167,7 @@ class Core {
 
   std::vector<AccountEntry> index_;
   std::optional<AccountPlain> loaded_account_;
-  std::int64_t loaded_position_ = -1;
+  std::int64_t loaded_id_ = -1;
 
   // Derives the key for `meta` from `password` into `key`.
   static bool DeriveKey(std::string_view password, const VaultMeta& meta,

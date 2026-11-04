@@ -33,7 +33,7 @@ int CoreCHeaderSmokeTest(void) {
   if (CoreIsOpen(NULL)) {
     return 3;
   }
-  if (CoreAddAccount(NULL, &account) != kCoreInvalidArgument) {
+  if (CoreAddAccount(NULL, &account, NULL) != kCoreInvalidArgument) {
     return 4;
   }
   if (CoreResultName(kCoreOk) == NULL) {
