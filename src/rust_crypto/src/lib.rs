@@ -1,6 +1,6 @@
 use aes_gcm::aead::AeadInOut;
 use aes_gcm::{Aes256Gcm, Key, KeyInit, Nonce, Tag};
-use argon2::Argon2;
+use argon2::{Algorithm, Argon2, Params, Version};
 use sha3::{Digest, Sha3_256, Sha3_512};
 use std::slice;
 use zeroize::Zeroize;
@@ -140,6 +140,36 @@ pub unsafe extern "C" fn argon2id_hash(
     let out = unsafe { slice::from_raw_parts_mut(output, output_len) };
 
     let argon2 = Argon2::default();
+    argon2.hash_password_into(pwd, slt, out).is_ok()
+}
+
+/// Derives `output_len` bytes from `password` and `salt` with Argon2id (v1.3)
+/// using explicit cost parameters: `m_cost` in KiB, `t_cost` iterations and
+/// `p_cost` lanes. Returns false on null pointers or invalid parameters
+/// (see the argon2 crate's `Params::new` for the accepted ranges).
+#[allow(clippy::missing_safety_doc)]
+#[allow(clippy::too_many_arguments)]
+#[no_mangle]
+pub unsafe extern "C" fn argon2id_hash_params(
+    password: *const u8,
+    pass_len: usize,
+    salt: *const u8,
+    salt_len: usize,
+    m_cost: u32,
+    t_cost: u32,
+    p_cost: u32,
+    output: *mut u8,
+    output_len: usize,
+) -> bool {
+    check_null!(password, salt, output);
+    let pwd = unsafe { slice::from_raw_parts(password, pass_len) };
+    let slt = unsafe { slice::from_raw_parts(salt, salt_len) };
+    let out = unsafe { slice::from_raw_parts_mut(output, output_len) };
+
+    let Ok(params) = Params::new(m_cost, t_cost, p_cost, Some(output_len)) else {
+        return false;
+    };
+    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
     argon2.hash_password_into(pwd, slt, out).is_ok()
 }
 
@@ -467,6 +497,116 @@ mod tests {
                 );
             }
         }
+    }
+
+    fn hash_params(password: &[u8], salt: &[u8], m: u32, t: u32, p: u32) -> Option<[u8; 32]> {
+        let mut out = [0u8; 32];
+        let ok = unsafe {
+            argon2id_hash_params(
+                password.as_ptr(),
+                password.len(),
+                salt.as_ptr(),
+                salt.len(),
+                m,
+                t,
+                p,
+                out.as_mut_ptr(),
+                out.len(),
+            )
+        };
+        ok.then_some(out)
+    }
+
+    #[test]
+    fn test_argon2id_params_null_parameters() {
+        let mut out = [0u8; 32];
+        unsafe {
+            assert!(!argon2id_hash_params(
+                std::ptr::null(),
+                1,
+                b"saltsalt".as_ptr(),
+                8,
+                8,
+                1,
+                1,
+                out.as_mut_ptr(),
+                out.len()
+            ));
+            assert!(!argon2id_hash_params(
+                b"pw".as_ptr(),
+                2,
+                std::ptr::null(),
+                8,
+                8,
+                1,
+                1,
+                out.as_mut_ptr(),
+                out.len()
+            ));
+            assert!(!argon2id_hash_params(
+                b"pw".as_ptr(),
+                2,
+                b"saltsalt".as_ptr(),
+                8,
+                8,
+                1,
+                1,
+                std::ptr::null_mut(),
+                32
+            ));
+        }
+    }
+
+    #[test]
+    fn test_argon2id_params_is_deterministic() {
+        let a = hash_params(b"password", b"somesalt", 8, 1, 1).unwrap();
+        let b = hash_params(b"password", b"somesalt", 8, 1, 1).unwrap();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_argon2id_params_change_output() {
+        let base = hash_params(b"password", b"somesalt", 16, 1, 1).unwrap();
+        assert_ne!(
+            base,
+            hash_params(b"password", b"somesalt", 32, 1, 1).unwrap()
+        );
+        assert_ne!(
+            base,
+            hash_params(b"password", b"somesalt", 16, 2, 1).unwrap()
+        );
+        assert_ne!(
+            base,
+            hash_params(b"password", b"somesalt", 16, 1, 2).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_argon2id_params_matches_default_hash() {
+        // Argon2::default() is Argon2id v1.3 with m=19456, t=2, p=1.
+        let mut expected = [0u8; 32];
+        unsafe {
+            assert!(argon2id_hash(
+                b"password".as_ptr(),
+                8,
+                b"somesalt".as_ptr(),
+                8,
+                expected.as_mut_ptr(),
+                expected.len()
+            ));
+        }
+        let actual = hash_params(b"password", b"somesalt", 19456, 2, 1).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_argon2id_params_rejects_invalid_parameters() {
+        // Memory must be at least 8 KiB per lane, and t/p at least 1.
+        assert!(hash_params(b"password", b"somesalt", 7, 1, 1).is_none());
+        assert!(hash_params(b"password", b"somesalt", 8, 0, 1).is_none());
+        assert!(hash_params(b"password", b"somesalt", 8, 1, 0).is_none());
+        // Salt shorter than 8 bytes.
+        assert!(hash_params(b"password", b"salt", 8, 1, 1).is_none());
     }
 
     #[test]
