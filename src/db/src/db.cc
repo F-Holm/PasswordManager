@@ -77,6 +77,7 @@ bool DB::CreateSchema() {
   return Execute(
       "CREATE TABLE IF NOT EXISTS accounts ("
       "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      "  uid BLOB NOT NULL UNIQUE,"
       "  position INTEGER NOT NULL,"
       "  description BLOB NOT NULL,"
       "  data BLOB NOT NULL,"
@@ -112,22 +113,23 @@ DBStatus DB::AddAccount(const AccountBinary& account) {
   }
 
   Statement insert(db_,
-                   "INSERT INTO accounts (position, description, data, "
+                   "INSERT INTO accounts (position, uid, description, data, "
                    "iv_description, iv_data, tag_description, tag_data) "
                    "VALUES ("
                    "  (SELECT COALESCE(MAX(position), -1) + 1 "
                    "     FROM accounts),"
-                   "  ?, ?, ?, ?, ?, ?);");
+                   "  ?, ?, ?, ?, ?, ?, ?);");
   if (!insert.IsValid()) {
     return LastStatus();
   }
 
-  insert.BindBlob(1, account.description);
-  insert.BindBlob(2, account.data);
-  insert.BindBlob(3, account.iv_description);
-  insert.BindBlob(4, account.iv_data);
-  insert.BindBlob(5, account.tag_description);
-  insert.BindBlob(6, account.tag_data);
+  insert.BindBlob(1, account.uid);
+  insert.BindBlob(2, account.description);
+  insert.BindBlob(3, account.data);
+  insert.BindBlob(4, account.iv_description);
+  insert.BindBlob(5, account.iv_data);
+  insert.BindBlob(6, account.tag_description);
+  insert.BindBlob(7, account.tag_data);
 
   if (insert.Step() != SQLITE_DONE) {
     return LastStatus();
@@ -142,7 +144,7 @@ std::expected<AccountBinary, DBStatus> DB::GetAccount(std::int64_t position) {
   }
 
   Statement select(db_,
-                   "SELECT description, data, iv_description, iv_data, "
+                   "SELECT uid, description, data, iv_description, iv_data, "
                    "tag_description, tag_data FROM accounts "
                    "WHERE position = ?;");
   if (!select.IsValid()) {
@@ -160,12 +162,13 @@ std::expected<AccountBinary, DBStatus> DB::GetAccount(std::int64_t position) {
   }
 
   AccountBinary account;
-  const bool ok = select.ColumnBlob(0, account.description) &&
-                  select.ColumnBlob(1, account.data) &&
-                  select.ColumnBlob(2, account.iv_description) &&
-                  select.ColumnBlob(3, account.iv_data) &&
-                  select.ColumnBlob(4, account.tag_description) &&
-                  select.ColumnBlob(5, account.tag_data);
+  const bool ok = select.ColumnBlob(0, account.uid) &&
+                  select.ColumnBlob(1, account.description) &&
+                  select.ColumnBlob(2, account.data) &&
+                  select.ColumnBlob(3, account.iv_description) &&
+                  select.ColumnBlob(4, account.iv_data) &&
+                  select.ColumnBlob(5, account.tag_description) &&
+                  select.ColumnBlob(6, account.tag_data);
   if (!ok) {
     return std::unexpected(DBStatus::kError);
   }
@@ -182,7 +185,7 @@ DBStatus DB::UpdateAccount(std::int64_t position,
   Statement update(db_,
                    "UPDATE accounts SET description = ?, data = ?, "
                    "iv_description = ?, iv_data = ?, tag_description = ?, "
-                   "tag_data = ? WHERE position = ?;");
+                   "tag_data = ? WHERE position = ? AND uid = ?;");
   if (!update.IsValid()) {
     return LastStatus();
   }
@@ -194,6 +197,7 @@ DBStatus DB::UpdateAccount(std::int64_t position,
   update.BindBlob(5, account.tag_description);
   update.BindBlob(6, account.tag_data);
   update.BindInt64(7, position);
+  update.BindBlob(8, account.uid);
 
   if (update.Step() != SQLITE_DONE) {
     return LastStatus();
@@ -325,7 +329,7 @@ std::expected<std::vector<AccountIndex>, DBStatus> DB::GetAllIndex() {
   }
 
   Statement select(db_,
-                   "SELECT position, description, iv_description, "
+                   "SELECT position, uid, description, iv_description, "
                    "tag_description FROM accounts ORDER BY position;");
   if (!select.IsValid()) {
     return std::unexpected(LastStatus());
@@ -336,9 +340,10 @@ std::expected<std::vector<AccountIndex>, DBStatus> DB::GetAllIndex() {
   while ((step = select.Step()) == SQLITE_ROW) {
     AccountIndex index;
     index.position = select.ColumnInt64(0);
-    const bool ok = select.ColumnBlob(1, index.description) &&
-                    select.ColumnBlob(2, index.iv_description) &&
-                    select.ColumnBlob(3, index.tag_description);
+    const bool ok = select.ColumnBlob(1, index.uid) &&
+                    select.ColumnBlob(2, index.description) &&
+                    select.ColumnBlob(3, index.iv_description) &&
+                    select.ColumnBlob(4, index.tag_description);
     if (!ok) {
       return std::unexpected(DBStatus::kError);
     }

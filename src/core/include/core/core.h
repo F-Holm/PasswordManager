@@ -148,7 +148,11 @@ class Core {
   // True if `key` decrypts and authenticates meta.verifier.
   static bool CheckVerifier(const Key& key, const VaultMeta& meta);
 
-  bool Encode(const AccountPlain& account, AccountBinary& out) const;
+  // Encrypts `account` into `out` under `uid` (the account's stable random
+  // identifier, generated once by AddAccount).
+  bool Encode(const AccountPlain& account,
+              const std::array<std::byte, AccountSize::kUid>& uid,
+              AccountBinary& out) const;
   bool Decode(AccountBinary& binary, AccountPlain& out) const;
   bool DecodeDescription(AccountIndex& index, AccountEntry& out) const;
 };

@@ -9,4 +9,6 @@ static constexpr std::size_t kUsername = 128;
 static constexpr std::size_t kPassword = 256;
 static constexpr std::size_t kExtra = 1024;
 static constexpr std::size_t kData = kEmail + kUsername + kPassword + kExtra;
+// Random per-account identifier, bound into the ciphertexts via AAD.
+static constexpr std::size_t kUid = 16;
 }  // namespace AccountSize

@@ -43,6 +43,8 @@ class DB {
 
   DBStatus AddAccount(const AccountBinary& account);
   std::expected<AccountBinary, DBStatus> GetAccount(std::int64_t position);
+  // Overwrites the account at `position`. Its uid never changes: kNotFound
+  // unless the stored account at `position` has `account.uid`.
   DBStatus UpdateAccount(std::int64_t position, const AccountBinary& account);
   DBStatus DeleteAccount(std::int64_t position);
   DBStatus MoveAccount(std::int64_t from_position, std::int64_t to_position);

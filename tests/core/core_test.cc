@@ -364,6 +364,7 @@ TEST_F(CoreTest, EditingDrawsFreshIvs) {
   ASSERT_EQ(core.EditAccount(0, account), CoreStatus::kOk);
   const auto after = db.GetAccount(0);
   ASSERT_TRUE(after.has_value());
+  EXPECT_EQ(before->uid, after->uid);
   EXPECT_NE(before->iv_description, after->iv_description);
   EXPECT_NE(before->iv_data, after->iv_data);
   EXPECT_NE(before->data, after->data);
@@ -524,4 +525,22 @@ TEST_F(CoreTest, DefaultKdfParamsAreUsedWhenNotGiven) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
   EXPECT_EQ(db.GetMeta()->kdf_params, Crypto::kDefaultKdfParams);
+}
+
+TEST_F(CoreTest, EachAccountGetsARandomUid) {
+  Core core;
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+  ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  const auto first = db.GetAccount(0);
+  const auto second = db.GetAccount(1);
+  ASSERT_TRUE(first.has_value());
+  ASSERT_TRUE(second.has_value());
+  EXPECT_NE(first->uid, second->uid);
+  EXPECT_NE(first->uid, decltype(first->uid){});
 }

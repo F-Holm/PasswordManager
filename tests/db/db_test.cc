@@ -15,8 +15,11 @@
 
 namespace {
 
-AccountBinary MakeAccount(std::byte marker) {
+// `uid_marker` defaults to `marker`, so accounts made with different
+// markers have distinct uids (the column is UNIQUE).
+AccountBinary MakeAccount(std::byte marker, std::byte uid_marker) {
   AccountBinary account;
+  account.uid.fill(uid_marker);
   account.description.fill(marker);
   account.data.fill(marker);
   account.iv_description.fill(marker);
@@ -24,6 +27,10 @@ AccountBinary MakeAccount(std::byte marker) {
   account.tag_description.fill(marker);
   account.tag_data.fill(marker);
   return account;
+}
+
+AccountBinary MakeAccount(std::byte marker) {
+  return MakeAccount(marker, marker);
 }
 
 VaultMeta MakeMeta(std::byte marker) {
@@ -163,11 +170,43 @@ TEST_F(DBTest, UpdateAccountOverwritesExistingRecord) {
   ASSERT_TRUE(db.Open(test_file));
 
   ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
-  ASSERT_EQ(db.UpdateAccount(0, MakeAccount(std::byte{0x02})), DBStatus::kOk);
+  ASSERT_EQ(db.UpdateAccount(0, MakeAccount(std::byte{0x02}, std::byte{0x01})),
+            DBStatus::kOk);
 
   auto fetched = db.GetAccount(0);
   ASSERT_TRUE(fetched.has_value());
   EXPECT_EQ(fetched->description[0], std::byte{0x02});
+  EXPECT_EQ(fetched->uid[0], std::byte{0x01});
+}
+
+TEST_F(DBTest, UpdateAccountRejectsADifferentUid) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  EXPECT_EQ(db.UpdateAccount(0, MakeAccount(std::byte{0x02})),
+            DBStatus::kNotFound);
+  EXPECT_EQ(db.GetAccount(0)->description[0], std::byte{0x01});
+}
+
+TEST_F(DBTest, AddAccountRejectsADuplicateUid) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
+  EXPECT_EQ(db.AddAccount(MakeAccount(std::byte{0x02}, std::byte{0x01})),
+            DBStatus::kAlreadyExists);
+  EXPECT_EQ(db.Count().value(), 1u);
+}
+
+TEST_F(DBTest, UidRoundTripsThroughGetAccountAndIndex) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01}, std::byte{0x7E})),
+            DBStatus::kOk);
+
+  EXPECT_EQ(db.GetAccount(0)->uid[0], std::byte{0x7E});
+  EXPECT_EQ(db.GetAllIndex().value()[0].uid[0], std::byte{0x7E});
 }
 
 TEST_F(DBTest, UpdateMissingAccountFails) {

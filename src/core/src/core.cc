@@ -245,8 +245,11 @@ bool Core::IsOpen() const noexcept {
   return has_key_ && db_.IsOpen();
 }
 
-bool Core::Encode(const AccountPlain& account, AccountBinary& out) const {
+bool Core::Encode(const AccountPlain& account,
+                  const std::array<std::byte, AccountSize::kUid>& uid,
+                  AccountBinary& out) const {
   out.SetZero();
+  out.uid = uid;
 
   std::memcpy(out.description.data(), account.description.data(),
               out.description.size());
@@ -319,8 +322,13 @@ CoreStatus Core::AddAccount(const AccountPlain& account) {
     return CoreStatus::kLocked;
   }
 
+  std::array<std::byte, AccountSize::kUid> uid{};
+  if (!Crypto::RandomBytes(uid)) {
+    return CoreStatus::kError;
+  }
+
   AccountBinary binary;
-  if (!Encode(account, binary)) {
+  if (!Encode(account, uid, binary)) {
     return CoreStatus::kError;
   }
 
@@ -340,8 +348,14 @@ CoreStatus Core::EditAccount(std::int64_t position,
     return CoreStatus::kNotFound;
   }
 
+  // Keep the account's uid: it identifies the account, not its contents.
+  const auto current = db_.GetAccount(position);
+  if (!current.has_value()) {
+    return FromDBStatus(current.error());
+  }
+
   AccountBinary binary;
-  if (!Encode(account, binary)) {
+  if (!Encode(account, current->uid, binary)) {
     return CoreStatus::kError;
   }
 
