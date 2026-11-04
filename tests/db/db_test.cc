@@ -111,7 +111,8 @@ TEST_F(DBTest, OperationsFailWhenDatabaseNotOpen) {
 
   EXPECT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kClosed);
   EXPECT_EQ(db.GetAccount(IdAt(db, 0)).error(), DBStatus::kClosed);
-  EXPECT_EQ(db.UpdateAccount(IdAt(db, 0), MakeAccount(std::byte{0x01})),
+  EXPECT_EQ(db.UpdateAccount(IdAt(db, 0), DB::kAnyRevision,
+                             MakeAccount(std::byte{0x01})),
             DBStatus::kClosed);
   EXPECT_EQ(db.DeleteAccount(IdAt(db, 0)), DBStatus::kClosed);
   EXPECT_EQ(db.MoveAccount(IdAt(db, 0), 1), DBStatus::kClosed);
@@ -184,7 +185,7 @@ TEST_F(DBTest, UpdateAccountOverwritesExistingRecord) {
   ASSERT_TRUE(db.Open(test_file));
 
   ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
-  ASSERT_EQ(db.UpdateAccount(IdAt(db, 0),
+  ASSERT_EQ(db.UpdateAccount(IdAt(db, 0), DB::kAnyRevision,
                              MakeAccount(std::byte{0x02}, std::byte{0x01})),
             DBStatus::kOk);
 
@@ -199,7 +200,8 @@ TEST_F(DBTest, UpdateAccountRejectsADifferentUid) {
   ASSERT_TRUE(db.Open(test_file));
 
   ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01})), DBStatus::kOk);
-  EXPECT_EQ(db.UpdateAccount(IdAt(db, 0), MakeAccount(std::byte{0x02})),
+  EXPECT_EQ(db.UpdateAccount(IdAt(db, 0), DB::kAnyRevision,
+                             MakeAccount(std::byte{0x02})),
             DBStatus::kNotFound);
   EXPECT_EQ(db.GetAccount(IdAt(db, 0))->description[0], std::byte{0x01});
 }
@@ -227,7 +229,8 @@ TEST_F(DBTest, UidRoundTripsThroughGetAccountAndIndex) {
 TEST_F(DBTest, UpdateMissingAccountFails) {
   DB db;
   ASSERT_TRUE(db.Open(test_file));
-  EXPECT_EQ(db.UpdateAccount(IdAt(db, 0), MakeAccount(std::byte{0x02})),
+  EXPECT_EQ(db.UpdateAccount(IdAt(db, 0), DB::kAnyRevision,
+                             MakeAccount(std::byte{0x02})),
             DBStatus::kNotFound);
 }
 
@@ -370,7 +373,8 @@ TEST_F(DBTest, OperationsFailGracefullyIfSchemaIsCorrupted) {
 
   EXPECT_NE(db.AddAccount(MakeAccount(std::byte{0x02})), DBStatus::kOk);
   EXPECT_FALSE(db.GetAccount(IdAt(db, 0)).has_value());
-  EXPECT_NE(db.UpdateAccount(IdAt(db, 0), MakeAccount(std::byte{0x02})),
+  EXPECT_NE(db.UpdateAccount(IdAt(db, 0), DB::kAnyRevision,
+                             MakeAccount(std::byte{0x02})),
             DBStatus::kOk);
   EXPECT_NE(db.DeleteAccount(IdAt(db, 0)), DBStatus::kOk);
   EXPECT_NE(db.MoveAccount(IdAt(db, 0), 1), DBStatus::kOk);
@@ -411,7 +415,8 @@ TEST_F(DBTest, WritesFailCleanlyWhileAnotherConnectionHoldsTheWriteLock) {
   EXPECT_EQ(db.AddAccount(MakeAccount(std::byte{0x03})), DBStatus::kBusy);
   EXPECT_EQ(db.DeleteAccount(IdAt(db, 0)), DBStatus::kBusy);
   EXPECT_EQ(db.MoveAccount(IdAt(db, 0), 1), DBStatus::kBusy);
-  EXPECT_EQ(db.UpdateAccount(IdAt(db, 0), MakeAccount(std::byte{0x03})),
+  EXPECT_EQ(db.UpdateAccount(IdAt(db, 0), DB::kAnyRevision,
+                             MakeAccount(std::byte{0x03})),
             DBStatus::kBusy);
 
   sqlite3_exec(other, "ROLLBACK;", nullptr, nullptr, nullptr);
@@ -660,4 +665,51 @@ TEST_F(DBTest, IdsAreNotReused) {
             DBStatus::kOk);
   EXPECT_NE(first, second);
   EXPECT_EQ(db.GetAccount(first).error(), DBStatus::kNotFound);
+}
+
+TEST_F(DBTest, UpdateBumpsTheRevision) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  std::int64_t id = -1;
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01}), &id), DBStatus::kOk);
+  EXPECT_EQ(db.GetAccount(id)->revision, 0);
+
+  ASSERT_EQ(
+      db.UpdateAccount(id, 0, MakeAccount(std::byte{0x02}, std::byte{0x01})),
+      DBStatus::kOk);
+  EXPECT_EQ(db.GetAccount(id)->revision, 1);
+  EXPECT_EQ(db.GetAllIndex().value()[0].revision, 1);
+  EXPECT_EQ(db.GetAllAccounts().value()[0].second.revision, 1);
+
+  ASSERT_EQ(db.UpdateAccount(id, DB::kAnyRevision,
+                             MakeAccount(std::byte{0x03}, std::byte{0x01})),
+            DBStatus::kOk);
+  EXPECT_EQ(db.GetAccount(id)->revision, 2);
+}
+
+TEST_F(DBTest, UpdateWithStaleRevisionReportsConflictAndChangesNothing) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  std::int64_t id = -1;
+  ASSERT_EQ(db.AddAccount(MakeAccount(std::byte{0x01}), &id), DBStatus::kOk);
+
+  // Two writers read revision 0; the first one wins...
+  ASSERT_EQ(
+      db.UpdateAccount(id, 0, MakeAccount(std::byte{0x02}, std::byte{0x01})),
+      DBStatus::kOk);
+  // ...and the second one is told instead of silently overwriting it.
+  EXPECT_EQ(
+      db.UpdateAccount(id, 0, MakeAccount(std::byte{0x03}, std::byte{0x01})),
+      DBStatus::kConflict);
+
+  const auto stored = db.GetAccount(id);
+  EXPECT_EQ(stored->data[0], std::byte{0x02});
+  EXPECT_EQ(stored->revision, 1);
+}
+
+TEST_F(DBTest, UpdateMissingAccountWithRevisionReportsNotFound) {
+  DB db;
+  ASSERT_TRUE(db.Open(test_file));
+  EXPECT_EQ(db.UpdateAccount(42, 0, MakeAccount(std::byte{0x01})),
+            DBStatus::kNotFound);
 }

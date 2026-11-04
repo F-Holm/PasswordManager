@@ -80,6 +80,7 @@ bool DB::CreateSchema() {
       "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
       "  uid BLOB NOT NULL UNIQUE,"
       "  position INTEGER NOT NULL,"
+      "  revision INTEGER NOT NULL DEFAULT 0,"
       "  description BLOB NOT NULL,"
       "  data BLOB NOT NULL,"
       "  iv_description BLOB NOT NULL,"
@@ -153,7 +154,8 @@ std::expected<AccountBinary, DBStatus> DB::GetAccount(std::int64_t id) {
 
   Statement select(db_,
                    "SELECT uid, description, data, iv_description, iv_data, "
-                   "tag_description, tag_data FROM accounts WHERE id = ?;");
+                   "tag_description, tag_data, revision FROM accounts "
+                   "WHERE id = ?;");
   if (!select.IsValid()) {
     return std::unexpected(LastStatus());
   }
@@ -179,37 +181,69 @@ std::expected<AccountBinary, DBStatus> DB::GetAccount(std::int64_t id) {
   if (!ok) {
     return std::unexpected(DBStatus::kError);
   }
+  account.revision = select.ColumnInt64(7);
 
   return account;
 }
 
-DBStatus DB::UpdateAccount(std::int64_t id, const AccountBinary& account) {
+DBStatus DB::UpdateAccount(std::int64_t id, std::int64_t expected_revision,
+                           const AccountBinary& account) {
   if (!IsOpen()) {
     return DBStatus::kClosed;
   }
 
-  Statement update(db_,
-                   "UPDATE accounts SET description = ?, data = ?, "
-                   "iv_description = ?, iv_data = ?, tag_description = ?, "
-                   "tag_data = ? WHERE id = ? AND uid = ?;");
-  if (!update.IsValid()) {
-    return LastStatus();
+  // The update and the conflict check must see the same state.
+  Transaction tx(db_);
+  if (!tx.IsActive()) {
+    return DBStatusFromSqlite(tx.BeginResult());
   }
 
-  update.BindBlob(1, account.description);
-  update.BindBlob(2, account.data);
-  update.BindBlob(3, account.iv_description);
-  update.BindBlob(4, account.iv_data);
-  update.BindBlob(5, account.tag_description);
-  update.BindBlob(6, account.tag_data);
-  update.BindInt64(7, id);
-  update.BindBlob(8, account.uid);
+  {
+    Statement update(
+        db_,
+        "UPDATE accounts SET description = ?, data = ?, iv_description = ?, "
+        "iv_data = ?, tag_description = ?, tag_data = ?, "
+        "revision = revision + 1 "
+        "WHERE id = ? AND uid = ? AND (? = -1 OR revision = ?);");
+    if (!update.IsValid()) {
+      return LastStatus();
+    }
 
-  if (update.Step() != SQLITE_DONE) {
-    return LastStatus();
+    update.BindBlob(1, account.description);
+    update.BindBlob(2, account.data);
+    update.BindBlob(3, account.iv_description);
+    update.BindBlob(4, account.iv_data);
+    update.BindBlob(5, account.tag_description);
+    update.BindBlob(6, account.tag_data);
+    update.BindInt64(7, id);
+    update.BindBlob(8, account.uid);
+    update.BindInt64(9, expected_revision);
+    update.BindInt64(10, expected_revision);
+
+    if (update.Step() != SQLITE_DONE) {
+      return LastStatus();
+    }
   }
 
-  return sqlite3_changes(db_) > 0 ? DBStatus::kOk : DBStatus::kNotFound;
+  if (sqlite3_changes(db_) == 0) {
+    // Nothing matched: tell a stale revision apart from a missing account.
+    Statement find(db_, "SELECT 1 FROM accounts WHERE id = ? AND uid = ?;");
+    if (!find.IsValid()) {
+      return LastStatus();
+    }
+    find.BindInt64(1, id);
+    find.BindBlob(2, account.uid);
+    const int step = find.Step();
+    if (step == SQLITE_ROW) {
+      return DBStatus::kConflict;
+    }
+    if (step != SQLITE_DONE) {
+      return LastStatus();
+    }
+    return DBStatus::kNotFound;
+  }
+
+  return tx.Commit() ? DBStatus::kOk : LastStatus();
 }
 
 std::expected<std::int64_t, DBStatus> DB::PositionOf(std::int64_t id) {
@@ -341,8 +375,9 @@ std::expected<std::vector<AccountIndex>, DBStatus> DB::GetAllIndex() {
   }
 
   Statement select(db_,
-                   "SELECT id, position, uid, description, iv_description, "
-                   "tag_description FROM accounts ORDER BY position;");
+                   "SELECT id, position, revision, uid, description, "
+                   "iv_description, tag_description FROM accounts "
+                   "ORDER BY position;");
   if (!select.IsValid()) {
     return std::unexpected(LastStatus());
   }
@@ -353,10 +388,11 @@ std::expected<std::vector<AccountIndex>, DBStatus> DB::GetAllIndex() {
     AccountIndex index;
     index.id = select.ColumnInt64(0);
     index.position = select.ColumnInt64(1);
-    const bool ok = select.ColumnBlob(2, index.uid) &&
-                    select.ColumnBlob(3, index.description) &&
-                    select.ColumnBlob(4, index.iv_description) &&
-                    select.ColumnBlob(5, index.tag_description);
+    index.revision = select.ColumnInt64(2);
+    const bool ok = select.ColumnBlob(3, index.uid) &&
+                    select.ColumnBlob(4, index.description) &&
+                    select.ColumnBlob(5, index.iv_description) &&
+                    select.ColumnBlob(6, index.tag_description);
     if (!ok) {
       return std::unexpected(DBStatus::kError);
     }
@@ -377,8 +413,8 @@ DB::GetAllAccounts() {
 
   Statement select(db_,
                    "SELECT id, uid, description, data, iv_description, "
-                   "iv_data, tag_description, tag_data FROM accounts "
-                   "ORDER BY position;");
+                   "iv_data, tag_description, tag_data, revision "
+                   "FROM accounts ORDER BY position;");
   if (!select.IsValid()) {
     return std::unexpected(LastStatus());
   }
@@ -398,6 +434,7 @@ DB::GetAllAccounts() {
     if (!ok) {
       return std::unexpected(DBStatus::kError);
     }
+    account.revision = select.ColumnInt64(8);
     result.emplace_back(id, account);
   }
   if (step != SQLITE_DONE) {

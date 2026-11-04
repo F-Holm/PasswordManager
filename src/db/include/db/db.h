@@ -52,9 +52,15 @@ class DB {
   DBStatus AddAccount(const AccountBinary& account,
                       std::int64_t* out_id = nullptr);
   std::expected<AccountBinary, DBStatus> GetAccount(std::int64_t id);
-  // Overwrites the account `id`. Its uid never changes: kNotFound unless the
-  // stored account `id` has `account.uid`.
-  DBStatus UpdateAccount(std::int64_t id, const AccountBinary& account);
+  // Passed as `expected_revision` to overwrite regardless of the revision.
+  static constexpr std::int64_t kAnyRevision = -1;
+
+  // Overwrites the account `id` and bumps its revision, provided it is still
+  // at `expected_revision` (kConflict otherwise; skip the check with
+  // kAnyRevision). Its uid never changes: kNotFound unless the stored
+  // account `id` has `account.uid`.
+  DBStatus UpdateAccount(std::int64_t id, std::int64_t expected_revision,
+                         const AccountBinary& account);
   // Deletes the account `id`, shifting the positions after it down.
   DBStatus DeleteAccount(std::int64_t id);
   // Moves the account `id` to `to_position`, shifting the accounts in

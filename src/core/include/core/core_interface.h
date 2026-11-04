@@ -69,6 +69,9 @@ CoreKdfParams CoreDefaultKdfParams(void);
 // Flat, fixed-size plaintext account record used at the C boundary. Every
 // array is NUL-padded; unused trailing bytes are zero.
 typedef struct CoreAccount {
+  // Revision the account was read at (filled in by CoreGetAccount, ignored
+  // by CoreAddAccount); pass it back to CoreEditAccount.
+  int64_t revision;
   char description[kCoreDescriptionSize];
   char email[kCoreEmailSize];
   char username[kCoreUsernameSize];
@@ -82,6 +85,7 @@ typedef struct CoreAccount {
 typedef struct CoreAccountEntry {
   int64_t id;
   int64_t position;
+  int64_t revision;
   char description[kCoreDescriptionSize];
 } CoreAccountEntry;
 
@@ -157,8 +161,15 @@ bool CoreIsOpen(const CoreSession* session);
 // *out_id unless `out_id` is NULL.
 CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account,
                           int64_t* out_id);
-// Encrypts and overwrites the account `id`.
+// Passed as `expected_revision` to CoreEditAccount to skip the check.
+enum { kCoreAnyRevision = -1 };
+
+// Encrypts and overwrites the account `id`, provided it is still at
+// `expected_revision` (normally account->revision as read by
+// CoreGetAccount). kCoreConflict, with nothing written, if someone else
+// changed it in the meantime.
 CoreResult CoreEditAccount(CoreSession* session, int64_t id,
+                           int64_t expected_revision,
                            const CoreAccount* account);
 // Deletes the account `id`, shifting later positions down.
 CoreResult CoreRemoveAccount(CoreSession* session, int64_t id);

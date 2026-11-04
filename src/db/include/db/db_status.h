@@ -7,6 +7,9 @@ enum class DBStatus : std::uint8_t {
   kOk,
   // The requested account (or position) does not exist.
   kNotFound,
+  // The account was updated by someone else since the given revision was
+  // read. Nothing was changed.
+  kConflict,
   // Another connection held the database lock for longer than the busy
   // timeout. Nothing was changed; the operation can be retried.
   kBusy,

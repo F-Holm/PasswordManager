@@ -189,7 +189,8 @@ TEST_F(CoreInterfaceTest, NullSessionCallsFailSafely) {
   EXPECT_FALSE(CoreIsOpen(nullptr));
   const CoreAccount account = MakeAccount("d", "e", "u", "p", "x");
   EXPECT_EQ(CoreAddAccount(nullptr, &account, nullptr), kCoreInvalidArgument);
-  EXPECT_EQ(CoreEditAccount(nullptr, 0, &account), kCoreInvalidArgument);
+  EXPECT_EQ(CoreEditAccount(nullptr, 0, kCoreAnyRevision, &account),
+            kCoreInvalidArgument);
   EXPECT_EQ(CoreRemoveAccount(nullptr, 0), kCoreInvalidArgument);
   EXPECT_EQ(CoreReorderAccount(nullptr, 0, 1), kCoreInvalidArgument);
   std::size_t count = 0;
@@ -205,7 +206,8 @@ TEST_F(CoreInterfaceTest, NullSessionCallsFailSafely) {
 TEST_F(CoreInterfaceTest, NullOutputPointersAreRejected) {
   ASSERT_EQ(Open(), kCoreOk);
   EXPECT_EQ(CoreAddAccount(session, nullptr, nullptr), kCoreInvalidArgument);
-  EXPECT_EQ(CoreEditAccount(session, IdAt(0), nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreEditAccount(session, IdAt(0), kCoreAnyRevision, nullptr),
+            kCoreInvalidArgument);
   EXPECT_EQ(CoreLoadIndex(session, nullptr), kCoreInvalidArgument);
   EXPECT_EQ(CoreGetIndexEntry(session, 0, nullptr), kCoreInvalidArgument);
   EXPECT_EQ(CoreGetAccount(session, IdAt(0), nullptr), kCoreInvalidArgument);
@@ -250,7 +252,8 @@ TEST_F(CoreInterfaceTest, EditAndRemoveAccount) {
   ASSERT_EQ(CoreAddAccount(session, &original, nullptr), kCoreOk);
 
   const CoreAccount edited = MakeAccount("new", "e", "u", "p", "x");
-  ASSERT_EQ(CoreEditAccount(session, IdAt(0), &edited), kCoreOk);
+  ASSERT_EQ(CoreEditAccount(session, IdAt(0), kCoreAnyRevision, &edited),
+            kCoreOk);
 
   CoreAccount fetched{};
   ASSERT_EQ(CoreGetAccount(session, IdAt(0), &fetched), kCoreOk);
@@ -402,4 +405,31 @@ TEST_F(CoreInterfaceTest, AddAccountReportsTheIdUsedByTheIndex) {
   ASSERT_EQ(CoreGetAccount(session, id, &fetched), kCoreOk);
   ASSERT_EQ(CoreRemoveAccount(session, id), kCoreOk);
   EXPECT_EQ(CoreGetAccount(session, id, &fetched), kCoreNotFound);
+}
+
+TEST_F(CoreInterfaceTest, EditWithStaleRevisionReportsConflict) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount original = MakeAccount("d", "e", "u", "p1", "x");
+  std::int64_t id = -1;
+  ASSERT_EQ(CoreAddAccount(session, &original, &id), kCoreOk);
+
+  CoreAccount read{};
+  ASSERT_EQ(CoreGetAccount(session, id, &read), kCoreOk);
+  EXPECT_EQ(read.revision, 0);
+
+  const CoreAccount first = MakeAccount("d", "e", "u", "p2", "x");
+  ASSERT_EQ(CoreEditAccount(session, id, read.revision, &first), kCoreOk);
+  const CoreAccount second = MakeAccount("d", "e", "u", "p3", "x");
+  EXPECT_EQ(CoreEditAccount(session, id, read.revision, &second),
+            kCoreConflict);
+
+  ASSERT_EQ(CoreGetAccount(session, id, &read), kCoreOk);
+  EXPECT_STREQ(read.password, "p2");
+  EXPECT_EQ(read.revision, 1);
+
+  std::size_t count = 0;
+  ASSERT_EQ(CoreLoadIndex(session, &count), kCoreOk);
+  CoreAccountEntry entry{};
+  ASSERT_EQ(CoreGetIndexEntry(session, 0, &entry), kCoreOk);
+  EXPECT_EQ(entry.revision, 1);
 }

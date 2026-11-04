@@ -14,6 +14,7 @@ struct AccountIndex {
   // Place of the account in the user's list; changes when accounts are
   // removed or reordered.
   std::int64_t position;
+  std::int64_t revision = 0;
   std::array<std::byte, AccountSize::kUid> uid;
   std::array<std::byte, AccountSize::kDescription> description;
   std::array<std::byte, Crypto::Size::kIv> iv_description;

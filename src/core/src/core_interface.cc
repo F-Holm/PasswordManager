@@ -21,10 +21,11 @@ static_assert(kCoreUsernameSize == AccountSize::kUsername);
 static_assert(kCorePasswordSize == AccountSize::kPassword);
 static_assert(kCoreExtraSize == AccountSize::kExtra);
 static_assert(kCoreMaxGeneratedPasswordLength == kMaxGeneratedPasswordLength);
+static_assert(kCoreAnyRevision == Core::kAnyRevision);
 static_assert(sizeof(CoreAccount) ==
-              AccountSize::kDescription + AccountSize::kEmail +
-                  AccountSize::kUsername + AccountSize::kPassword +
-                  AccountSize::kExtra);
+              sizeof(std::int64_t) + AccountSize::kDescription +
+                  AccountSize::kEmail + AccountSize::kUsername +
+                  AccountSize::kPassword + AccountSize::kExtra);
 
 // CoreSession simply wraps a Core; it exists so the public header can expose
 // an opaque pointer instead of the C++ class definition.
@@ -43,6 +44,7 @@ void ToPlain(const CoreAccount& in, AccountPlain& out) noexcept {
 }
 
 void FromPlain(const AccountPlain& in, CoreAccount& out) noexcept {
+  out.revision = in.revision;
   std::memcpy(out.description, in.description.data(), in.description.size());
   std::memcpy(out.email, in.email.data(), in.email.size());
   std::memcpy(out.username, in.username.data(), in.username.size());
@@ -209,6 +211,7 @@ CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account,
 }
 
 CoreResult CoreEditAccount(CoreSession* session, std::int64_t id,
+                           std::int64_t expected_revision,
                            const CoreAccount* account) {
   if (session == nullptr || account == nullptr) {
     return kCoreInvalidArgument;
@@ -216,7 +219,7 @@ CoreResult CoreEditAccount(CoreSession* session, std::int64_t id,
   return Guard([&] {
     AccountPlain plain;
     ToPlain(*account, plain);
-    return session->core.EditAccount(id, plain);
+    return session->core.EditAccount(id, expected_revision, plain);
   });
 }
 
@@ -260,6 +263,7 @@ CoreResult CoreGetIndexEntry(const CoreSession* session, std::size_t list_index,
   const AccountEntry& entry = index[list_index];
   out_entry->id = entry.id;
   out_entry->position = entry.position;
+  out_entry->revision = entry.revision;
   std::memcpy(out_entry->description, entry.description.data(),
               entry.description.size());
   return kCoreOk;

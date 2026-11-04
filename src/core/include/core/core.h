@@ -22,6 +22,9 @@
 // so it can be encrypted into (or decrypted out of) an AccountBinary without
 // heap allocation.
 struct AccountPlain {
+  // Revision the account was read at (set by Core::GetAccount; ignored by
+  // AddAccount). Pass it back to EditAccount to detect concurrent edits.
+  std::int64_t revision = 0;
   std::array<char, AccountSize::kDescription> description{};
   std::array<char, AccountSize::kEmail> email{};
   std::array<char, AccountSize::kUsername> username{};
@@ -40,6 +43,8 @@ struct AccountEntry {
   std::int64_t id = -1;
   // Place of the account in the list (0-based).
   std::int64_t position = -1;
+  // Current revision of the account (see AccountPlain::revision).
+  std::int64_t revision = 0;
   std::array<char, AccountSize::kDescription> description{};
 
   void SetZero() noexcept;
@@ -119,10 +124,18 @@ class Core {
   // *out_id if given. Invalidates the cached index.
   CoreStatus AddAccount(const AccountPlain& account,
                         std::int64_t* out_id = nullptr);
-  // Encrypts and overwrites the account `id` (kNotFound if there is none).
-  // Invalidates the cached index, and clears the loaded account if it was
-  // `id`.
-  CoreStatus EditAccount(std::int64_t id, const AccountPlain& account);
+  // Passed as `expected_revision` to EditAccount to overwrite the account
+  // whatever its revision.
+  static constexpr std::int64_t kAnyRevision = DB::kAnyRevision;
+
+  // Encrypts and overwrites the account `id` (kNotFound if there is none),
+  // provided nobody changed it since it was read at `expected_revision`
+  // (normally the `revision` GetAccount returned): otherwise nothing is
+  // written and kConflict is returned, so the caller can reload it and show
+  // the newer version instead of silently discarding it. Invalidates the
+  // cached index, and clears the loaded account if it was `id`.
+  CoreStatus EditAccount(std::int64_t id, std::int64_t expected_revision,
+                         const AccountPlain& account);
   // Deletes the account `id`, shifting later positions down. Invalidates the
   // cached index and the loaded account.
   CoreStatus RemoveAccount(std::int64_t id);

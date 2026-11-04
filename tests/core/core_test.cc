@@ -117,7 +117,8 @@ TEST_F(CoreTest, OperationsReportLockedWhenVaultNotOpen) {
       MakeAccount("desc", "email", "user", "pass", "extra");
 
   EXPECT_EQ(core.AddAccount(account), CoreStatus::kLocked);
-  EXPECT_EQ(core.EditAccount(IdAt(0), account), CoreStatus::kLocked);
+  EXPECT_EQ(core.EditAccount(IdAt(0), Core::kAnyRevision, account),
+            CoreStatus::kLocked);
   EXPECT_EQ(core.RemoveAccount(IdAt(0)), CoreStatus::kLocked);
   EXPECT_EQ(core.ReorderAccount(IdAt(0), 1), CoreStatus::kLocked);
   EXPECT_EQ(core.LoadIndex(), CoreStatus::kLocked);
@@ -207,9 +208,10 @@ TEST_F(CoreTest, EditAccountOverwritesContent) {
       core.AddAccount(MakeAccount("old", "old@e", "old_u", "old_p", "old_x")),
       CoreStatus::kOk);
 
-  ASSERT_EQ(core.EditAccount(IdAt(0), MakeAccount("new", "new@e", "new_u",
-                                                  "new_p", "new_x")),
-            CoreStatus::kOk);
+  ASSERT_EQ(
+      core.EditAccount(IdAt(0), Core::kAnyRevision,
+                       MakeAccount("new", "new@e", "new_u", "new_p", "new_x")),
+      CoreStatus::kOk);
 
   const AccountPlain* fetched = Fetch(core, IdAt(0));
   ASSERT_NE(fetched, nullptr);
@@ -220,7 +222,8 @@ TEST_F(CoreTest, EditAccountOverwritesContent) {
 TEST_F(CoreTest, EditMissingAccountFails) {
   Core core;
   ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
-  EXPECT_EQ(core.EditAccount(IdAt(0), MakeAccount("desc", "e", "u", "p", "x")),
+  EXPECT_EQ(core.EditAccount(IdAt(0), Core::kAnyRevision,
+                             MakeAccount("desc", "e", "u", "p", "x")),
             CoreStatus::kNotFound);
 }
 
@@ -231,7 +234,8 @@ TEST_F(CoreTest, EditingLoadedAccountClearsIt) {
             CoreStatus::kOk);
   ASSERT_NE(Fetch(core, IdAt(0)), nullptr);
 
-  ASSERT_EQ(core.EditAccount(IdAt(0), MakeAccount("new", "e", "u", "p", "x")),
+  ASSERT_EQ(core.EditAccount(IdAt(0), Core::kAnyRevision,
+                             MakeAccount("new", "e", "u", "p", "x")),
             CoreStatus::kOk);
 
   EXPECT_EQ(core.CurrentAccount(), nullptr);
@@ -246,9 +250,9 @@ TEST_F(CoreTest, EditingOtherAccountKeepsLoadedAccountIntact) {
             CoreStatus::kOk);
   ASSERT_NE(Fetch(core, IdAt(0)), nullptr);
 
-  ASSERT_EQ(
-      core.EditAccount(IdAt(1), MakeAccount("edited", "e", "u", "p", "x")),
-      CoreStatus::kOk);
+  ASSERT_EQ(core.EditAccount(IdAt(1), Core::kAnyRevision,
+                             MakeAccount("edited", "e", "u", "p", "x")),
+            CoreStatus::kOk);
 
   ASSERT_NE(core.CurrentAccount(), nullptr);
   EXPECT_EQ(GetAccountField(core.CurrentAccount()->description), "first");
@@ -395,7 +399,8 @@ TEST_F(CoreTest, EditingDrawsFreshIvs) {
   ASSERT_TRUE(before.has_value());
 
   // Re-encrypting identical plaintext must not reuse the (key, IV) pair.
-  ASSERT_EQ(core.EditAccount(IdAt(0), account), CoreStatus::kOk);
+  ASSERT_EQ(core.EditAccount(IdAt(0), Core::kAnyRevision, account),
+            CoreStatus::kOk);
   const auto after = db.GetAccount(IdAt(0));
   ASSERT_TRUE(after.has_value());
   EXPECT_EQ(before->uid, after->uid);
@@ -847,7 +852,8 @@ TEST_F(CoreTest, IdsKeepNamingTheSameAccountWhenAnotherSessionChangesTheList) {
   ASSERT_EQ(cli.ReorderAccount(fourth, 0), CoreStatus::kOk);
 
   // Editing "the fourth account" still edits the fourth account...
-  ASSERT_EQ(gui.EditAccount(fourth, MakeAccount("fourth*", "e", "u", "p", "x")),
+  ASSERT_EQ(gui.EditAccount(fourth, Core::kAnyRevision,
+                            MakeAccount("fourth*", "e", "u", "p", "x")),
             CoreStatus::kOk);
   ASSERT_EQ(gui.LoadIndex(), CoreStatus::kOk);
   ASSERT_EQ(gui.Index().size(), 3u);
@@ -856,8 +862,62 @@ TEST_F(CoreTest, IdsKeepNamingTheSameAccountWhenAnotherSessionChangesTheList) {
   EXPECT_EQ(GetAccountField(gui.Index()[2].description), "third");
 
   // ...and acting on the removed one fails instead of hitting another one.
-  EXPECT_EQ(gui.EditAccount(first, MakeAccount("x", "e", "u", "p", "x")),
+  EXPECT_EQ(gui.EditAccount(first, Core::kAnyRevision,
+                            MakeAccount("x", "e", "u", "p", "x")),
             CoreStatus::kNotFound);
   EXPECT_EQ(gui.RemoveAccount(first), CoreStatus::kNotFound);
   EXPECT_EQ(gui.GetAccount(first).error(), CoreStatus::kNotFound);
+}
+
+TEST_F(CoreTest, ConcurrentEditsOfTheSameAccountAreDetected) {
+  Core gui;
+  ASSERT_EQ(gui.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  std::int64_t id = -1;
+  ASSERT_EQ(gui.AddAccount(MakeAccount("bank", "e", "u", "old-pw", "x"), &id),
+            CoreStatus::kOk);
+  Core cli;
+  ASSERT_EQ(cli.Unlock(test_file, kPassword), CoreStatus::kOk);
+
+  // Both programs open the account at the same revision.
+  const auto gui_view = gui.GetAccount(id);
+  const auto cli_view = cli.GetAccount(id);
+  ASSERT_TRUE(gui_view.has_value());
+  ASSERT_TRUE(cli_view.has_value());
+  const std::int64_t read_revision = (*gui_view)->revision;
+  EXPECT_EQ((*cli_view)->revision, read_revision);
+
+  // The CLI saves first.
+  ASSERT_EQ(cli.EditAccount(id, read_revision,
+                            MakeAccount("bank", "e", "u", "cli-pw", "x")),
+            CoreStatus::kOk);
+
+  // The GUI's save would overwrite the CLI's change: it is refused.
+  EXPECT_EQ(gui.EditAccount(id, read_revision,
+                            MakeAccount("bank", "e", "u", "gui-pw", "x")),
+            CoreStatus::kConflict);
+  const AccountPlain* stored = Fetch(gui, id);
+  ASSERT_NE(stored, nullptr);
+  EXPECT_EQ(GetAccountField(stored->password), "cli-pw");
+  EXPECT_EQ(stored->revision, read_revision + 1);
+
+  // After reloading, the GUI can save on top of the newer version.
+  EXPECT_EQ(gui.EditAccount(id, stored->revision,
+                            MakeAccount("bank", "e", "u", "gui-pw", "x")),
+            CoreStatus::kOk);
+  EXPECT_EQ(GetAccountField(Fetch(cli, id)->password), "gui-pw");
+}
+
+TEST_F(CoreTest, IndexReportsRevisions) {
+  Core core;
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  std::int64_t id = -1;
+  ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x"), &id),
+            CoreStatus::kOk);
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+  EXPECT_EQ(core.Index()[0].revision, 0);
+
+  ASSERT_EQ(core.EditAccount(id, 0, MakeAccount("b", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+  EXPECT_EQ(core.Index()[0].revision, 1);
 }

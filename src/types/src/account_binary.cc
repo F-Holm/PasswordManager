@@ -4,6 +4,7 @@
 #include <span>
 
 void AccountBinary::SetZero() noexcept {
+  revision = 0;
   Crypto::SecureClear(uid);
   Crypto::SecureClear(description);
   Crypto::SecureClear(data);

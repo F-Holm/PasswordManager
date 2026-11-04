@@ -35,6 +35,8 @@ CoreStatus FromDBStatus(DBStatus status) noexcept {
       return CoreStatus::kBusy;
     case DBStatus::kAlreadyExists:
       return CoreStatus::kAlreadyExists;
+    case DBStatus::kConflict:
+      return CoreStatus::kConflict;
     case DBStatus::kClosed:
       return CoreStatus::kLocked;
     case DBStatus::kError:
@@ -85,6 +87,7 @@ std::string_view ToString(CoreStatus status) noexcept {
 }
 
 void AccountPlain::SetZero() noexcept {
+  revision = 0;
   Crypto::SecureClear(std::as_writable_bytes(std::span(description)));
   Crypto::SecureClear(std::as_writable_bytes(std::span(email)));
   Crypto::SecureClear(std::as_writable_bytes(std::span(username)));
@@ -99,6 +102,7 @@ AccountPlain::~AccountPlain() noexcept {
 void AccountEntry::SetZero() noexcept {
   id = -1;
   position = -1;
+  revision = 0;
   Crypto::SecureClear(std::as_writable_bytes(std::span(description)));
 }
 
@@ -287,7 +291,8 @@ CoreStatus Core::ChangeMasterPassword(
       if (!Encode(new_key, plain, uid, binary)) {
         return fail(CoreStatus::kError);
       }
-      const DBStatus update = db_.UpdateAccount(id, binary);
+      const std::int64_t revision = binary.revision;
+      const DBStatus update = db_.UpdateAccount(id, revision, binary);
       if (update != DBStatus::kOk) {
         return fail(FromDBStatus(update));
       }
@@ -424,6 +429,7 @@ bool Core::DecodeDescription(AccountIndex& index, AccountEntry& out) const {
 
   out.id = index.id;
   out.position = index.position;
+  out.revision = index.revision;
   std::memcpy(out.description.data(), index.description.data(),
               out.description.size());
   return true;
@@ -451,7 +457,8 @@ CoreStatus Core::AddAccount(const AccountPlain& account, std::int64_t* out_id) {
   return status;
 }
 
-CoreStatus Core::EditAccount(std::int64_t id, const AccountPlain& account) {
+CoreStatus Core::EditAccount(std::int64_t id, std::int64_t expected_revision,
+                             const AccountPlain& account) {
   if (!IsOpen()) {
     return CoreStatus::kLocked;
   }
@@ -467,7 +474,8 @@ CoreStatus Core::EditAccount(std::int64_t id, const AccountPlain& account) {
     return CoreStatus::kError;
   }
 
-  const CoreStatus status = FromDBStatus(db_.UpdateAccount(id, binary));
+  const CoreStatus status =
+      FromDBStatus(db_.UpdateAccount(id, expected_revision, binary));
   if (status == CoreStatus::kOk) {
     ClearIndex();
     if (id == loaded_id_) {
@@ -584,6 +592,7 @@ std::expected<const AccountPlain*, CoreStatus> Core::GetAccount(
     return std::unexpected(CoreStatus::kCorrupted);
   }
 
+  loaded_account_->revision = binary->revision;
   loaded_id_ = id;
   return &(*loaded_account_);
 }
