@@ -131,6 +131,16 @@ class Core {
   // next LoadIndex() and cleared by ClearIndex() and by any mutation.
   [[nodiscard]] const std::vector<AccountEntry>& Index() const noexcept;
   void ClearIndex() noexcept;
+  // Positions within Index() (0-based, ascending) of the entries whose
+  // description contains `query`, ignoring ASCII case. An empty query
+  // matches every entry. Works on the loaded index; call LoadIndex() first.
+  [[nodiscard]] std::vector<std::size_t> SearchIndex(
+      std::string_view query) const;
+
+  // Number of accounts in the vault (without decrypting anything).
+  std::expected<std::size_t, CoreStatus> Count();
+  // Rebuilds the vault file to reclaim the space of deleted accounts.
+  CoreStatus Compact();
 
   // Decrypts the account at `position`, replacing whatever account was
   // previously loaded, and returns a pointer to it. The pointer is

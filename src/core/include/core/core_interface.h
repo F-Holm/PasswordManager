@@ -163,6 +163,19 @@ CoreResult CoreLoadIndex(CoreSession* session, size_t* out_count);
 CoreResult CoreGetIndexEntry(const CoreSession* session, size_t list_index,
                              CoreAccountEntry* out_entry);
 void CoreClearIndex(CoreSession* session);
+// Finds the loaded index entries whose description contains the
+// `query_size` bytes at `query`, ignoring ASCII case (an empty query matches
+// everything). Writes the total number of matches to *out_count and the
+// first min(*out_count, capacity) matching list indices (as accepted by
+// CoreGetIndexEntry) to `out_indices`, which may be NULL if capacity is 0.
+CoreResult CoreSearchIndex(const CoreSession* session, const char* query,
+                           size_t query_size, size_t* out_indices,
+                           size_t capacity, size_t* out_count);
+
+// Writes the number of accounts in the vault to *out_count.
+CoreResult CoreCount(CoreSession* session, size_t* out_count);
+// Rebuilds the vault file to reclaim the space of deleted accounts.
+CoreResult CoreCompact(CoreSession* session);
 
 // Decrypts the account at `position` and copies it into *out_account,
 // replacing whatever account was previously loaded in this session.

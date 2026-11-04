@@ -328,3 +328,39 @@ TEST_F(CoreInterfaceTest, ChangeMasterPasswordRejectsNullArguments) {
   EXPECT_EQ(CoreChangeMasterPassword(session, "a", 1, nullptr, 1, nullptr),
             kCoreInvalidArgument);
 }
+
+TEST_F(CoreInterfaceTest, SearchCountAndCompact) {
+  ASSERT_EQ(Open(), kCoreOk);
+  const CoreAccount bank = MakeAccount("My Bank", "e", "u", "p", "x");
+  const CoreAccount mail = MakeAccount("Email", "e", "u", "p", "x");
+  const CoreAccount old_bank = MakeAccount("bank (old)", "e", "u", "p", "x");
+  ASSERT_EQ(CoreAddAccount(session, &bank), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &mail), kCoreOk);
+  ASSERT_EQ(CoreAddAccount(session, &old_bank), kCoreOk);
+
+  std::size_t count = 0;
+  ASSERT_EQ(CoreCount(session, &count), kCoreOk);
+  EXPECT_EQ(count, 3u);
+  ASSERT_EQ(CoreLoadIndex(session, &count), kCoreOk);
+
+  std::array<std::size_t, 1> indices{};
+  ASSERT_EQ(CoreSearchIndex(session, "BANK", 4, indices.data(), indices.size(),
+                            &count),
+            kCoreOk);
+  EXPECT_EQ(count, 2u);  // Total matches, even though only one fits.
+  EXPECT_EQ(indices[0], 0u);
+
+  ASSERT_EQ(CoreSearchIndex(session, nullptr, 0, nullptr, 0, &count), kCoreOk);
+  EXPECT_EQ(count, 3u);
+
+  EXPECT_EQ(CoreSearchIndex(session, nullptr, 1, nullptr, 0, &count),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreSearchIndex(session, "a", 1, nullptr, 1, &count),
+            kCoreInvalidArgument);
+  EXPECT_EQ(CoreSearchIndex(session, "a", 1, nullptr, 0, nullptr),
+            kCoreInvalidArgument);
+
+  EXPECT_EQ(CoreCompact(session), kCoreOk);
+  EXPECT_EQ(CoreCompact(nullptr), kCoreInvalidArgument);
+  EXPECT_EQ(CoreCount(session, nullptr), kCoreInvalidArgument);
+}

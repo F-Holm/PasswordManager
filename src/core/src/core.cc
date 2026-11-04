@@ -1,6 +1,7 @@
 #include "core/core.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <filesystem>
 #include <optional>
@@ -531,6 +532,41 @@ const std::vector<AccountEntry>& Core::Index() const noexcept {
 
 void Core::ClearIndex() noexcept {
   index_.clear();
+}
+
+std::vector<std::size_t> Core::SearchIndex(std::string_view query) const {
+  const auto lower = [](char c) {
+    return static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+  };
+  std::vector<std::size_t> matches;
+  for (std::size_t i = 0; i < index_.size(); ++i) {
+    const std::string_view description = GetAccountField(index_[i].description);
+    const auto found = std::ranges::search(
+        description, query,
+        [&](char a, char b) { return lower(a) == lower(b); });
+    if (query.empty() || !found.empty()) {
+      matches.push_back(i);
+    }
+  }
+  return matches;
+}
+
+std::expected<std::size_t, CoreStatus> Core::Count() {
+  if (!IsOpen()) {
+    return std::unexpected(CoreStatus::kLocked);
+  }
+  const auto count = db_.Count();
+  if (!count.has_value()) {
+    return std::unexpected(FromDBStatus(count.error()));
+  }
+  return *count;
+}
+
+CoreStatus Core::Compact() {
+  if (!IsOpen()) {
+    return CoreStatus::kLocked;
+  }
+  return FromDBStatus(db_.Compact());
 }
 
 std::expected<const AccountPlain*, CoreStatus> Core::GetAccount(

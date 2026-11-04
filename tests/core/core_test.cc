@@ -9,6 +9,7 @@
 #include <cstring>
 #include <filesystem>
 #include <string_view>
+#include <vector>
 
 namespace {
 
@@ -748,4 +749,41 @@ TEST_F(CoreChangePasswordTest, RequiresAnOpenVault) {
   Core core;
   EXPECT_EQ(core.ChangeMasterPassword(kPassword, kNewPassword),
             CoreStatus::kLocked);
+}
+
+TEST_F(CoreTest, SearchIndexMatchesSubstringsIgnoringCase) {
+  Core core;
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  for (const char* description : {"My Bank", "Email", "bank (old)", "Gym"}) {
+    ASSERT_EQ(core.AddAccount(MakeAccount(description, "e", "u", "p", "x")),
+              CoreStatus::kOk);
+  }
+  ASSERT_EQ(core.LoadIndex(), CoreStatus::kOk);
+
+  EXPECT_EQ(core.SearchIndex("BANK"), (std::vector<std::size_t>{0, 2}));
+  EXPECT_EQ(core.SearchIndex("aIl"), (std::vector<std::size_t>{1}));
+  EXPECT_EQ(core.SearchIndex(""), (std::vector<std::size_t>{0, 1, 2, 3}));
+  EXPECT_TRUE(core.SearchIndex("nothing").empty());
+
+  core.ClearIndex();
+  EXPECT_TRUE(core.SearchIndex("").empty());
+}
+
+TEST_F(CoreTest, CountAndCompact) {
+  Core core;
+  EXPECT_EQ(core.Count().error(), CoreStatus::kLocked);
+  EXPECT_EQ(core.Compact(), CoreStatus::kLocked);
+
+  ASSERT_EQ(core.Create(test_file, kPassword, kTestKdf), CoreStatus::kOk);
+  EXPECT_EQ(core.Count().value(), 0u);
+  ASSERT_EQ(core.AddAccount(MakeAccount("a", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+  ASSERT_EQ(core.AddAccount(MakeAccount("b", "e", "u", "p", "x")),
+            CoreStatus::kOk);
+  ASSERT_EQ(core.RemoveAccount(0), CoreStatus::kOk);
+  EXPECT_EQ(core.Count().value(), 1u);
+
+  EXPECT_EQ(core.Compact(), CoreStatus::kOk);
+  EXPECT_EQ(core.Count().value(), 1u);
+  EXPECT_EQ(GetAccountField(Fetch(core, 0)->description), "b");
 }

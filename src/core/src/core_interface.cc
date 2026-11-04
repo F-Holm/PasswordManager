@@ -1,5 +1,6 @@
 #include "core/core_interface.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <new>
@@ -267,6 +268,46 @@ void CoreClearIndex(CoreSession* session) {
   if (session != nullptr) {
     session->core.ClearIndex();
   }
+}
+
+CoreResult CoreSearchIndex(const CoreSession* session, const char* query,
+                           std::size_t query_size, std::size_t* out_indices,
+                           std::size_t capacity, std::size_t* out_count) {
+  if (session == nullptr || out_count == nullptr ||
+      (query == nullptr && query_size > 0) ||
+      (out_indices == nullptr && capacity > 0)) {
+    return kCoreInvalidArgument;
+  }
+  return Guard([&] {
+    const std::vector<std::size_t> matches = session->core.SearchIndex(
+        query == nullptr ? std::string_view{}
+                         : std::string_view(query, query_size));
+    const std::size_t copied = std::min(matches.size(), capacity);
+    std::copy_n(matches.begin(), copied, out_indices);
+    *out_count = matches.size();
+    return CoreStatus::kOk;
+  });
+}
+
+CoreResult CoreCount(CoreSession* session, std::size_t* out_count) {
+  if (session == nullptr || out_count == nullptr) {
+    return kCoreInvalidArgument;
+  }
+  return Guard([&] {
+    const auto count = session->core.Count();
+    if (!count.has_value()) {
+      return count.error();
+    }
+    *out_count = *count;
+    return CoreStatus::kOk;
+  });
+}
+
+CoreResult CoreCompact(CoreSession* session) {
+  if (session == nullptr) {
+    return kCoreInvalidArgument;
+  }
+  return Guard([&] { return session->core.Compact(); });
 }
 
 CoreResult CoreGetAccount(CoreSession* session, std::int64_t position,
