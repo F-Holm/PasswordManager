@@ -24,15 +24,20 @@ int CoreCHeaderSmokeTest(void) {
     return 1;
   }
   /* Null arguments must fail safely from C as well. */
-  if (CoreOpen(NULL, key, sizeof key) != NULL) {
+  if (CoreOpenWithKey(NULL, "vault", key, sizeof key) !=
+      kCoreInvalidArgument) {
     return 2;
   }
   if (CoreIsOpen(NULL)) {
     return 3;
   }
-  if (CoreAddAccount(NULL, &account)) {
+  if (CoreAddAccount(NULL, &account) != kCoreInvalidArgument) {
     return 4;
   }
+  if (CoreResultName(kCoreOk) == NULL) {
+    return 5;
+  }
   CoreClose(NULL);
+  CoreFree(NULL);
   return 0;
 }

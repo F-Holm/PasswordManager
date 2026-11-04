@@ -3,11 +3,13 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <expected>
 #include <optional>
 #include <span>
 #include <string_view>
 #include <vector>
 
+#include "core/core_status.h"
 #include "crypto/crypto.h"
 #include "db/db.h"
 #include "types/account_binary.h"
@@ -71,40 +73,45 @@ class Core {
 
   // Opens the vault database at `db_path` using an already-derived
   // `master_key` (e.g. via Crypto::Kdf). Replaces any previously open vault.
-  bool Open(std::string_view db_path,
-            const std::array<std::byte, Crypto::Size::kKey>& master_key);
+  CoreStatus Open(std::string_view db_path,
+                  const std::array<std::byte, Crypto::Size::kKey>& master_key);
   // Closes the vault, wipes the master key and every cached plaintext.
   void Close() noexcept;
   [[nodiscard]] bool IsOpen() const noexcept;
 
+  // Every operation below returns kLocked if no vault is open.
+
   // Encrypts and appends `account` as a new entry. Invalidates the cached
   // index.
-  bool AddAccount(const AccountPlain& account);
-  // Encrypts and overwrites the account at `position`. Invalidates the
-  // cached index, and clears the loaded account if it was `position`.
-  bool EditAccount(std::int64_t position, const AccountPlain& account);
+  CoreStatus AddAccount(const AccountPlain& account);
+  // Encrypts and overwrites the account at `position` (kNotFound if there is
+  // none). Invalidates the cached index, and clears the loaded account if it
+  // was `position`.
+  CoreStatus EditAccount(std::int64_t position, const AccountPlain& account);
   // Deletes the account at `position`, shifting later positions down.
   // Invalidates the cached index and the loaded account.
-  bool RemoveAccount(std::int64_t position);
+  CoreStatus RemoveAccount(std::int64_t position);
   // Moves the account at `from_position` to `to_position`, shifting the
   // accounts in between. Invalidates the cached index and the loaded
   // account.
-  bool ReorderAccount(std::int64_t from_position, std::int64_t to_position);
+  CoreStatus ReorderAccount(std::int64_t from_position,
+                            std::int64_t to_position);
 
-  // Reloads and decrypts every index entry from the vault, caches it and
-  // returns a reference to the cache. The reference is invalidated by the
-  // next call to GetAllIndex or ClearIndex.
-  const std::vector<AccountEntry>& GetAllIndex();
-  // Returns the index cache as it stands, without refreshing it from the
-  // vault. Useful to read entries back after a prior GetAllIndex() call.
-  [[nodiscard]] const std::vector<AccountEntry>& IndexCache() const noexcept;
+  // Reloads and decrypts every index entry from the vault into the cache
+  // returned by Index(). Entries that fail authentication are left out.
+  CoreStatus LoadIndex();
+  // The index as loaded by the last LoadIndex() call. The reference stays
+  // valid for the lifetime of the Core; its contents are replaced by the
+  // next LoadIndex() and cleared by ClearIndex() and by any mutation.
+  [[nodiscard]] const std::vector<AccountEntry>& Index() const noexcept;
   void ClearIndex() noexcept;
 
   // Decrypts the account at `position`, replacing whatever account was
-  // previously loaded, and returns a pointer to it (nullptr on failure).
-  // The pointer is invalidated by the next call to GetAccount or
-  // ClearAccount, or by any mutating operation.
-  const AccountPlain* GetAccount(std::int64_t position);
+  // previously loaded, and returns a pointer to it. The pointer is
+  // invalidated by the next call to GetAccount or ClearAccount, or by any
+  // mutating operation. kCorrupted if the stored data fails authentication.
+  std::expected<const AccountPlain*, CoreStatus> GetAccount(
+      std::int64_t position);
   [[nodiscard]] const AccountPlain* CurrentAccount() const noexcept;
   void ClearAccount() noexcept;
 

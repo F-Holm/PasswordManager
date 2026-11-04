@@ -15,7 +15,10 @@
 // handle.
 //
 // CoreSession is opaque on purpose: callers only ever hold a pointer to it,
-// created by CoreOpen and destroyed by CoreClose.
+// created by CoreNew and destroyed by CoreFree.
+//
+// Every fallible function returns a CoreResult (kCoreOk on success); outputs
+// are written through pointer arguments and left untouched on failure.
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,6 +33,21 @@ enum {
   kCorePasswordSize = 256,
   kCoreExtraSize = 1024,
   kCoreMasterKeySize = 32
+};
+
+// Result codes. Same values as CoreStatus in core/core_status.h.
+typedef int32_t CoreResult;
+enum {
+  kCoreOk = 0,
+  kCoreNotFound = 1,
+  kCoreConflict = 2,
+  kCoreBusy = 3,
+  kCoreLocked = 4,
+  kCoreWrongPassword = 5,
+  kCoreInvalidArgument = 6,
+  kCoreAlreadyExists = 7,
+  kCoreCorrupted = 8,
+  kCoreError = 9
 };
 
 typedef struct CoreSession CoreSession;
@@ -51,41 +69,51 @@ typedef struct CoreAccountEntry {
   char description[kCoreDescriptionSize];
 } CoreAccountEntry;
 
+// Stable, human-readable, NUL-terminated name of `result` (e.g. "busy").
+// Never returns NULL.
+const char* CoreResultName(CoreResult result);
+
+// Creates an empty session with no vault open. Returns NULL only if memory
+// is exhausted.
+CoreSession* CoreNew(void);
+// Closes any open vault, wipes every secret the session held and frees it.
+// `session` may be NULL.
+void CoreFree(CoreSession* session);
+
 // Opens the vault database at `db_path` (a NUL-terminated path) using an
-// already-derived master key of exactly kCoreMasterKeySize bytes. Returns a
-// new session on success, or nullptr on failure (invalid key size, or the
-// database could not be opened).
-CoreSession* CoreOpen(const char* db_path, const uint8_t* master_key,
-                      size_t master_key_size);
-// Closes and frees `session`, wiping every secret it held. `session` may be
-// nullptr, in which case this is a no-op.
+// already-derived master key of exactly kCoreMasterKeySize bytes. Replaces
+// any vault already open in `session`.
+CoreResult CoreOpenWithKey(CoreSession* session, const char* db_path,
+                           const uint8_t* master_key, size_t master_key_size);
+// Closes the vault and wipes the master key and every cached plaintext; the
+// session can be reused. `session` may be NULL.
 void CoreClose(CoreSession* session);
 bool CoreIsOpen(const CoreSession* session);
 
 // Encrypts and appends `account` as a new entry.
-bool CoreAddAccount(CoreSession* session, const CoreAccount* account);
+CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account);
 // Encrypts and overwrites the account at `position`.
-bool CoreEditAccount(CoreSession* session, int64_t position,
-                     const CoreAccount* account);
+CoreResult CoreEditAccount(CoreSession* session, int64_t position,
+                           const CoreAccount* account);
 // Deletes the account at `position`, shifting later positions down.
-bool CoreRemoveAccount(CoreSession* session, int64_t position);
+CoreResult CoreRemoveAccount(CoreSession* session, int64_t position);
 // Moves the account at `from_position` to `to_position`.
-bool CoreReorderAccount(CoreSession* session, int64_t from_position,
-                        int64_t to_position);
+CoreResult CoreReorderAccount(CoreSession* session, int64_t from_position,
+                              int64_t to_position);
 
-// Reloads the full account index and returns its entry count. Individual
-// entries are then read with CoreGetIndexEntry.
-size_t CoreLoadIndex(CoreSession* session);
-// Copies the `list_index`-th (0-based) cached index entry into *out_entry.
-// Returns false if `list_index` is out of range.
-bool CoreGetIndexEntry(const CoreSession* session, size_t list_index,
-                       CoreAccountEntry* out_entry);
+// Reloads the full account index and writes its entry count to *out_count.
+// Individual entries are then read with CoreGetIndexEntry.
+CoreResult CoreLoadIndex(CoreSession* session, size_t* out_count);
+// Copies the `list_index`-th (0-based) loaded index entry into *out_entry.
+// kCoreNotFound if `list_index` is out of range.
+CoreResult CoreGetIndexEntry(const CoreSession* session, size_t list_index,
+                             CoreAccountEntry* out_entry);
 void CoreClearIndex(CoreSession* session);
 
 // Decrypts the account at `position` and copies it into *out_account,
 // replacing whatever account was previously loaded in this session.
-bool CoreGetAccount(CoreSession* session, int64_t position,
-                    CoreAccount* out_account);
+CoreResult CoreGetAccount(CoreSession* session, int64_t position,
+                          CoreAccount* out_account);
 void CoreClearAccount(CoreSession* session);
 
 #ifdef __cplusplus

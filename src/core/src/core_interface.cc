@@ -3,8 +3,12 @@
 #include <array>
 #include <cstring>
 #include <new>
+#include <span>
+#include <utility>
+#include <vector>
 
 #include "core/core.h"
+#include "core/core_status.h"
 #include "crypto/crypto.h"
 #include "types/account_size.h"
 
@@ -45,158 +49,184 @@ void FromPlain(const AccountPlain& in, CoreAccount& out) noexcept {
 
 }  // namespace
 
-extern "C" {
+namespace {
 
-CoreSession* CoreOpen(const char* db_path, const std::uint8_t* master_key,
-                      std::size_t master_key_size) {
-  if (db_path == nullptr || master_key == nullptr ||
-      master_key_size != kCoreMasterKeySize) {
-    return nullptr;
-  }
+constexpr CoreResult ToResult(CoreStatus status) noexcept {
+  return static_cast<CoreResult>(status);
+}
 
+// Runs `body` (which returns a CoreStatus), turning any C++ exception into
+// kCoreError so it never unwinds across the C ABI.
+template <typename Body>
+CoreResult Guard(Body&& body) noexcept {
   try {
-    std::array<std::byte, Crypto::Size::kKey> key{};
-    std::memcpy(key.data(), master_key, key.size());
-
-    auto* session = new CoreSession();
-    const bool opened = session->core.Open(db_path, key);
-    Crypto::SecureClear(std::span(key));
-
-    if (!opened) {
-      delete session;
-      return nullptr;
-    }
-    return session;
+    return ToResult(std::forward<Body>(body)());
   } catch (...) {
-    return nullptr;
+    return kCoreError;
   }
 }
 
-void CoreClose(CoreSession* session) {
+}  // namespace
+
+static_assert(ToResult(CoreStatus::kOk) == kCoreOk);
+static_assert(ToResult(CoreStatus::kNotFound) == kCoreNotFound);
+static_assert(ToResult(CoreStatus::kConflict) == kCoreConflict);
+static_assert(ToResult(CoreStatus::kBusy) == kCoreBusy);
+static_assert(ToResult(CoreStatus::kLocked) == kCoreLocked);
+static_assert(ToResult(CoreStatus::kWrongPassword) == kCoreWrongPassword);
+static_assert(ToResult(CoreStatus::kInvalidArgument) == kCoreInvalidArgument);
+static_assert(ToResult(CoreStatus::kAlreadyExists) == kCoreAlreadyExists);
+static_assert(ToResult(CoreStatus::kCorrupted) == kCoreCorrupted);
+static_assert(ToResult(CoreStatus::kError) == kCoreError);
+
+extern "C" {
+
+const char* CoreResultName(CoreResult result) {
+  switch (result) {
+    case kCoreOk:
+    case kCoreNotFound:
+    case kCoreConflict:
+    case kCoreBusy:
+    case kCoreLocked:
+    case kCoreWrongPassword:
+    case kCoreInvalidArgument:
+    case kCoreAlreadyExists:
+    case kCoreCorrupted:
+    case kCoreError:
+      // Every name is a string literal, hence NUL-terminated.
+      return ToString(static_cast<CoreStatus>(result)).data();
+    default:
+      return "unknown";
+  }
+}
+
+CoreSession* CoreNew(void) {
+  return new (std::nothrow) CoreSession();
+}
+
+void CoreFree(CoreSession* session) {
   delete session;
 }
 
-bool CoreIsOpen(const CoreSession* session) {
-  if (session == nullptr) {
-    return false;
+CoreResult CoreOpenWithKey(CoreSession* session, const char* db_path,
+                           const std::uint8_t* master_key,
+                           std::size_t master_key_size) {
+  if (session == nullptr || db_path == nullptr || master_key == nullptr ||
+      master_key_size != kCoreMasterKeySize) {
+    return kCoreInvalidArgument;
   }
-  try {
-    return session->core.IsOpen();
-  } catch (...) {
-    return false;
+  return Guard([&] {
+    std::array<std::byte, Crypto::Size::kKey> key{};
+    std::memcpy(key.data(), master_key, key.size());
+    const CoreStatus status = session->core.Open(db_path, key);
+    Crypto::SecureClear(std::span(key));
+    return status;
+  });
+}
+
+void CoreClose(CoreSession* session) {
+  if (session != nullptr) {
+    session->core.Close();
   }
 }
 
-bool CoreAddAccount(CoreSession* session, const CoreAccount* account) {
+bool CoreIsOpen(const CoreSession* session) {
+  return session != nullptr && session->core.IsOpen();
+}
+
+CoreResult CoreAddAccount(CoreSession* session, const CoreAccount* account) {
   if (session == nullptr || account == nullptr) {
-    return false;
+    return kCoreInvalidArgument;
   }
-  try {
+  return Guard([&] {
     AccountPlain plain;
     ToPlain(*account, plain);
     return session->core.AddAccount(plain);
-  } catch (...) {
-    return false;
-  }
+  });
 }
 
-bool CoreEditAccount(CoreSession* session, std::int64_t position,
-                     const CoreAccount* account) {
+CoreResult CoreEditAccount(CoreSession* session, std::int64_t position,
+                           const CoreAccount* account) {
   if (session == nullptr || account == nullptr) {
-    return false;
+    return kCoreInvalidArgument;
   }
-  try {
+  return Guard([&] {
     AccountPlain plain;
     ToPlain(*account, plain);
     return session->core.EditAccount(position, plain);
-  } catch (...) {
-    return false;
-  }
+  });
 }
 
-bool CoreRemoveAccount(CoreSession* session, std::int64_t position) {
+CoreResult CoreRemoveAccount(CoreSession* session, std::int64_t position) {
   if (session == nullptr) {
-    return false;
+    return kCoreInvalidArgument;
   }
-  try {
-    return session->core.RemoveAccount(position);
-  } catch (...) {
-    return false;
-  }
+  return Guard([&] { return session->core.RemoveAccount(position); });
 }
 
-bool CoreReorderAccount(CoreSession* session, std::int64_t from_position,
-                        std::int64_t to_position) {
+CoreResult CoreReorderAccount(CoreSession* session, std::int64_t from_position,
+                              std::int64_t to_position) {
   if (session == nullptr) {
-    return false;
+    return kCoreInvalidArgument;
   }
-  try {
-    return session->core.ReorderAccount(from_position, to_position);
-  } catch (...) {
-    return false;
-  }
+  return Guard(
+      [&] { return session->core.ReorderAccount(from_position, to_position); });
 }
 
-std::size_t CoreLoadIndex(CoreSession* session) {
-  if (session == nullptr) {
-    return 0;
+CoreResult CoreLoadIndex(CoreSession* session, std::size_t* out_count) {
+  if (session == nullptr || out_count == nullptr) {
+    return kCoreInvalidArgument;
   }
-  try {
-    return session->core.GetAllIndex().size();
-  } catch (...) {
-    return 0;
-  }
-}
-
-bool CoreGetIndexEntry(const CoreSession* session, std::size_t list_index,
-                       CoreAccountEntry* out_entry) {
-  if (session == nullptr || out_entry == nullptr) {
-    return false;
-  }
-  try {
-    const std::vector<AccountEntry>& index = session->core.IndexCache();
-    if (list_index >= index.size()) {
-      return false;
+  return Guard([&] {
+    const CoreStatus status = session->core.LoadIndex();
+    if (status == CoreStatus::kOk) {
+      *out_count = session->core.Index().size();
     }
-    const AccountEntry& entry = index[list_index];
-    out_entry->position = entry.position;
-    std::memcpy(out_entry->description, entry.description.data(),
-                entry.description.size());
-    return true;
-  } catch (...) {
-    return false;
+    return status;
+  });
+}
+
+CoreResult CoreGetIndexEntry(const CoreSession* session, std::size_t list_index,
+                             CoreAccountEntry* out_entry) {
+  if (session == nullptr || out_entry == nullptr) {
+    return kCoreInvalidArgument;
   }
+  const std::vector<AccountEntry>& index = session->core.Index();
+  if (list_index >= index.size()) {
+    return kCoreNotFound;
+  }
+  const AccountEntry& entry = index[list_index];
+  out_entry->position = entry.position;
+  std::memcpy(out_entry->description, entry.description.data(),
+              entry.description.size());
+  return kCoreOk;
 }
 
 void CoreClearIndex(CoreSession* session) {
-  if (session == nullptr) {
-    return;
+  if (session != nullptr) {
+    session->core.ClearIndex();
   }
-  session->core.ClearIndex();
 }
 
-bool CoreGetAccount(CoreSession* session, std::int64_t position,
-                    CoreAccount* out_account) {
+CoreResult CoreGetAccount(CoreSession* session, std::int64_t position,
+                          CoreAccount* out_account) {
   if (session == nullptr || out_account == nullptr) {
-    return false;
+    return kCoreInvalidArgument;
   }
-  try {
-    const AccountPlain* account = session->core.GetAccount(position);
-    if (account == nullptr) {
-      return false;
+  return Guard([&] {
+    const auto account = session->core.GetAccount(position);
+    if (!account.has_value()) {
+      return account.error();
     }
-    FromPlain(*account, *out_account);
-    return true;
-  } catch (...) {
-    return false;
-  }
+    FromPlain(**account, *out_account);
+    return CoreStatus::kOk;
+  });
 }
 
 void CoreClearAccount(CoreSession* session) {
-  if (session == nullptr) {
-    return;
+  if (session != nullptr) {
+    session->core.ClearAccount();
   }
-  session->core.ClearAccount();
 }
 
 }  // extern "C"

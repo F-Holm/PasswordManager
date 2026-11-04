@@ -19,7 +19,49 @@ std::span<const std::byte> AsBytes(std::string_view value) noexcept {
   return {reinterpret_cast<const std::byte*>(value.data()), value.size()};
 }
 
+CoreStatus FromDBStatus(DBStatus status) noexcept {
+  switch (status) {
+    case DBStatus::kOk:
+      return CoreStatus::kOk;
+    case DBStatus::kNotFound:
+      return CoreStatus::kNotFound;
+    case DBStatus::kBusy:
+      return CoreStatus::kBusy;
+    case DBStatus::kClosed:
+      return CoreStatus::kLocked;
+    case DBStatus::kError:
+      break;
+  }
+  return CoreStatus::kError;
+}
+
 }  // namespace
+
+std::string_view ToString(CoreStatus status) noexcept {
+  switch (status) {
+    case CoreStatus::kOk:
+      return "ok";
+    case CoreStatus::kNotFound:
+      return "not found";
+    case CoreStatus::kConflict:
+      return "conflict";
+    case CoreStatus::kBusy:
+      return "busy";
+    case CoreStatus::kLocked:
+      return "locked";
+    case CoreStatus::kWrongPassword:
+      return "wrong password";
+    case CoreStatus::kInvalidArgument:
+      return "invalid argument";
+    case CoreStatus::kAlreadyExists:
+      return "already exists";
+    case CoreStatus::kCorrupted:
+      return "corrupted";
+    case CoreStatus::kError:
+      break;
+  }
+  return "error";
+}
 
 void AccountPlain::SetZero() noexcept {
   Crypto::SecureClear(std::as_writable_bytes(std::span(description)));
@@ -66,17 +108,18 @@ Core::~Core() {
   Close();
 }
 
-bool Core::Open(std::string_view db_path,
-                const std::array<std::byte, Crypto::Size::kKey>& master_key) {
+CoreStatus Core::Open(
+    std::string_view db_path,
+    const std::array<std::byte, Crypto::Size::kKey>& master_key) {
   Close();
 
   if (!db_.Open(db_path)) {
-    return false;
+    return CoreStatus::kError;
   }
 
   master_key_ = master_key;
   has_key_ = true;
-  return true;
+  return CoreStatus::kOk;
 }
 
 void Core::Close() noexcept {
@@ -160,83 +203,87 @@ bool Core::DecodeDescription(AccountIndex& index, AccountEntry& out) const {
   return true;
 }
 
-bool Core::AddAccount(const AccountPlain& account) {
+CoreStatus Core::AddAccount(const AccountPlain& account) {
   if (!IsOpen()) {
-    return false;
+    return CoreStatus::kLocked;
   }
 
   AccountBinary binary;
   if (!Encode(account, binary)) {
-    return false;
+    return CoreStatus::kError;
   }
 
-  if (db_.AddAccount(binary) != DBStatus::kOk) {
-    return false;
+  const CoreStatus status = FromDBStatus(db_.AddAccount(binary));
+  if (status == CoreStatus::kOk) {
+    ClearIndex();
   }
-
-  ClearIndex();
-  return true;
+  return status;
 }
 
-bool Core::EditAccount(std::int64_t position, const AccountPlain& account) {
-  if (!IsOpen() || position < 0) {
-    return false;
+CoreStatus Core::EditAccount(std::int64_t position,
+                             const AccountPlain& account) {
+  if (!IsOpen()) {
+    return CoreStatus::kLocked;
+  }
+  if (position < 0) {
+    return CoreStatus::kNotFound;
   }
 
   AccountBinary binary;
   if (!Encode(account, binary)) {
-    return false;
+    return CoreStatus::kError;
   }
 
-  if (db_.UpdateAccount(position, binary) != DBStatus::kOk) {
-    return false;
+  const CoreStatus status = FromDBStatus(db_.UpdateAccount(position, binary));
+  if (status == CoreStatus::kOk) {
+    ClearIndex();
+    if (position == loaded_position_) {
+      ClearAccount();
+    }
+  }
+  return status;
+}
+
+CoreStatus Core::RemoveAccount(std::int64_t position) {
+  if (!IsOpen()) {
+    return CoreStatus::kLocked;
+  }
+  if (position < 0) {
+    return CoreStatus::kNotFound;
   }
 
-  ClearIndex();
-  if (position == loaded_position_) {
+  const CoreStatus status = FromDBStatus(db_.DeleteAccount(position));
+  if (status == CoreStatus::kOk) {
+    ClearIndex();
     ClearAccount();
   }
-  return true;
+  return status;
 }
 
-bool Core::RemoveAccount(std::int64_t position) {
-  if (!IsOpen() || position < 0) {
-    return false;
-  }
-
-  if (db_.DeleteAccount(position) != DBStatus::kOk) {
-    return false;
-  }
-
-  ClearIndex();
-  ClearAccount();
-  return true;
-}
-
-bool Core::ReorderAccount(std::int64_t from_position,
-                          std::int64_t to_position) {
+CoreStatus Core::ReorderAccount(std::int64_t from_position,
+                                std::int64_t to_position) {
   if (!IsOpen()) {
-    return false;
+    return CoreStatus::kLocked;
   }
 
-  if (db_.MoveAccount(from_position, to_position) != DBStatus::kOk) {
-    return false;
+  const CoreStatus status =
+      FromDBStatus(db_.MoveAccount(from_position, to_position));
+  if (status == CoreStatus::kOk) {
+    ClearIndex();
+    ClearAccount();
   }
-
-  ClearIndex();
-  ClearAccount();
-  return true;
+  return status;
 }
 
-const std::vector<AccountEntry>& Core::GetAllIndex() {
+CoreStatus Core::LoadIndex() {
   index_.clear();
   if (!IsOpen()) {
-    return index_;
+    return CoreStatus::kLocked;
   }
 
   auto raw = db_.GetAllIndex();
   if (!raw.has_value()) {
-    return index_;
+    return FromDBStatus(raw.error());
   }
   index_.reserve(raw->size());
   for (AccountIndex& entry : *raw) {
@@ -245,10 +292,10 @@ const std::vector<AccountEntry>& Core::GetAllIndex() {
       index_.push_back(decoded);
     }
   }
-  return index_;
+  return CoreStatus::kOk;
 }
 
-const std::vector<AccountEntry>& Core::IndexCache() const noexcept {
+const std::vector<AccountEntry>& Core::Index() const noexcept {
   return index_;
 }
 
@@ -256,21 +303,25 @@ void Core::ClearIndex() noexcept {
   index_.clear();
 }
 
-const AccountPlain* Core::GetAccount(std::int64_t position) {
+std::expected<const AccountPlain*, CoreStatus> Core::GetAccount(
+    std::int64_t position) {
   ClearAccount();
-  if (!IsOpen() || position < 0) {
-    return nullptr;
+  if (!IsOpen()) {
+    return std::unexpected(CoreStatus::kLocked);
+  }
+  if (position < 0) {
+    return std::unexpected(CoreStatus::kNotFound);
   }
 
   auto binary = db_.GetAccount(position);
   if (!binary.has_value()) {
-    return nullptr;
+    return std::unexpected(FromDBStatus(binary.error()));
   }
 
   loaded_account_.emplace();
   if (!Decode(*binary, *loaded_account_)) {
     ClearAccount();
-    return nullptr;
+    return std::unexpected(CoreStatus::kCorrupted);
   }
 
   loaded_position_ = position;
