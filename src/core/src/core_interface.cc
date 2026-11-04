@@ -8,16 +8,16 @@
 #include "crypto/crypto.h"
 #include "types/account_size.h"
 
-extern "C" {
-
-const std::size_t kCoreDescriptionSize = AccountSize::kDescription;
-const std::size_t kCoreEmailSize = AccountSize::kEmail;
-const std::size_t kCoreUsernameSize = AccountSize::kUsername;
-const std::size_t kCorePasswordSize = AccountSize::kPassword;
-const std::size_t kCoreExtraSize = AccountSize::kExtra;
-const std::size_t kCoreMasterKeySize = Crypto::Size::kKey;
-
-}  // extern "C"
+static_assert(kCoreDescriptionSize == AccountSize::kDescription);
+static_assert(kCoreEmailSize == AccountSize::kEmail);
+static_assert(kCoreUsernameSize == AccountSize::kUsername);
+static_assert(kCorePasswordSize == AccountSize::kPassword);
+static_assert(kCoreExtraSize == AccountSize::kExtra);
+static_assert(kCoreMasterKeySize == Crypto::Size::kKey);
+static_assert(sizeof(CoreAccount) ==
+              AccountSize::kDescription + AccountSize::kEmail +
+                  AccountSize::kUsername + AccountSize::kPassword +
+                  AccountSize::kExtra);
 
 // CoreSession simply wraps a Core; it exists so the public header can expose
 // an opaque pointer instead of the C++ class definition.

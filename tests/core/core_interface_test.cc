@@ -7,6 +7,11 @@
 #include <cstring>
 #include <string>
 
+#include "crypto/crypto.h"
+#include "types/account_size.h"
+
+extern "C" int CoreCHeaderSmokeTest(void);
+
 namespace {
 
 std::array<std::uint8_t, 32> MakeKey(std::uint8_t marker) {
@@ -48,12 +53,16 @@ class CoreInterfaceTest : public ::testing::Test {
 };
 
 TEST_F(CoreInterfaceTest, FieldSizesMatchAccountLayout) {
-  EXPECT_EQ(kCoreMasterKeySize, 32u);
-  EXPECT_GT(kCoreDescriptionSize, 0u);
-  EXPECT_GT(kCoreEmailSize, 0u);
-  EXPECT_GT(kCoreUsernameSize, 0u);
-  EXPECT_GT(kCorePasswordSize, 0u);
-  EXPECT_GT(kCoreExtraSize, 0u);
+  EXPECT_EQ(sizeof(CoreAccount::description), AccountSize::kDescription);
+  EXPECT_EQ(sizeof(CoreAccount::email), AccountSize::kEmail);
+  EXPECT_EQ(sizeof(CoreAccount::username), AccountSize::kUsername);
+  EXPECT_EQ(sizeof(CoreAccount::password), AccountSize::kPassword);
+  EXPECT_EQ(sizeof(CoreAccount::extra), AccountSize::kExtra);
+  EXPECT_EQ(static_cast<std::size_t>(kCoreMasterKeySize), Crypto::Size::kKey);
+}
+
+TEST_F(CoreInterfaceTest, HeaderCompilesAndWorksFromC) {
+  EXPECT_EQ(CoreCHeaderSmokeTest(), 0);
 }
 
 TEST_F(CoreInterfaceTest, OpenRejectsWrongKeySize) {
