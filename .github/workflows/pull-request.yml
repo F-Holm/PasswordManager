@@ -7,19 +7,28 @@ on:
 jobs:
   test:
     if: github.event.pull_request.draft == false
-    name: Test on ${{ matrix.os }}
+    name: Test on ${{ matrix.os }} (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
-            env_flags: "LINT ASAN"
-          - os: windows-latest
-            env_flags: "ASAN"
+            name: lint + asan
+            sanitizer: asan
+            extra_cmake_args: "-DENABLE_LINT=ON"
+          - os: ubuntu-latest
+            name: tsan
+            sanitizer: tsan
           - os: macos-latest
-            env_flags: "ASAN"
+            name: asan
+            sanitizer: asan
+          - os: macos-latest
+            name: tsan
+            sanitizer: tsan
+          - os: windows-latest
+            name: no sanitizers
+            sanitizer: ""
 
     steps:
       - name: Checkout code
@@ -52,7 +61,15 @@ jobs:
 
       # --- EXECUTION ---
       - name: Run Execution Pipeline
+        if: matrix.sanitizer == ''
         run: |
-          just config-dev ${{ matrix.env_flags }}
+          just config-dev
           just build-dev
           just test-dev
+
+      - name: Run Sanitizer Pipeline
+        if: matrix.sanitizer != ''
+        run: |
+          cmake --preset debug-${{ matrix.sanitizer }} ${{ matrix.extra_cmake_args }}
+          cmake --build --preset build-debug-${{ matrix.sanitizer }} --parallel
+          ctest --preset test-debug-${{ matrix.sanitizer }} -j4
